@@ -19,8 +19,8 @@ namespace InventarioComputo.UI.ViewModels
         // **LA CORRECCIÓN MÁS IMPORTANTE ESTÁ AQUÍ**
         // Se usan strings con los nombres exactos de los comandos generados por el Toolkit.
         [ObservableProperty]
-        [NotifyCanExecuteChangedFor("EditarAsyncCommand")]
-        [NotifyCanExecuteChangedFor("EliminarAsyncCommand")]
+        [NotifyCanExecuteChangedFor(nameof(EditarCommand))]
+        [NotifyCanExecuteChangedFor(nameof(EliminarCommand))]
         private Estado? _estadoSeleccionado;
 
         [ObservableProperty]
