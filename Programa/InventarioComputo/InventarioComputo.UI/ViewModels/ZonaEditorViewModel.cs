@@ -7,63 +7,66 @@ using InventarioComputo.UI.ViewModels.Base;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
-using System.Windows;
 
 namespace InventarioComputo.UI.ViewModels
 {
     public partial class ZonaEditorViewModel : BaseViewModel, IEditorViewModel
     {
         private readonly IZonaService _srv;
+        private readonly IDialogService _dialogService;
+        private Zona _entidad = new();
 
         [ObservableProperty]
-        private Zona? _entidad;
+        private string _titulo = "Nueva Zona";
 
-        [ObservableProperty]
-        private Area? _areaPadre;
+        public string Nombre
+        {
+            get => _entidad.Nombre;
+            set => SetProperty(_entidad.Nombre, value, _entidad, (e, v) => e.Nombre = v);
+        }
 
-        public ZonaEditorViewModel(IZonaService srv, ILogger<ZonaEditorViewModel> log)
+        public bool Activo
+        {
+            get => _entidad.Activo;
+            set => SetProperty(_entidad.Activo, value, _entidad, (e, v) => e.Activo = v);
+        }
+
+        public bool DialogResult { get; set; }
+
+        public ZonaEditorViewModel(IZonaService srv, IDialogService dialogService, ILogger<ZonaEditorViewModel> log)
         {
             _srv = srv;
+            _dialogService = dialogService;
             Logger = log;
         }
 
-        public void SetEntidad(Zona zona, Area areaPadre)
+        public void SetEntidad(Zona entidad, Area areaPadre)
         {
-            Entidad = new Zona
+            _entidad = entidad;
+            if (entidad.Id > 0)
             {
-                Id = zona.Id,
-                Nombre = zona.Nombre,
-                AreaId = zona.AreaId,
-                Activo = zona.Activo
-            };
-            AreaPadre = areaPadre;
+                Titulo = $"Editar Zona en {areaPadre.Nombre}";
+            }
+            else
+            {
+                Titulo = $"Nueva Zona en {areaPadre.Nombre}";
+            }
+            OnPropertyChanged(nameof(Nombre));
+            OnPropertyChanged(nameof(Activo));
         }
 
         [RelayCommand]
-        private async Task GuardarAsync(Window window)
+        private async Task GuardarAsync()
         {
-            if (Entidad == null || AreaPadre == null || string.IsNullOrWhiteSpace(Entidad.Nombre))
-            {
-                ShowError("El nombre es obligatorio.");
-                return;
-            }
-
-            IsBusy = true;
             try
             {
-                Entidad.AreaId = AreaPadre.Id;
-                await _srv.GuardarAsync(Entidad, default);
-                window.DialogResult = true;
-                window.Close();
+                await _srv.GuardarAsync(_entidad, default);
+                DialogResult = true;
             }
             catch (Exception ex)
             {
-                Logger?.LogError(ex, "Error al guardar la zona.");
-                ShowError($"No se pudo guardar la zona. Error: {ex.Message}");
-            }
-            finally
-            {
-                IsBusy = false;
+                Logger?.LogError(ex, "Error al guardar la zona");
+                _dialogService.ShowError("Ocurrió un error al guardar: " + ex.Message);
             }
         }
     }

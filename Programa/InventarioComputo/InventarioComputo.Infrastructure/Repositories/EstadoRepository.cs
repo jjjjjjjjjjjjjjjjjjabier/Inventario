@@ -1,11 +1,15 @@
-﻿using InventarioComputo.Application.Contracts.Repositories; 
+﻿using InventarioComputo.Application.Contracts.Repositories;
 using InventarioComputo.Domain.Entities;
 using InventarioComputo.Infrastructure.Persistencia;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace InventarioComputo.Infrastructure.Repositories
 {
-    public class EstadoRepository : IEstadoRepository 
+    public class EstadoRepository : IEstadoRepository
     {
         private readonly InventarioDbContext _context;
 
@@ -28,7 +32,7 @@ namespace InventarioComputo.Infrastructure.Repositories
                 query = query.Where(e => e.Nombre.Contains(filtro) || (e.Descripcion != null && e.Descripcion.Contains(filtro)));
             }
 
-            return await query.AsNoTracking().ToListAsync(ct);
+            return await query.OrderBy(e => e.Nombre).AsNoTracking().ToListAsync(ct);
         }
 
         public async Task<bool> ExisteNombreAsync(string nombre, int? excluirId, CancellationToken ct)
@@ -68,7 +72,9 @@ namespace InventarioComputo.Infrastructure.Repositories
             var entidad = await _context.Estados.FindAsync(new object[] { id }, ct);
             if (entidad != null)
             {
-                _context.Estados.Remove(entidad);
+                // **CAMBIO CLAVE: Implementación de Soft Delete**
+                entidad.Activo = false;
+                _context.Entry(entidad).State = EntityState.Modified;
                 await _context.SaveChangesAsync(ct);
             }
         }

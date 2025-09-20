@@ -12,11 +12,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using System;
-using System.IO;
 using System.Windows;
 
 namespace InventarioComputo.UI
 {
+    // **CORRECCIÓN:** Se especifica la ruta completa a System.Windows.Application
+    // para resolver la ambigüedad con el namespace InventarioComputo.Application.
     public partial class App : System.Windows.Application
     {
         private readonly IHost _host;
@@ -41,11 +42,10 @@ namespace InventarioComputo.UI
                 {
                     var connectionString = hostContext.Configuration.GetConnectionString("DefaultConnection");
 
-                    // 1. Configuración de la Base de Datos
                     services.AddDbContext<InventarioDbContext>(options =>
                         options.UseSqlServer(connectionString));
 
-                    // 2. Registro de Repositorios
+                    // Repositorios
                     services.AddScoped<ISedeRepository, SedeRepository>();
                     services.AddScoped<IAreaRepository, AreaRepository>();
                     services.AddScoped<IZonaRepository, ZonaRepository>();
@@ -54,7 +54,7 @@ namespace InventarioComputo.UI
                     services.AddScoped<ITipoEquipoRepository, TipoEquipoRepository>();
                     services.AddScoped<IEquipoComputoRepository, EquipoComputoRepository>();
 
-                    // 3. Registro de Servicios de Aplicación
+                    // Servicios de Aplicación
                     services.AddScoped<ISedeService, SedeService>();
                     services.AddScoped<IAreaService, AreaService>();
                     services.AddScoped<IZonaService, ZonaService>();
@@ -63,9 +63,11 @@ namespace InventarioComputo.UI
                     services.AddScoped<ITipoEquipoService, TipoEquipoService>();
                     services.AddScoped<IEquipoComputoService, EquipoComputoService>();
 
-                    // 4. Registro de Servicios de la UI
-                    services.AddSingleton<IDialogService, DialogService>();
+                    // Servicios de la UI
+                    services.AddSingleton<DialogService>();
+                    services.AddSingleton<IDialogService>(sp => sp.GetRequiredService<DialogService>());
 
+                    // ViewModels
                     services.AddTransient<MainWindowViewModel>();
                     services.AddTransient<EstadosViewModel>();
                     services.AddTransient<EstadoEditorViewModel>();
@@ -80,18 +82,13 @@ namespace InventarioComputo.UI
                     services.AddTransient<EquiposComputoViewModel>();
                     services.AddTransient<EquipoComputoEditorViewModel>();
 
-                    // 6. Registro de Vistas (UserControls y Windows)
-                    services.AddTransient<UnidadesView>();
-                    services.AddTransient<UnidadEditorView>();
-                    services.AddTransient<EstadosView>();
+                    // Vistas (Ventanas)
                     services.AddTransient<EstadoEditorView>();
-                    services.AddTransient<UbicacionesView>();
+                    services.AddTransient<UnidadEditorView>();
+                    services.AddTransient<TipoEquipoEditorView>();
                     services.AddTransient<SedeEditorView>();
                     services.AddTransient<AreaEditorView>();
                     services.AddTransient<ZonaEditorView>();
-                    services.AddTransient<TiposEquipoView>();
-                    services.AddTransient<TipoEquipoEditorView>();
-                    services.AddTransient<EquiposComputoView>();
                     services.AddTransient<EquipoComputoEditorView>();
                     services.AddSingleton<MainWindow>();
                 })
@@ -101,6 +98,15 @@ namespace InventarioComputo.UI
         protected override async void OnStartup(StartupEventArgs e)
         {
             await _host.StartAsync();
+
+            var dialogService = _host.Services.GetRequiredService<DialogService>();
+            dialogService.Register<EstadoEditorViewModel, EstadoEditorView>();
+            dialogService.Register<UnidadEditorViewModel, UnidadEditorView>();
+            dialogService.Register<TipoEquipoEditorViewModel, TipoEquipoEditorView>();
+            dialogService.Register<SedeEditorViewModel, SedeEditorView>();
+            dialogService.Register<AreaEditorViewModel, AreaEditorView>();
+            dialogService.Register<ZonaEditorViewModel, ZonaEditorView>();
+            dialogService.Register<EquipoComputoEditorViewModel, EquipoComputoEditorView>();
 
             var mainWindow = _host.Services.GetRequiredService<MainWindow>();
             mainWindow.Show();

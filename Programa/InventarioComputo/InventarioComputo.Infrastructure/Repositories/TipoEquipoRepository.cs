@@ -32,7 +32,7 @@ namespace InventarioComputo.Infrastructure.Repositories
                 query = query.Where(t => t.Nombre.Contains(filtro));
             }
 
-            return await query.AsNoTracking().ToListAsync(ct);
+            return await query.OrderBy(t => t.Nombre).AsNoTracking().ToListAsync(ct);
         }
 
         public async Task<TipoEquipo?> ObtenerPorIdAsync(int id, CancellationToken ct)
@@ -59,7 +59,9 @@ namespace InventarioComputo.Infrastructure.Repositories
             var entidad = await _context.TiposEquipo.FindAsync(new object[] { id }, ct);
             if (entidad != null)
             {
-                _context.TiposEquipo.Remove(entidad);
+                // **CAMBIO CLAVE: Implementación de Soft Delete**
+                entidad.Activo = false;
+                _context.Entry(entidad).State = EntityState.Modified;
                 await _context.SaveChangesAsync(ct);
             }
         }

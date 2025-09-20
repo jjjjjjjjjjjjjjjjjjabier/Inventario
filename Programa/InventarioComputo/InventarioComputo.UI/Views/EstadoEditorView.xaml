@@ -1,31 +1,48 @@
 ﻿<Window x:Class="InventarioComputo.UI.Views.EstadoEditorView"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Editor de Estado" 
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:InventarioComputo.UI.ViewModels"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=vm:EstadoEditorViewModel, IsDesignTimeCreatable=False}"
+        Title="{Binding Titulo}" 
         SizeToContent="Height"
         WindowStartupLocation="CenterOwner"
         Width="400" 
         ResizeMode="NoResize">
-    <StackPanel Margin="16">
-        <TextBlock Text="Nombre" Style="{StaticResource LabelStyle}"/>
-        <TextBox Text="{Binding Nombre, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
 
-        <TextBlock Text="Descripción" Style="{StaticResource LabelStyle}"/>
-        <TextBox Text="{Binding Descripcion, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
-        <TextBlock Text="Color (Hex #RRGGBB)" Style="{StaticResource LabelStyle}"/>
-        <TextBox Text="{Binding ColorHex, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,8"/>
+        <Label Grid.Row="0" Grid.Column="0" Content="Nombre:" VerticalAlignment="Center"/>
+        <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Nombre, UpdateSourceTrigger=PropertyChanged}" Margin="5"/>
 
-        <CheckBox Content="Activo" IsChecked="{Binding Activo}" Margin="0,8,0,16"/>
+        <Label Grid.Row="1" Grid.Column="0" Content="Descripción:" VerticalAlignment="Center"/>
+        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Descripcion, UpdateSourceTrigger=PropertyChanged}" Margin="5"/>
 
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+        <Label Grid.Row="2" Grid.Column="0" Content="Color (Hex):" VerticalAlignment="Center"/>
+        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding ColorHex, UpdateSourceTrigger=PropertyChanged}" Margin="5"/>
 
+        <CheckBox Grid.Row="3" Grid.Column="1" Content="Activo" IsChecked="{Binding Activo}" Margin="5,10"/>
+
+        <StackPanel Grid.Row="5" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Content="Guardar" 
-                    Command="{Binding GuardarCommand}" 
-                    CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                    Command="{Binding GuardarAsyncCommand}" 
                     IsDefault="True" MinWidth="80"/>
 
-            <Button Content="Cancelar" IsCancel="True" Background="Gray" MinWidth="80" Margin="8,0,0,0"/>
+            <Button Content="Cancelar" IsCancel="True" MinWidth="80" Margin="10,0,0,0"/>
         </StackPanel>
-    </StackPanel>
+    </Grid>
 </Window>

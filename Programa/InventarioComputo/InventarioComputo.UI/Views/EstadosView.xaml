@@ -4,8 +4,13 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:converters="clr-namespace:InventarioComputo.UI.Converters"
              mc:Ignorable="d" 
              d:DesignHeight="600" d:DesignWidth="1000">
+
+    <UserControl.Resources>
+        <converters:ColorFromHexConverter x:Key="ColorFromHexConverter"/>
+    </UserControl.Resources>
 
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Loaded">
@@ -25,7 +30,11 @@
                 <Button Content="Editar" Command="{Binding EditarAsyncCommand}"/>
                 <Button Content="Eliminar" Command="{Binding EliminarAsyncCommand}"/>
             </StackPanel>
-            <Button Content="Refrescar" Command="{Binding BuscarAsyncCommand}" HorizontalAlignment="Right"/>
+
+            <CheckBox Content="Mostrar Inactivos" 
+                      IsChecked="{Binding MostrarInactivos, Mode=TwoWay}"
+                      HorizontalAlignment="Right"
+                      VerticalAlignment="Center"/>
         </DockPanel>
 
         <DataGrid Grid.Row="1" ItemsSource="{Binding Estados}"

@@ -21,6 +21,9 @@ namespace InventarioComputo.UI.ViewModels
         [NotifyCanExecuteChangedFor(nameof(EliminarCommand))]
         private TipoEquipo? _tipoEquipoSeleccionado;
 
+        [ObservableProperty]
+        private bool _mostrarInactivos;
+
         public ObservableCollection<TipoEquipo> TiposEquipo { get; } = new();
 
         public TiposEquipoViewModel(ITipoEquipoService srv, IDialogService dialogService, ILogger<TiposEquipoViewModel> log)
@@ -29,6 +32,8 @@ namespace InventarioComputo.UI.ViewModels
             _dialogService = dialogService;
             Logger = log;
         }
+
+        partial void OnMostrarInactivosChanged(bool value) => _ = BuscarAsync();
 
         [RelayCommand]
         private async Task LoadedAsync() => await BuscarAsync();
@@ -40,13 +45,13 @@ namespace InventarioComputo.UI.ViewModels
             try
             {
                 TiposEquipo.Clear();
-                var lista = await _srv.BuscarAsync(null, true);
+                var lista = await _srv.BuscarAsync(null, MostrarInactivos);
                 foreach (var item in lista) TiposEquipo.Add(item);
             }
             catch (Exception ex)
             {
                 Logger?.LogError(ex, "Error al buscar tipos de equipo.");
-                ShowError("Ocurrió un error al cargar los tipos de equipo.");
+                _dialogService.ShowError("Ocurrió un error al cargar los tipos de equipo.");
             }
             finally
             {
@@ -80,18 +85,18 @@ namespace InventarioComputo.UI.ViewModels
         private async Task EliminarAsync()
         {
             if (TipoEquipoSeleccionado == null) return;
-            if (!ConfirmAction($"¿Eliminar el tipo de equipo '{TipoEquipoSeleccionado.Nombre}'?", "Confirmar Eliminación")) return;
+            if (!_dialogService.Confirm($"¿Está seguro de querer desactivar el tipo de equipo '{TipoEquipoSeleccionado.Nombre}'?", "Confirmar Desactivación")) return;
 
             IsBusy = true;
             try
             {
                 await _srv.EliminarAsync(TipoEquipoSeleccionado.Id);
-                TiposEquipo.Remove(TipoEquipoSeleccionado);
+                await BuscarAsync(); // Refrescar la lista
             }
             catch (Exception ex)
             {
                 Logger?.LogError(ex, "Error al eliminar tipo de equipo.");
-                ShowError("No se pudo eliminar. Es posible que esté en uso por algún equipo.");
+                _dialogService.ShowError("No se pudo desactivar. Es posible que esté en uso por algún equipo.");
             }
             finally
             {

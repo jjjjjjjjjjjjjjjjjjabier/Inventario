@@ -17,9 +17,9 @@ namespace InventarioComputo.Application.Services
             _repo = repo;
         }
 
-        public Task<IReadOnlyList<EquipoComputo>> ObtenerTodosAsync(CancellationToken ct = default)
+        public Task<IReadOnlyList<EquipoComputo>> ObtenerTodosAsync(bool incluirInactivos, CancellationToken ct = default)
         {
-            return _repo.ObtenerTodosAsync(ct);
+            return _repo.ObtenerTodosAsync(incluirInactivos, ct);
         }
 
         public Task<EquipoComputo?> ObtenerPorIdAsync(int id, CancellationToken ct = default)

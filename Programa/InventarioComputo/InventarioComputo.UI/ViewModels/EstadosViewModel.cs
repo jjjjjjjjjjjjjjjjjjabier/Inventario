@@ -16,10 +16,15 @@ namespace InventarioComputo.UI.ViewModels
         private readonly IEstadoService _srv;
         private readonly IDialogService _dialogService;
 
+        // **LA CORRECCIÓN MÁS IMPORTANTE ESTÁ AQUÍ**
+        // Se usan strings con los nombres exactos de los comandos generados por el Toolkit.
         [ObservableProperty]
-        [NotifyCanExecuteChangedFor(nameof(EditarCommand))]
-        [NotifyCanExecuteChangedFor(nameof(EliminarCommand))]
+        [NotifyCanExecuteChangedFor("EditarAsyncCommand")]
+        [NotifyCanExecuteChangedFor("EliminarAsyncCommand")]
         private Estado? _estadoSeleccionado;
+
+        [ObservableProperty]
+        private bool _mostrarInactivos;
 
         public ObservableCollection<Estado> Estados { get; } = new();
 
@@ -29,6 +34,8 @@ namespace InventarioComputo.UI.ViewModels
             _dialogService = dialogService;
             Logger = log;
         }
+
+        partial void OnMostrarInactivosChanged(bool value) => _ = BuscarAsync();
 
         [RelayCommand]
         private async Task LoadedAsync() => await BuscarAsync();
@@ -40,13 +47,13 @@ namespace InventarioComputo.UI.ViewModels
             try
             {
                 Estados.Clear();
-                var lista = await _srv.BuscarAsync(null, true);
+                var lista = await _srv.BuscarAsync(null, MostrarInactivos);
                 foreach (var e in lista) Estados.Add(e);
             }
             catch (Exception ex)
             {
                 Logger?.LogError(ex, "Error al buscar estados");
-                ShowError("Ocurrió un error al cargar los estados.");
+                _dialogService.ShowError("Ocurrió un error al cargar los estados.");
             }
             finally
             {
@@ -80,18 +87,18 @@ namespace InventarioComputo.UI.ViewModels
         private async Task EliminarAsync()
         {
             if (EstadoSeleccionado == null) return;
-            if (!ConfirmAction($"¿Eliminar el estado '{EstadoSeleccionado.Nombre}'?", "Confirmar Eliminación")) return;
+            if (!_dialogService.Confirm($"¿Está seguro de querer desactivar el estado '{EstadoSeleccionado.Nombre}'?", "Confirmar Desactivación")) return;
 
             IsBusy = true;
             try
             {
                 await _srv.EliminarAsync(EstadoSeleccionado.Id);
-                Estados.Remove(EstadoSeleccionado);
+                await BuscarAsync();
             }
             catch (Exception ex)
             {
                 Logger?.LogError(ex, "Error al eliminar estado");
-                ShowError("No se pudo eliminar el estado. Es posible que esté en uso.");
+                _dialogService.ShowError("No se pudo desactivar el estado. Es posible que esté en uso.");
             }
             finally
             {

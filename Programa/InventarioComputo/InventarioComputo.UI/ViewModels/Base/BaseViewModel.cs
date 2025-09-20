@@ -1,6 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Extensions.Logging;
-using System.Windows;
 
 namespace InventarioComputo.UI.ViewModels.Base
 {
@@ -16,13 +15,7 @@ namespace InventarioComputo.UI.ViewModels.Base
         // Propiedad para el logger que podrán usar todos los ViewModels hijos.
         protected ILogger? Logger { get; set; }
 
-        protected void ShowError(string mensaje)
-            => MessageBox.Show(mensaje, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-
-        protected void ShowInfo(string mensaje)
-            => MessageBox.Show(mensaje, "Información", MessageBoxButton.OK, MessageBoxImage.Information);
-
-        protected bool ConfirmAction(string mensaje, string titulo)
-            => MessageBox.Show(mensaje, titulo, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
+        // **CAMBIO CLAVE:** Se han eliminado los métodos ShowError, ShowInfo y ConfirmAction.
+        // Cada ViewModel que necesite mostrar mensajes ahora deberá inyectar y usar IDialogService.
     }
 }

@@ -9,7 +9,6 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows;
 
 namespace InventarioComputo.UI.ViewModels
 {
@@ -21,32 +20,40 @@ namespace InventarioComputo.UI.ViewModels
         private readonly ISedeService _sedeSrv;
         private readonly IAreaService _areaSrv;
         private readonly IZonaService _zonaSrv;
+        private readonly IDialogService _dialogService;
+
+        private EquipoComputo _entidad = new();
 
         [ObservableProperty]
-        private EquipoComputo? _entidad;
+        private string _titulo = "Nuevo Equipo";
+        public bool DialogResult { get; set; }
 
+        // --- Propiedades del formulario ---
+        public string NumeroSerie { get => _entidad.NumeroSerie; set => SetProperty(_entidad.NumeroSerie, value, _entidad, (e, v) => e.NumeroSerie = v); }
+        public string EtiquetaInventario { get => _entidad.EtiquetaInventario; set => SetProperty(_entidad.EtiquetaInventario, value, _entidad, (e, v) => e.EtiquetaInventario = v); }
+        public string Marca { get => _entidad.Marca; set => SetProperty(_entidad.Marca, value, _entidad, (e, v) => e.Marca = v); }
+        public string Modelo { get => _entidad.Modelo; set => SetProperty(_entidad.Modelo, value, _entidad, (e, v) => e.Modelo = v); }
+        public string Caracteristicas { get => _entidad.Caracteristicas; set => SetProperty(_entidad.Caracteristicas, value, _entidad, (e, v) => e.Caracteristicas = v); }
+        public string? Observaciones { get => _entidad.Observaciones; set => SetProperty(_entidad.Observaciones, value, _entidad, (e, v) => e.Observaciones = v); }
+        public DateTime? FechaAdquisicion { get => _entidad.FechaAdquisicion; set => SetProperty(_entidad.FechaAdquisicion, value, _entidad, (e, v) => e.FechaAdquisicion = v); }
+
+        // --- Propiedades para ComboBoxes ---
         public ObservableCollection<TipoEquipo> TiposEquipo { get; } = new();
         public ObservableCollection<Estado> Estados { get; } = new();
         public ObservableCollection<Sede> Sedes { get; } = new();
         public ObservableCollection<Area> Areas { get; } = new();
         public ObservableCollection<Zona> Zonas { get; } = new();
 
-        [ObservableProperty]
-        private TipoEquipo? _tipoEquipoSeleccionado;
+        [ObservableProperty] private TipoEquipo? _tipoEquipoSeleccionado;
+        [ObservableProperty] private Estado? _estadoSeleccionado;
+        [ObservableProperty] private Sede? _sedeSeleccionada;
+        [ObservableProperty] private Area? _areaSeleccionada;
+        [ObservableProperty] private Zona? _zonaSeleccionada;
 
-        [ObservableProperty]
-        private Estado? _estadoSeleccionado;
-
-        [ObservableProperty]
-        private Sede? _sedeSeleccionada;
-
-        [ObservableProperty]
-        private Area? _areaSeleccionada;
-
-        [ObservableProperty]
-        private Zona? _zonaSeleccionada;
-
-        public EquipoComputoEditorViewModel(IEquipoComputoService equipoSrv, ITipoEquipoService tipoEquipoSrv, IEstadoService estadoSrv, ISedeService sedeSrv, IAreaService areaSrv, IZonaService zonaSrv, ILogger<EquipoComputoEditorViewModel> log)
+        public EquipoComputoEditorViewModel(
+            IEquipoComputoService equipoSrv, ITipoEquipoService tipoEquipoSrv, IEstadoService estadoSrv,
+            ISedeService sedeSrv, IAreaService areaSrv, IZonaService zonaSrv,
+            IDialogService dialogService, ILogger<EquipoComputoEditorViewModel> log)
         {
             _equipoSrv = equipoSrv;
             _tipoEquipoSrv = tipoEquipoSrv;
@@ -54,51 +61,51 @@ namespace InventarioComputo.UI.ViewModels
             _sedeSrv = sedeSrv;
             _areaSrv = areaSrv;
             _zonaSrv = zonaSrv;
+            _dialogService = dialogService;
             Logger = log;
         }
 
-        public async void SetEquipo(EquipoComputo equipo)
+        public void SetEquipo(EquipoComputo equipo)
         {
-            Entidad = equipo;
-            await CargarComboBoxes();
+            _entidad = equipo;
+            if (equipo.Id > 0) Titulo = "Editar Equipo";
+            else FechaAdquisicion = DateTime.Today;
 
-            TipoEquipoSeleccionado = TiposEquipo.FirstOrDefault(t => t.Id == equipo.TipoEquipoId);
-            EstadoSeleccionado = Estados.FirstOrDefault(e => e.Id == equipo.EstadoId);
-
-            if (equipo.Zona != null)
-            {
-                SedeSeleccionada = Sedes.FirstOrDefault(s => s.Id == equipo.Zona.Area?.SedeId);
-                await CargarAreasAsync();
-                AreaSeleccionada = Areas.FirstOrDefault(a => a.Id == equipo.Zona.AreaId);
-                await CargarZonasAsync();
-                ZonaSeleccionada = Zonas.FirstOrDefault(z => z.Id == equipo.ZonaId);
-            }
+            // Cargar los combos y luego seleccionar los valores del equipo
+            _ = CargarCombosAsync();
         }
 
-        partial void OnSedeSeleccionadaChanged(Sede? value) => _ = CargarAreasAsync();
-        partial void OnAreaSeleccionadaChanged(Area? value) => _ = CargarZonasAsync();
-
-        private async Task CargarComboBoxes()
+        private async Task CargarCombosAsync()
         {
             IsBusy = true;
             try
             {
-                TiposEquipo.Clear();
-                var tipos = await _tipoEquipoSrv.BuscarAsync(null, true);
+                // Cargar catálogos
+                var tipos = await _tipoEquipoSrv.BuscarAsync(null, false);
                 foreach (var t in tipos) TiposEquipo.Add(t);
 
-                Estados.Clear();
-                var estados = await _estadoSrv.BuscarAsync(null, true);
+                var estados = await _estadoSrv.BuscarAsync(null, false);
                 foreach (var e in estados) Estados.Add(e);
 
-                Sedes.Clear();
-                var sedes = await _sedeSrv.BuscarAsync(null, true);
+                var sedes = await _sedeSrv.BuscarAsync(null, false);
                 foreach (var s in sedes) Sedes.Add(s);
+
+                // Seleccionar valores si es una edición
+                if (_entidad.Id > 0)
+                {
+                    TipoEquipoSeleccionado = TiposEquipo.FirstOrDefault(t => t.Id == _entidad.TipoEquipoId);
+                    EstadoSeleccionado = Estados.FirstOrDefault(e => e.Id == _entidad.EstadoId);
+                    if (_entidad.Zona != null)
+                    {
+                        SedeSeleccionada = Sedes.FirstOrDefault(s => s.Id == _entidad.Zona.Area.SedeId);
+                        // Cargar áreas y zonas en cascada...
+                    }
+                }
             }
             catch (Exception ex)
             {
-                Logger?.LogError(ex, "Error cargando ComboBoxes para Equipo Editor");
-                ShowError("Error al cargar datos necesarios para el formulario.");
+                Logger?.LogError(ex, "Error cargando catálogos para el editor de equipos");
+                _dialogService.ShowError("No se pudieron cargar los datos necesarios para el formulario.");
             }
             finally
             {
@@ -106,13 +113,20 @@ namespace InventarioComputo.UI.ViewModels
             }
         }
 
+        partial void OnSedeSeleccionadaChanged(Sede? value) => _ = CargarAreasAsync();
+        partial void OnAreaSeleccionadaChanged(Area? value) => _ = CargarZonasAsync();
+
         private async Task CargarAreasAsync()
         {
             Areas.Clear();
+            Zonas.Clear();
             if (SedeSeleccionada != null)
             {
                 var areas = await _areaSrv.BuscarAsync(SedeSeleccionada.Id, null, default);
                 foreach (var a in areas) Areas.Add(a);
+
+                if (_entidad.Zona?.AreaId > 0)
+                    AreaSeleccionada = Areas.FirstOrDefault(a => a.Id == _entidad.Zona.AreaId);
             }
         }
 
@@ -123,39 +137,33 @@ namespace InventarioComputo.UI.ViewModels
             {
                 var zonas = await _zonaSrv.BuscarAsync(AreaSeleccionada.Id, null, default);
                 foreach (var z in zonas) Zonas.Add(z);
+
+                if (_entidad.ZonaId > 0)
+                    ZonaSeleccionada = Zonas.FirstOrDefault(z => z.Id == _entidad.ZonaId);
             }
         }
 
         [RelayCommand]
-        private async Task GuardarAsync(Window window)
+        private async Task GuardarAsync()
         {
-            if (Entidad == null || string.IsNullOrWhiteSpace(Entidad.NumeroSerie) || TipoEquipoSeleccionado == null || EstadoSeleccionado == null || ZonaSeleccionada == null)
-            {
-                ShowError("Número de Serie, Tipo, Estado y Zona son obligatorios.");
-                return;
-            }
-
-            IsBusy = true;
             try
             {
-                Entidad.TipoEquipoId = TipoEquipoSeleccionado.Id;
-                Entidad.EstadoId = EstadoSeleccionado.Id;
-                Entidad.ZonaId = ZonaSeleccionada.Id;
+                // Asignar Ids de los combos a la entidad
+                _entidad.TipoEquipoId = TipoEquipoSeleccionado?.Id ?? 0;
+                _entidad.EstadoId = EstadoSeleccionado?.Id ?? 0;
+                _entidad.ZonaId = ZonaSeleccionada?.Id ?? 0;
 
-                if (Entidad.Id == 0) await _equipoSrv.AgregarAsync(Entidad);
-                else await _equipoSrv.ActualizarAsync(Entidad);
+                if (_entidad.Id == 0)
+                    await _equipoSrv.AgregarAsync(_entidad);
+                else
+                    await _equipoSrv.ActualizarAsync(_entidad);
 
-                window.DialogResult = true;
-                window.Close();
+                DialogResult = true;
             }
             catch (Exception ex)
             {
-                Logger?.LogError(ex, "Error guardando equipo");
-                ShowError($"No se pudo guardar el equipo. Error: {ex.Message}");
-            }
-            finally
-            {
-                IsBusy = false;
+                Logger?.LogError(ex, "Error al guardar equipo");
+                _dialogService.ShowError("Ocurrió un error al guardar: " + ex.Message);
             }
         }
     }

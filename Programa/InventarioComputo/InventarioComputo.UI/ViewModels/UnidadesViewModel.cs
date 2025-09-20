@@ -31,10 +31,7 @@ namespace InventarioComputo.UI.ViewModels
         }
 
         [RelayCommand]
-        private async Task LoadedAsync()
-        {
-            await BuscarAsync();
-        }
+        private async Task LoadedAsync() => await BuscarAsync();
 
         [RelayCommand]
         private async Task BuscarAsync()
@@ -43,16 +40,13 @@ namespace InventarioComputo.UI.ViewModels
             try
             {
                 Unidades.Clear();
-                var unidades = await _srv.BuscarAsync(null, true);
-                foreach (var unidad in unidades)
-                {
-                    Unidades.Add(unidad);
-                }
+                var lista = await _srv.BuscarAsync(null, true);
+                foreach (var item in lista) Unidades.Add(item);
             }
             catch (Exception ex)
             {
-                Logger?.LogError(ex, "Error al buscar unidades");
-                ShowError("Ocurrió un error al cargar las unidades.");
+                Logger?.LogError(ex, "Error buscando unidades");
+                _dialogService.ShowError("Ocurrió un error al cargar las unidades.");
             }
             finally
             {
@@ -63,8 +57,8 @@ namespace InventarioComputo.UI.ViewModels
         [RelayCommand]
         private async Task CrearAsync()
         {
-            var nuevaUnidad = new Unidad { Activo = true };
-            if (_dialogService.ShowDialog<UnidadEditorViewModel>(vm => vm.SetUnidad(nuevaUnidad)) == true)
+            var nuevo = new Unidad { Activo = true };
+            if (_dialogService.ShowDialog<UnidadEditorViewModel>(vm => vm.SetEntidad(nuevo)) == true)
             {
                 await BuscarAsync();
             }
@@ -76,7 +70,7 @@ namespace InventarioComputo.UI.ViewModels
         private async Task EditarAsync()
         {
             if (UnidadSeleccionada == null) return;
-            if (_dialogService.ShowDialog<UnidadEditorViewModel>(vm => vm.SetUnidad(UnidadSeleccionada)) == true)
+            if (_dialogService.ShowDialog<UnidadEditorViewModel>(vm => vm.SetEntidad(UnidadSeleccionada)) == true)
             {
                 await BuscarAsync();
             }
@@ -86,7 +80,7 @@ namespace InventarioComputo.UI.ViewModels
         private async Task EliminarAsync()
         {
             if (UnidadSeleccionada == null) return;
-            if (!ConfirmAction($"¿Realmente desea eliminar la unidad '{UnidadSeleccionada.Nombre}'?", "Confirmar Eliminación")) return;
+            if (!_dialogService.Confirm($"¿Eliminar la unidad '{UnidadSeleccionada.Nombre}'?", "Confirmar Eliminación")) return;
 
             IsBusy = true;
             try
@@ -96,8 +90,8 @@ namespace InventarioComputo.UI.ViewModels
             }
             catch (Exception ex)
             {
-                Logger?.LogError(ex, "Error al eliminar la unidad con ID {UnidadId}", UnidadSeleccionada.Id);
-                ShowError("Ocurrió un error al eliminar la unidad. Es posible que esté en uso.");
+                Logger?.LogError(ex, "Error al eliminar unidad");
+                _dialogService.ShowError("No se pudo eliminar la unidad. Es posible que esté en uso.");
             }
             finally
             {

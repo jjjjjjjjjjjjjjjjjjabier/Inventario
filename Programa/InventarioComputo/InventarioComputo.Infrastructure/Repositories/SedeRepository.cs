@@ -18,6 +18,7 @@ namespace InventarioComputo.Infrastructure.Repositories
         {
             var query = _context.Sedes.AsQueryable();
 
+            // Por defecto, solo se muestran las sedes activas
             if (!incluirInactivas)
             {
                 query = query.Where(s => s.Activo);
@@ -28,7 +29,7 @@ namespace InventarioComputo.Infrastructure.Repositories
                 query = query.Where(s => s.Nombre.Contains(filtro));
             }
 
-            return await query.AsNoTracking().ToListAsync(ct);
+            return await query.OrderBy(s => s.Nombre).AsNoTracking().ToListAsync(ct);
         }
 
         public async Task<bool> ExisteNombreAsync(string nombre, int? excluirId, CancellationToken ct)
@@ -65,7 +66,10 @@ namespace InventarioComputo.Infrastructure.Repositories
             var entidad = await _context.Sedes.FindAsync(new object[] { id }, ct);
             if (entidad != null)
             {
-                _context.Sedes.Remove(entidad);
+                // **CAMBIO CLAVE: Implementación de Soft Delete**
+                // En lugar de borrar, marcamos la entidad como inactiva.
+                entidad.Activo = false;
+                _context.Entry(entidad).State = EntityState.Modified;
                 await _context.SaveChangesAsync(ct);
             }
         }

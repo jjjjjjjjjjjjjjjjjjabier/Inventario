@@ -1,16 +1,33 @@
-﻿// Archivo: InventarioComputo.UI/Services/IDialogService.cs
-
+﻿using InventarioComputo.UI.ViewModels.Base;
 using System;
 
 namespace InventarioComputo.UI.Services
 {
-    // Interfaz auxiliar para identificar ViewModels que son para editores.
-    public interface IEditorViewModel { }
-
     public interface IDialogService
     {
-        // Un único método genérico para mostrar cualquier diálogo.
-        // Devuelve 'bool?' para saber si el usuario guardó (true) o canceló (false/null).
-        bool? ShowDialog<TViewModel>(Action<TViewModel> setViewModelState) where TViewModel : class, IEditorViewModel;
+        // Este método ya lo tenías, para abrir ventanas de edición.
+        bool? ShowDialog<TViewModel>(Action<TViewModel> setViewModelState) where TViewModel : BaseViewModel;
+
+        // --- NUEVOS MÉTODOS ---
+
+        /// <summary>
+        /// Muestra un mensaje de información al usuario.
+        /// </summary>
+        /// <param name="message">El texto a mostrar.</param>
+        void ShowInfo(string message);
+
+        /// <summary>
+        /// Muestra un mensaje de error al usuario.
+        /// </summary>
+        /// <param name="message">El texto del error a mostrar.</param>
+        void ShowError(string message);
+
+        /// <summary>
+        /// Muestra un cuadro de diálogo de confirmación (Sí/No) al usuario.
+        /// </summary>
+        /// <param name="message">La pregunta de confirmación.</param>
+        /// <param name="title">El título de la ventana.</param>
+        /// <returns>True si el usuario presiona "Sí", de lo contrario False.</returns>
+        bool Confirm(string message, string title);
     }
 }

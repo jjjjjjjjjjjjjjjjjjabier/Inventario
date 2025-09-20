@@ -7,57 +7,63 @@ using InventarioComputo.UI.ViewModels.Base;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
-using System.Windows;
 
 namespace InventarioComputo.UI.ViewModels
 {
     public partial class TipoEquipoEditorViewModel : BaseViewModel, IEditorViewModel
     {
         private readonly ITipoEquipoService _srv;
+        private readonly IDialogService _dialogService;
+
+        private TipoEquipo _entidad = new();
 
         [ObservableProperty]
-        private TipoEquipo? _entidad;
+        private string _titulo = "Nuevo Tipo de Equipo";
 
-        public TipoEquipoEditorViewModel(ITipoEquipoService srv, ILogger<TipoEquipoEditorViewModel> log)
+        public string Nombre
+        {
+            get => _entidad.Nombre;
+            set => SetProperty(_entidad.Nombre, value, _entidad, (e, v) => e.Nombre = v);
+        }
+
+        public bool Activo
+        {
+            get => _entidad.Activo;
+            set => SetProperty(_entidad.Activo, value, _entidad, (e, v) => e.Activo = v);
+        }
+
+        public bool DialogResult { get; set; }
+
+        public TipoEquipoEditorViewModel(ITipoEquipoService srv, IDialogService dialogService, ILogger<TipoEquipoEditorViewModel> log)
         {
             _srv = srv;
+            _dialogService = dialogService;
             Logger = log;
         }
 
-        public void SetEntidad(TipoEquipo tipoEquipo)
+        public void SetEntidad(TipoEquipo entidad)
         {
-            Entidad = new TipoEquipo
+            _entidad = entidad;
+            if (entidad.Id > 0)
             {
-                Id = tipoEquipo.Id,
-                Nombre = tipoEquipo.Nombre,
-                Activo = tipoEquipo.Activo
-            };
+                Titulo = "Editar Tipo de Equipo";
+            }
+            OnPropertyChanged(nameof(Nombre));
+            OnPropertyChanged(nameof(Activo));
         }
 
         [RelayCommand]
-        private async Task GuardarAsync(Window window)
+        private async Task GuardarAsync()
         {
-            if (Entidad == null || string.IsNullOrWhiteSpace(Entidad.Nombre))
-            {
-                ShowError("El nombre es obligatorio.");
-                return;
-            }
-
-            IsBusy = true;
             try
             {
-                await _srv.GuardarAsync(Entidad);
-                window.DialogResult = true;
-                window.Close();
+                await _srv.GuardarAsync(_entidad);
+                DialogResult = true;
             }
             catch (Exception ex)
             {
-                Logger?.LogError(ex, "Error al guardar tipo de equipo.");
-                ShowError($"No se pudo guardar. Error: {ex.Message}");
-            }
-            finally
-            {
-                IsBusy = false;
+                Logger?.LogError(ex, "Error al guardar tipo de equipo");
+                _dialogService.ShowError("Ocurrió un error al guardar: " + ex.Message);
             }
         }
     }

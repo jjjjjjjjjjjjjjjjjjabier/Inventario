@@ -25,7 +25,10 @@
                 <Button Content="Editar Equipo" Command="{Binding EditarAsyncCommand}"/>
                 <Button Content="Eliminar Equipo" Command="{Binding EliminarAsyncCommand}"/>
             </StackPanel>
-            <Button Content="Refrescar" Command="{Binding BuscarAsyncCommand}" HorizontalAlignment="Right"/>
+            <CheckBox Content="Mostrar Inactivos" 
+                      IsChecked="{Binding MostrarInactivos, Mode=TwoWay}"
+                      HorizontalAlignment="Right"
+                      VerticalAlignment="Center"/>
         </DockPanel>
 
         <DataGrid Grid.Row="1" ItemsSource="{Binding Equipos}"
@@ -39,6 +42,7 @@
                 <DataGridTextColumn Header="Modelo" Binding="{Binding Modelo}" Width="*"/>
                 <DataGridTextColumn Header="Estado" Binding="{Binding Estado.Nombre}" Width="*"/>
                 <DataGridTextColumn Header="Ubicación" Binding="{Binding Zona.Nombre}" Width="*"/>
+                <DataGridCheckBoxColumn Header="Activo" Binding="{Binding Activo}" Width="Auto"/>
             </DataGrid.Columns>
         </DataGrid>
 

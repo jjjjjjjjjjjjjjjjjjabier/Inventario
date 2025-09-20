@@ -30,7 +30,9 @@ namespace InventarioComputo.Infrastructure.Repositories
             var equipo = await _context.EquiposComputo.FindAsync(new object[] { id }, ct);
             if (equipo != null)
             {
-                _context.EquiposComputo.Remove(equipo);
+                // **CAMBIO CLAVE: Implementación de Soft Delete**
+                equipo.Activo = false;
+                _context.Entry(equipo).State = EntityState.Modified;
                 await _context.SaveChangesAsync(ct);
             }
         }
@@ -48,14 +50,20 @@ namespace InventarioComputo.Infrastructure.Repositories
             return await query.AnyAsync(ct);
         }
 
-        public async Task<IReadOnlyList<EquipoComputo>> ObtenerTodosAsync(CancellationToken ct)
+        public async Task<IReadOnlyList<EquipoComputo>> ObtenerTodosAsync(bool incluirInactivos, CancellationToken ct)
         {
-            return await _context.EquiposComputo
+            var query = _context.EquiposComputo
                 .Include(e => e.TipoEquipo)
                 .Include(e => e.Estado)
                 .Include(e => e.Zona)
-                .AsNoTracking()
-                .ToListAsync(ct);
+                .AsNoTracking();
+
+            if (!incluirInactivos)
+            {
+                query = query.Where(e => e.Activo);
+            }
+
+            return await query.ToListAsync(ct);
         }
 
         public async Task<EquipoComputo?> ObtenerPorIdAsync(int id, CancellationToken ct)
@@ -64,9 +72,9 @@ namespace InventarioComputo.Infrastructure.Repositories
                 .Include(e => e.TipoEquipo)
                 .Include(e => e.Estado)
                 .Include(e => e.Zona)
-                    .ThenInclude(z => z.Area)
-                        .ThenInclude(a => a.Sede)
-                .AsNoTracking() 
+                    .ThenInclude(z => z!.Area)
+                        .ThenInclude(a => a!.Sede)
+                .AsNoTracking()
                 .FirstOrDefaultAsync(e => e.Id == id, ct);
         }
 

@@ -2,6 +2,10 @@
 using InventarioComputo.Domain.Entities;
 using InventarioComputo.Infrastructure.Persistencia;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace InventarioComputo.Infrastructure.Repositories
 {
@@ -16,14 +20,15 @@ namespace InventarioComputo.Infrastructure.Repositories
 
         public async Task<IReadOnlyList<Zona>> BuscarAsync(int areaId, string? filtro, CancellationToken ct)
         {
-            var query = _context.Zonas.Where(z => z.AreaId == areaId);
+            var query = _context.Zonas
+                .Where(z => z.AreaId == areaId && z.Activo); // **CAMBIO:** Por defecto solo activas
 
             if (!string.IsNullOrWhiteSpace(filtro))
             {
                 query = query.Where(z => z.Nombre.Contains(filtro));
             }
 
-            return await query.AsNoTracking().ToListAsync(ct);
+            return await query.OrderBy(z => z.Nombre).AsNoTracking().ToListAsync(ct);
         }
 
         public async Task<bool> ExisteNombreAsync(int areaId, string nombre, int? excluirId, CancellationToken ct)
@@ -60,7 +65,9 @@ namespace InventarioComputo.Infrastructure.Repositories
             var entidad = await _context.Zonas.FindAsync(new object[] { id }, ct);
             if (entidad != null)
             {
-                _context.Zonas.Remove(entidad);
+                // **CAMBIO CLAVE: Implementación de Soft Delete**
+                entidad.Activo = false;
+                _context.Entry(entidad).State = EntityState.Modified;
                 await _context.SaveChangesAsync(ct);
             }
         }

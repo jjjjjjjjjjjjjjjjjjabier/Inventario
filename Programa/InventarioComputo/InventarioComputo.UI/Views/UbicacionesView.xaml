@@ -19,7 +19,12 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <Button Grid.Row="0" Content="Refrescar Sedes" Command="{Binding BuscarSedesAsyncCommand}" HorizontalAlignment="Left" Margin="0,0,0,8"/>
+        <DockPanel Grid.Row="0" Margin="0,0,0,8">
+            <CheckBox Content="Mostrar Inactivas" 
+                      IsChecked="{Binding MostrarInactivas, Mode=TwoWay}" 
+                      VerticalAlignment="Center"/>
+        </DockPanel>
+
 
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>

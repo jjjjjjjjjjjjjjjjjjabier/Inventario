@@ -7,57 +7,62 @@ using InventarioComputo.UI.ViewModels.Base;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
-using System.Windows;
 
 namespace InventarioComputo.UI.ViewModels
 {
     public partial class SedeEditorViewModel : BaseViewModel, IEditorViewModel
     {
         private readonly ISedeService _srv;
+        private readonly IDialogService _dialogService;
+        private Sede _entidad = new();
 
         [ObservableProperty]
-        private Sede? _entidad;
+        private string _titulo = "Nueva Sede";
 
-        public SedeEditorViewModel(ISedeService srv, ILogger<SedeEditorViewModel> log)
+        public string Nombre
+        {
+            get => _entidad.Nombre;
+            set => SetProperty(_entidad.Nombre, value, _entidad, (e, v) => e.Nombre = v);
+        }
+
+        public bool Activo
+        {
+            get => _entidad.Activo;
+            set => SetProperty(_entidad.Activo, value, _entidad, (e, v) => e.Activo = v);
+        }
+
+        public bool DialogResult { get; set; }
+
+        public SedeEditorViewModel(ISedeService srv, IDialogService dialogService, ILogger<SedeEditorViewModel> log)
         {
             _srv = srv;
+            _dialogService = dialogService;
             Logger = log;
         }
 
-        public void SetEntidad(Sede sede)
+        public void SetEntidad(Sede entidad)
         {
-            Entidad = new Sede
+            _entidad = entidad;
+            if (entidad.Id > 0)
             {
-                Id = sede.Id,
-                Nombre = sede.Nombre,
-                Activo = sede.Activo
-            };
+                Titulo = "Editar Sede";
+            }
+            OnPropertyChanged(nameof(Nombre));
+            OnPropertyChanged(nameof(Activo));
         }
 
         [RelayCommand]
-        private async Task GuardarAsync(Window window)
+        private async Task GuardarAsync()
         {
-            if (Entidad == null || string.IsNullOrWhiteSpace(Entidad.Nombre))
-            {
-                ShowError("El nombre es obligatorio.");
-                return;
-            }
-
-            IsBusy = true;
             try
             {
-                await _srv.GuardarAsync(Entidad);
-                window.DialogResult = true;
-                window.Close();
+                await _srv.GuardarAsync(_entidad);
+                DialogResult = true;
             }
             catch (Exception ex)
             {
-                Logger?.LogError(ex, "Error al guardar sede.");
-                ShowError($"No se pudo guardar la sede. Error: {ex.Message}");
-            }
-            finally
-            {
-                IsBusy = false;
+                Logger?.LogError(ex, "Error al guardar la sede");
+                _dialogService.ShowError("Ocurrió un error al guardar: " + ex.Message);
             }
         }
     }

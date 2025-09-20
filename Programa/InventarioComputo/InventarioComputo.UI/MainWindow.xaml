@@ -11,6 +11,9 @@
         Background="#F0F2F5">
 
     <Window.Resources>
+        <DataTemplate DataType="{x:Type vm:EquiposComputoViewModel}">
+            <views:EquiposComputoView />
+        </DataTemplate>
         <DataTemplate DataType="{x:Type vm:EstadosViewModel}">
             <views:EstadosView />
         </DataTemplate>
@@ -22,9 +25,6 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type vm:TiposEquipoViewModel}">
             <views:TiposEquipoView />
-        </DataTemplate>
-        <DataTemplate DataType="{x:Type vm:EquiposComputoViewModel}">
-            <views:EquiposComputoView />
         </DataTemplate>
 
         <Style x:Key="NavButtonStyle" TargetType="Button">

@@ -7,58 +7,70 @@ using InventarioComputo.UI.ViewModels.Base;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
-using System.Windows;
 
 namespace InventarioComputo.UI.ViewModels
 {
     public partial class UnidadEditorViewModel : BaseViewModel, IEditorViewModel
     {
         private readonly IUnidadService _srv;
+        private readonly IDialogService _dialogService;
+        private Unidad _entidad = new();
 
         [ObservableProperty]
-        private Unidad? _entidad;
+        private string _titulo = "Nueva Unidad";
 
-        public UnidadEditorViewModel(IUnidadService srv, ILogger<UnidadEditorViewModel> log)
+        public string Nombre
+        {
+            get => _entidad.Nombre;
+            set => SetProperty(_entidad.Nombre, value, _entidad, (e, v) => e.Nombre = v);
+        }
+
+        public string Abreviatura
+        {
+            get => _entidad.Abreviatura;
+            set => SetProperty(_entidad.Abreviatura, value, _entidad, (e, v) => e.Abreviatura = v);
+        }
+
+        public bool Activo
+        {
+            get => _entidad.Activo;
+            set => SetProperty(_entidad.Activo, value, _entidad, (e, v) => e.Activo = v);
+        }
+
+        public bool DialogResult { get; set; }
+
+        public UnidadEditorViewModel(IUnidadService srv, IDialogService dialogService, ILogger<UnidadEditorViewModel> log)
         {
             _srv = srv;
+            _dialogService = dialogService;
             Logger = log;
         }
 
-        public void SetUnidad(Unidad unidad)
+        public void SetEntidad(Unidad entidad)
         {
-            Entidad = new Unidad
+            _entidad = entidad;
+            if (entidad.Id > 0)
             {
-                Id = unidad.Id,
-                Nombre = unidad.Nombre,
-                Abreviatura = unidad.Abreviatura,
-                Activo = unidad.Activo
-            };
+                Titulo = "Editar Unidad";
+            }
+            OnPropertyChanged(nameof(Nombre));
+            OnPropertyChanged(nameof(Abreviatura));
+            OnPropertyChanged(nameof(Activo));
         }
 
         [RelayCommand]
-        private async Task GuardarAsync(Window window)
+        private async Task GuardarAsync()
         {
-            if (Entidad == null || string.IsNullOrWhiteSpace(Entidad.Nombre) || string.IsNullOrWhiteSpace(Entidad.Abreviatura))
-            {
-                ShowError("El nombre y la abreviatura son obligatorios.");
-                return;
-            }
-
-            IsBusy = true;
             try
             {
-                await _srv.GuardarAsync(Entidad);
-                window.DialogResult = true;
-                window.Close();
+                // Aquí podrías añadir validaciones antes de guardar
+                await _srv.GuardarAsync(_entidad);
+                DialogResult = true;
             }
             catch (Exception ex)
             {
                 Logger?.LogError(ex, "Error al guardar la unidad");
-                ShowError($"No se pudo guardar la unidad. Error: {ex.Message}");
-            }
-            finally
-            {
-                IsBusy = false;
+                _dialogService.ShowError("Ocurrió un error al guardar: " + ex.Message);
             }
         }
     }

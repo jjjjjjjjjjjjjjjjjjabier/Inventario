@@ -35,6 +35,9 @@ namespace InventarioComputo.UI.ViewModels
         [NotifyCanExecuteChangedFor(nameof(EliminarZonaCommand))]
         private Zona? _zonaSeleccionada;
 
+        [ObservableProperty]
+        private bool _mostrarInactivas;
+
         public ObservableCollection<Sede> Sedes { get; } = new();
         public ObservableCollection<Area> Areas { get; } = new();
         public ObservableCollection<Zona> Zonas { get; } = new();
@@ -50,6 +53,8 @@ namespace InventarioComputo.UI.ViewModels
 
         partial void OnSedeSeleccionadaChanged(Sede? value) => _ = BuscarAreasAsync();
         partial void OnAreaSeleccionadaChanged(Area? value) => _ = BuscarZonasAsync();
+        partial void OnMostrarInactivasChanged(bool value) => _ = BuscarSedesAsync();
+
 
         [RelayCommand]
         private async Task LoadedAsync() => await BuscarSedesAsync();
@@ -62,10 +67,17 @@ namespace InventarioComputo.UI.ViewModels
             try
             {
                 Sedes.Clear();
-                var sedes = await _sedeSvc.BuscarAsync(null, true);
+                Areas.Clear();
+                Zonas.Clear();
+                var sedes = await _sedeSvc.BuscarAsync(null, MostrarInactivas);
                 foreach (var s in sedes) Sedes.Add(s);
             }
-            catch (Exception ex) { Logger?.LogError(ex, "Error buscando sedes"); ShowError("Error al cargar sedes."); }
+            catch (Exception ex)
+            {
+                Logger?.LogError(ex, "Error buscando sedes");
+                // **CAMBIO:** Usando el servicio de diálogo.
+                _dialogService.ShowError("Error al cargar sedes.");
+            }
             finally { IsBusy = false; }
         }
 
@@ -95,7 +107,8 @@ namespace InventarioComputo.UI.ViewModels
         private async Task EliminarSedeAsync()
         {
             if (SedeSeleccionada == null) return;
-            if (ConfirmAction($"¿Eliminar '{SedeSeleccionada.Nombre}' y todas sus áreas y zonas?", "Confirmar"))
+            // **CAMBIO:** Usando el servicio de diálogo.
+            if (_dialogService.Confirm($"¿Está seguro de querer desactivar la sede '{SedeSeleccionada.Nombre}'? Sus áreas y zonas asociadas no serán visibles.", "Confirmar Desactivación"))
             {
                 await _sedeSvc.EliminarAsync(SedeSeleccionada.Id);
                 await BuscarSedesAsync();
@@ -106,7 +119,8 @@ namespace InventarioComputo.UI.ViewModels
         private async Task BuscarAreasAsync()
         {
             Areas.Clear();
-            if (SedeSeleccionada != null)
+            Zonas.Clear();
+            if (SedeSeleccionada != null && (SedeSeleccionada.Activo || MostrarInactivas))
             {
                 var areas = await _areaSvc.BuscarAsync(SedeSeleccionada.Id, null, default);
                 foreach (var a in areas) Areas.Add(a);
@@ -140,7 +154,8 @@ namespace InventarioComputo.UI.ViewModels
         private async Task EliminarAreaAsync()
         {
             if (AreaSeleccionada == null) return;
-            if (ConfirmAction($"¿Eliminar '{AreaSeleccionada.Nombre}' y todas sus zonas?", "Confirmar"))
+            // **CAMBIO:** Usando el servicio de diálogo.
+            if (_dialogService.Confirm($"¿Desactivar el área '{AreaSeleccionada.Nombre}'?", "Confirmar"))
             {
                 await _areaSvc.EliminarAsync(AreaSeleccionada.Id, default);
                 await BuscarAreasAsync();
@@ -151,7 +166,7 @@ namespace InventarioComputo.UI.ViewModels
         private async Task BuscarZonasAsync()
         {
             Zonas.Clear();
-            if (AreaSeleccionada != null)
+            if (AreaSeleccionada != null && (AreaSeleccionada.Activo || MostrarInactivas))
             {
                 var zonas = await _zonaSvc.BuscarAsync(AreaSeleccionada.Id, null, default);
                 foreach (var z in zonas) Zonas.Add(z);
@@ -185,7 +200,8 @@ namespace InventarioComputo.UI.ViewModels
         private async Task EliminarZonaAsync()
         {
             if (ZonaSeleccionada == null) return;
-            if (ConfirmAction($"¿Eliminar la zona '{ZonaSeleccionada.Nombre}'?", "Confirmar"))
+            // **CAMBIO:** Usando el servicio de diálogo.
+            if (_dialogService.Confirm($"¿Desactivar la zona '{ZonaSeleccionada.Nombre}'?", "Confirmar"))
             {
                 await _zonaSvc.EliminarAsync(ZonaSeleccionada.Id, default);
                 await BuscarZonasAsync();

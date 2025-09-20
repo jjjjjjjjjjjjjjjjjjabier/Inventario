@@ -7,7 +7,7 @@ namespace InventarioComputo.Application.Contracts.Repositories
 {
     public interface IEquipoComputoRepository
     {
-        Task<IReadOnlyList<EquipoComputo>> ObtenerTodosAsync(CancellationToken ct);
+        Task<IReadOnlyList<EquipoComputo>> ObtenerTodosAsync(bool incluirInactivos, CancellationToken ct);
         Task<EquipoComputo?> ObtenerPorIdAsync(int id, CancellationToken ct);
         Task<EquipoComputo> AgregarAsync(EquipoComputo equipo, CancellationToken ct);
         Task ActualizarAsync(EquipoComputo equipo, CancellationToken ct);

@@ -21,6 +21,9 @@ namespace InventarioComputo.UI.ViewModels
         [NotifyCanExecuteChangedFor(nameof(EliminarCommand))]
         private EquipoComputo? _equipoSeleccionado;
 
+        [ObservableProperty]
+        private bool _mostrarInactivos;
+
         public ObservableCollection<EquipoComputo> Equipos { get; } = new();
 
         public EquiposComputoViewModel(IEquipoComputoService srv, IDialogService dialogService, ILogger<EquiposComputoViewModel> log)
@@ -29,6 +32,8 @@ namespace InventarioComputo.UI.ViewModels
             _dialogService = dialogService;
             Logger = log;
         }
+
+        partial void OnMostrarInactivosChanged(bool value) => _ = BuscarAsync();
 
         [RelayCommand]
         private async Task LoadedAsync() => await BuscarAsync();
@@ -40,13 +45,13 @@ namespace InventarioComputo.UI.ViewModels
             try
             {
                 Equipos.Clear();
-                var lista = await _srv.ObtenerTodosAsync();
+                var lista = await _srv.ObtenerTodosAsync(MostrarInactivos);
                 foreach (var item in lista) Equipos.Add(item);
             }
             catch (Exception ex)
             {
                 Logger?.LogError(ex, "Error buscando equipos.");
-                ShowError("Error al cargar los equipos de cómputo.");
+                _dialogService.ShowError("Error al cargar los equipos de cómputo.");
             }
             finally
             {
@@ -70,15 +75,13 @@ namespace InventarioComputo.UI.ViewModels
         private async Task EditarAsync()
         {
             if (EquipoSeleccionado == null) return;
-
             var equipoAEditar = await _srv.ObtenerPorIdAsync(EquipoSeleccionado.Id);
             if (equipoAEditar == null)
             {
-                ShowError("No se encontró el equipo. La lista se refrescará.");
+                _dialogService.ShowError("No se encontró el equipo. La lista se refrescará.");
                 await BuscarAsync();
                 return;
             }
-
             if (_dialogService.ShowDialog<EquipoComputoEditorViewModel>(vm => vm.SetEquipo(equipoAEditar)) == true)
             {
                 await BuscarAsync();
@@ -89,18 +92,18 @@ namespace InventarioComputo.UI.ViewModels
         private async Task EliminarAsync()
         {
             if (EquipoSeleccionado == null) return;
-            if (!ConfirmAction($"¿Eliminar el equipo '{EquipoSeleccionado.NumeroSerie}'?", "Confirmar")) return;
+            if (!_dialogService.Confirm($"¿Está seguro de querer desactivar el equipo con número de serie '{EquipoSeleccionado.NumeroSerie}'?", "Confirmar Desactivación")) return;
 
             IsBusy = true;
             try
             {
                 await _srv.EliminarAsync(EquipoSeleccionado.Id);
-                Equipos.Remove(EquipoSeleccionado);
+                await BuscarAsync();
             }
             catch (Exception ex)
             {
                 Logger?.LogError(ex, "Error al eliminar equipo.");
-                ShowError("Ocurrió un error al eliminar el equipo.");
+                _dialogService.ShowError("Ocurrió un error al desactivar el equipo.");
             }
             finally
             {

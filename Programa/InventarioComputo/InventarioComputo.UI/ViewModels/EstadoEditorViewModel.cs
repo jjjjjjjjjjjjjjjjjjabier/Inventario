@@ -7,59 +7,76 @@ using InventarioComputo.UI.ViewModels.Base;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
-using System.Windows;
 
 namespace InventarioComputo.UI.ViewModels
 {
     public partial class EstadoEditorViewModel : BaseViewModel, IEditorViewModel
     {
         private readonly IEstadoService _srv;
+        private readonly IDialogService _dialogService;
+        private Estado _entidad = new();
 
         [ObservableProperty]
-        private Estado? _entidad;
+        private string _titulo = "Nuevo Estado";
 
-        public EstadoEditorViewModel(IEstadoService srv, ILogger<EstadoEditorViewModel> log)
+        public string Nombre
+        {
+            get => _entidad.Nombre;
+            set => SetProperty(_entidad.Nombre, value, _entidad, (e, v) => e.Nombre = v);
+        }
+
+        public string? Descripcion
+        {
+            get => _entidad.Descripcion;
+            set => SetProperty(_entidad.Descripcion, value, _entidad, (e, v) => e.Descripcion = v);
+        }
+
+        public string? ColorHex
+        {
+            get => _entidad.ColorHex;
+            set => SetProperty(_entidad.ColorHex, value, _entidad, (e, v) => e.ColorHex = v);
+        }
+
+        public bool Activo
+        {
+            get => _entidad.Activo;
+            set => SetProperty(_entidad.Activo, value, _entidad, (e, v) => e.Activo = v);
+        }
+
+        public bool DialogResult { get; set; }
+
+        public EstadoEditorViewModel(IEstadoService srv, IDialogService dialogService, ILogger<EstadoEditorViewModel> log)
         {
             _srv = srv;
+            _dialogService = dialogService;
             Logger = log;
         }
 
         public void SetEstado(Estado estado)
         {
-            Entidad = new Estado
+            _entidad = estado;
+            if (estado.Id > 0)
             {
-                Id = estado.Id,
-                Nombre = estado.Nombre,
-                Descripcion = estado.Descripcion,
-                ColorHex = estado.ColorHex,
-                Activo = estado.Activo
-            };
+                Titulo = "Editar Estado";
+            }
+            OnPropertyChanged(nameof(Nombre));
+            OnPropertyChanged(nameof(Descripcion));
+            OnPropertyChanged(nameof(ColorHex));
+            OnPropertyChanged(nameof(Activo));
         }
 
         [RelayCommand]
-        private async Task GuardarAsync(Window window)
+        private async Task GuardarAsync()
         {
-            if (Entidad == null || string.IsNullOrWhiteSpace(Entidad.Nombre))
-            {
-                ShowError("El nombre no puede estar vacío.");
-                return;
-            }
-
-            IsBusy = true;
             try
             {
-                await _srv.GuardarAsync(Entidad);
-                window.DialogResult = true;
-                window.Close();
+                await _srv.GuardarAsync(_entidad);
+                DialogResult = true;
             }
             catch (Exception ex)
             {
-                Logger?.LogError(ex, "Error al guardar estado.");
-                ShowError($"No se pudo guardar el estado. Error: {ex.Message}");
-            }
-            finally
-            {
-                IsBusy = false;
+                Logger?.LogError(ex, "Error al guardar estado");
+                _dialogService.ShowError("Ocurrió un error al guardar: " + ex.Message);
             }
         }
     }
