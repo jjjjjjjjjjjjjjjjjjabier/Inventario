@@ -1,0 +1,89 @@
+﻿<UserControl x:Class="InventarioComputo.UI.Views.UbicacionesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             mc:Ignorable="d"
+             d:DesignHeight="600" d:DesignWidth="1000">
+
+    <i:Interaction.Triggers>
+        <i:EventTrigger EventName="Loaded">
+            <i:InvokeCommandAction Command="{Binding LoadedAsyncCommand}" />
+        </i:EventTrigger>
+    </i:Interaction.Triggers>
+
+    <Grid Margin="8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Button Grid.Row="0" Content="Refrescar Sedes" Command="{Binding BuscarSedesAsyncCommand}" HorizontalAlignment="Left" Margin="0,0,0,8"/>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <DockPanel Grid.Column="0">
+                <TextBlock DockPanel.Dock="Top" Text="Sedes" Style="{StaticResource HeaderStyle}" Margin="0,0,0,4"/>
+                <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,4,0,0">
+                    <Button Content="Nuevo" Command="{Binding CrearSedeAsyncCommand}"/>
+                    <Button Content="Editar" Command="{Binding EditarSedeAsyncCommand}" Margin="4,0,0,0"/>
+                    <Button Content="Eliminar" Command="{Binding EliminarSedeAsyncCommand}" Margin="4,0,0,0"/>
+                </StackPanel>
+                <DataGrid ItemsSource="{Binding Sedes}" SelectedItem="{Binding SedeSeleccionada, Mode=TwoWay}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" Width="*"/>
+                        <DataGridCheckBoxColumn Header="Activo" Binding="{Binding Activo}" Width="Auto"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+
+            <GridSplitter Grid.Column="1" Width="8" HorizontalAlignment="Stretch"/>
+
+            <DockPanel Grid.Column="2">
+                <TextBlock DockPanel.Dock="Top" Text="Áreas" Style="{StaticResource HeaderStyle}" Margin="0,0,0,4"/>
+                <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,4,0,0">
+                    <Button Content="Nuevo" Command="{Binding CrearAreaAsyncCommand}" />
+                    <Button Content="Editar" Command="{Binding EditarAreaAsyncCommand}" Margin="4,0,0,0"/>
+                    <Button Content="Eliminar" Command="{Binding EliminarAreaAsyncCommand}" Margin="4,0,0,0"/>
+                </StackPanel>
+                <DataGrid ItemsSource="{Binding Areas}" SelectedItem="{Binding AreaSeleccionada, Mode=TwoWay}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" Width="*"/>
+                        <DataGridCheckBoxColumn Header="Activo" Binding="{Binding Activo}" Width="Auto"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+
+            <GridSplitter Grid.Column="3" Width="8" HorizontalAlignment="Stretch"/>
+
+            <DockPanel Grid.Column="4">
+                <TextBlock DockPanel.Dock="Top" Text="Zonas" Style="{StaticResource HeaderStyle}" Margin="0,0,0,4"/>
+                <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,4,0,0">
+                    <Button Content="Nuevo" Command="{Binding CrearZonaAsyncCommand}" />
+                    <Button Content="Editar" Command="{Binding EditarZonaAsyncCommand}" Margin="4,0,0,0"/>
+                    <Button Content="Eliminar" Command="{Binding EliminarZonaAsyncCommand}" Margin="4,0,0,0"/>
+                </StackPanel>
+                <DataGrid ItemsSource="{Binding Zonas}" SelectedItem="{Binding ZonaSeleccionada, Mode=TwoWay}" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" Width="*"/>
+                        <DataGridCheckBoxColumn Header="Activo" Binding="{Binding Activo}" Width="Auto"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DockPanel>
+        </Grid>
+
+        <Border Grid.Row="1" Background="#7F000000" CornerRadius="5"
+                Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <TextBlock Text="Cargando..." Foreground="White" FontSize="18"
+                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Border>
+    </Grid>
+</UserControl>
