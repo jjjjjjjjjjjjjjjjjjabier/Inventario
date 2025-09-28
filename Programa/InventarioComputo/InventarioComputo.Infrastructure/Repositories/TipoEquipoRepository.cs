@@ -48,6 +48,13 @@ namespace InventarioComputo.Infrastructure.Repositories
             }
             else
             {
+                var local = _context.TiposEquipo.Local.FirstOrDefault(e => e.Id == entidad.Id);
+                if (local != null)
+                {
+                    _context.Entry(local).State = EntityState.Detached;
+                }
+
+                _context.Attach(entidad);
                 _context.Entry(entidad).State = EntityState.Modified;
             }
             await _context.SaveChangesAsync(ct);
@@ -59,7 +66,6 @@ namespace InventarioComputo.Infrastructure.Repositories
             var entidad = await _context.TiposEquipo.FindAsync(new object[] { id }, ct);
             if (entidad != null)
             {
-                // **CAMBIO CLAVE: Implementación de Soft Delete**
                 entidad.Activo = false;
                 _context.Entry(entidad).State = EntityState.Modified;
                 await _context.SaveChangesAsync(ct);
@@ -75,7 +81,7 @@ namespace InventarioComputo.Infrastructure.Repositories
                 query = query.Where(t => t.Id != idExcluir.Value);
             }
 
-            return await query.AnyAsync(ct);
+            return await query.AsNoTracking().AnyAsync(ct);
         }
     }
 }

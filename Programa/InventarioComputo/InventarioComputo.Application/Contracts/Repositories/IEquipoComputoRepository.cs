@@ -1,4 +1,5 @@
-﻿using InventarioComputo.Domain.Entities;
+﻿using InventarioComputo.Domain.DTOs;
+using InventarioComputo.Domain.Entities;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -7,11 +8,14 @@ namespace InventarioComputo.Application.Contracts.Repositories
 {
     public interface IEquipoComputoRepository
     {
-        Task<IReadOnlyList<EquipoComputo>> ObtenerTodosAsync(bool incluirInactivos, CancellationToken ct);
-        Task<EquipoComputo?> ObtenerPorIdAsync(int id, CancellationToken ct);
-        Task<EquipoComputo> AgregarAsync(EquipoComputo equipo, CancellationToken ct);
-        Task ActualizarAsync(EquipoComputo equipo, CancellationToken ct);
-        Task EliminarAsync(int id, CancellationToken ct);
-        Task<bool> ExistsByNumeroSerieAsync(string numeroSerie, int? idExcluir, CancellationToken ct);
+        Task<IReadOnlyList<EquipoComputo>> ObtenerTodosAsync(bool incluirInactivos, CancellationToken ct = default);
+        Task<EquipoComputo?> ObtenerPorIdAsync(int id, CancellationToken ct = default);
+        Task<EquipoComputo> AgregarAsync(EquipoComputo equipo, CancellationToken ct = default);
+        Task<EquipoComputo> ActualizarAsync(EquipoComputo equipo, CancellationToken ct = default);
+        Task EliminarAsync(int id, CancellationToken ct = default);
+        Task<bool> ExistsByNumeroSerieAsync(string numeroSerie, int? idExcluir = null, CancellationToken ct = default);
+        
+        // Nuevo método para reportes
+        Task<IReadOnlyList<EquipoComputo>> ObtenerParaReporteAsync(FiltroReporteDTO filtro, CancellationToken ct = default);
     }
 }

@@ -13,8 +13,14 @@ namespace InventarioComputo.Application.Services
         private readonly IZonaRepository _repo;
         public ZonaService(IZonaRepository repo) => _repo = repo;
 
-        public Task<IReadOnlyList<Zona>> BuscarAsync(int areaId, string? filtro, CancellationToken ct = default)
-            => _repo.BuscarAsync(areaId, filtro, ct);
+        public Task<IReadOnlyList<Zona>> BuscarAsync(int areaId, string? filtro, bool incluirInactivas = false, CancellationToken ct = default)
+            => _repo.BuscarAsync(areaId, filtro, incluirInactivas, ct);
+
+        public Task<IReadOnlyList<Zona>> ObtenerTodasAsync(bool incluirInactivas = false, CancellationToken ct = default)
+            => _repo.ObtenerTodasAsync(incluirInactivas, ct);
+
+        public Task<Zona?> ObtenerPorIdAsync(int id, CancellationToken ct = default)
+            => _repo.ObtenerPorIdAsync(id, ct);
 
         public async Task<Zona> GuardarAsync(Zona entidad, CancellationToken ct = default)
         {

@@ -3,48 +3,56 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:local="clr-namespace:InventarioComputo.UI.Views"
              mc:Ignorable="d" 
-             d:DesignHeight="600" d:DesignWidth="1000">
+             d:DesignHeight="450" d:DesignWidth="800"
+             Loaded="UserControl_Loaded">
 
-    <i:Interaction.Triggers>
-        <i:EventTrigger EventName="Loaded">
-            <i:InvokeCommandAction Command="{Binding LoadedAsyncCommand}" />
-        </i:EventTrigger>
-    </i:Interaction.Triggers>
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </UserControl.Resources>
 
-    <Grid Margin="8">
+    <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <DockPanel Grid.Row="0" Margin="0,0,0,8">
-            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
-                <Button Content="Nuevo" Command="{Binding CrearAsyncCommand}"/>
-                <Button Content="Editar" Command="{Binding EditarAsyncCommand}"/>
-                <Button Content="Eliminar" Command="{Binding EliminarAsyncCommand}"/>
+        <!-- Panel superior: Filtros y acciones -->
+        <Grid Grid.Row="0" Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Filtros -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                <CheckBox Content="Mostrar inactivos" IsChecked="{Binding MostrarInactivos}" VerticalAlignment="Center"/>
             </StackPanel>
 
-            <CheckBox Content="Mostrar Inactivos"
-                      IsChecked="{Binding MostrarInactivos, Mode=TwoWay}"
-                      HorizontalAlignment="Right"
-                      VerticalAlignment="Center"/>
-        </DockPanel>
+            <!-- Botones de acción (solo para administradores) -->
+            <StackPanel Grid.Column="2" Orientation="Horizontal" 
+                      Visibility="{Binding EsAdministrador, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Button Content="Nuevo" Command="{Binding CrearCommand}" Padding="10,5" Margin="0,0,5,0"/>
+                <Button Content="Editar" Command="{Binding EditarCommand}" Padding="10,5" Margin="0,0,5,0"/>
+                <Button Content="Desactivar" Command="{Binding EliminarCommand}" Padding="10,5"/>
+            </StackPanel>
+        </Grid>
 
-        <DataGrid Grid.Row="1" ItemsSource="{Binding TiposEquipo}"
-                  SelectedItem="{Binding TipoEquipoSeleccionado, Mode=TwoWay}"
-                  AutoGenerateColumns="False" IsReadOnly="True" CanUserAddRows="False">
+        <!-- Lista de tipos de equipo -->
+        <DataGrid Grid.Row="1" 
+                  ItemsSource="{Binding TiposEquipo}" 
+                  SelectedItem="{Binding TipoEquipoSeleccionado}"
+                  AutoGenerateColumns="False" 
+                  IsReadOnly="True"
+                  SelectionMode="Single"
+                  HorizontalGridLinesBrush="#EEEEEE"
+                  VerticalGridLinesBrush="#EEEEEE">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" Width="*"/>
-                <DataGridCheckBoxColumn Header="Activo" Binding="{Binding Activo}" Width="120"/>
+                <DataGridCheckBoxColumn Header="Activo" Binding="{Binding Activo}" Width="80"/>
             </DataGrid.Columns>
         </DataGrid>
-
-        <Border Grid.Row="1" Background="#7F000000" CornerRadius="5"
-                Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <TextBlock Text="Cargando..." Foreground="White" FontSize="18"
-                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
-        </Border>
     </Grid>
 </UserControl>

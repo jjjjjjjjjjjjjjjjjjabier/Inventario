@@ -15,6 +15,7 @@ namespace InventarioComputo.UI.ViewModels
     {
         private readonly IEquipoComputoService _srv;
         private readonly IDialogService _dialogService;
+        private readonly ISessionService _sessionService;
 
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(EditarCommand))]
@@ -24,22 +25,57 @@ namespace InventarioComputo.UI.ViewModels
         [ObservableProperty]
         private bool _mostrarInactivos;
 
+        [ObservableProperty]
+        private bool _esAdministrador;
+
         public ObservableCollection<EquipoComputo> Equipos { get; } = new();
 
-        public EquiposComputoViewModel(IEquipoComputoService srv, IDialogService dialogService, ILogger<EquiposComputoViewModel> log)
+        public EquiposComputoViewModel(
+            IEquipoComputoService srv, 
+            IDialogService dialogService, 
+            ISessionService sessionService,
+            ILogger<EquiposComputoViewModel> log)
         {
             _srv = srv;
             _dialogService = dialogService;
+            _sessionService = sessionService;
             Logger = log;
+            
+            // Verificar permisos del usuario
+            EsAdministrador = _sessionService.TieneRol("Administrador");
         }
 
         partial void OnMostrarInactivosChanged(bool value) => _ = BuscarAsync();
 
         [RelayCommand]
-        private async Task LoadedAsync() => await BuscarAsync();
+        public async Task LoadedAsync() => await BuscarAsync();
+
+        [RelayCommand(CanExecute = nameof(PuedeCrearEditar))]
+        public async Task CrearAsync()
+        {
+            var nuevo = new EquipoComputo { Activo = true, FechaAdquisicion = DateTime.Today };
+            if (_dialogService.ShowDialog<EquipoComputoEditorViewModel>(vm => vm.SetEquipo(nuevo)) == true)
+            {
+                await BuscarAsync();
+            }
+        }
+
+        private bool PuedeCrearEditar() => EsAdministrador && !IsBusy;
+
+        private bool CanEditarEliminar() => EsAdministrador && EquipoSeleccionado != null && !IsBusy;
+
+        [RelayCommand(CanExecute = nameof(CanEditarEliminar))]
+        public async Task EditarAsync()
+        {
+            if (EquipoSeleccionado == null) return;
+            if (_dialogService.ShowDialog<EquipoComputoEditorViewModel>(vm => vm.SetEquipo(EquipoSeleccionado)) == true)
+            {
+                await BuscarAsync();
+            }
+        }
 
         [RelayCommand]
-        private async Task BuscarAsync()
+        public async Task BuscarAsync()
         {
             IsBusy = true;
             try
@@ -50,8 +86,8 @@ namespace InventarioComputo.UI.ViewModels
             }
             catch (Exception ex)
             {
-                Logger?.LogError(ex, "Error buscando equipos.");
-                _dialogService.ShowError("Error al cargar los equipos de cómputo.");
+                Logger?.LogError(ex, "Error buscando equipos");
+                _dialogService.ShowError("Ocurrió un error al cargar los equipos.");
             }
             finally
             {
@@ -59,36 +95,7 @@ namespace InventarioComputo.UI.ViewModels
             }
         }
 
-        [RelayCommand]
-        private async Task CrearAsync()
-        {
-            var nuevo = new EquipoComputo();
-            if (_dialogService.ShowDialog<EquipoComputoEditorViewModel>(vm => vm.SetEquipo(nuevo)) == true)
-            {
-                await BuscarAsync();
-            }
-        }
-
-        private bool CanEditDelete() => EquipoSeleccionado != null && !IsBusy;
-
-        [RelayCommand(CanExecute = nameof(CanEditDelete))]
-        private async Task EditarAsync()
-        {
-            if (EquipoSeleccionado == null) return;
-            var equipoAEditar = await _srv.ObtenerPorIdAsync(EquipoSeleccionado.Id);
-            if (equipoAEditar == null)
-            {
-                _dialogService.ShowError("No se encontró el equipo. La lista se refrescará.");
-                await BuscarAsync();
-                return;
-            }
-            if (_dialogService.ShowDialog<EquipoComputoEditorViewModel>(vm => vm.SetEquipo(equipoAEditar)) == true)
-            {
-                await BuscarAsync();
-            }
-        }
-
-        [RelayCommand(CanExecute = nameof(CanEditDelete))]
+        [RelayCommand(CanExecute = nameof(CanEditarEliminar))]
         private async Task EliminarAsync()
         {
             if (EquipoSeleccionado == null) return;
@@ -110,5 +117,14 @@ namespace InventarioComputo.UI.ViewModels
                 IsBusy = false;
             }
         }
+
+        [RelayCommand(CanExecute = nameof(CanVerHistorial))]
+        public void VerHistorial()
+        {
+            if (EquipoSeleccionado == null) return;
+            _dialogService.ShowDialog<HistorialEquipoViewModel>(vm => vm.CargarHistorialAsync(EquipoSeleccionado.Id));
+        }
+
+        private bool CanVerHistorial() => EquipoSeleccionado != null && !IsBusy;
     }
 }

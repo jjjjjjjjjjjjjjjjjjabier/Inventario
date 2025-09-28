@@ -35,8 +35,7 @@ namespace InventarioComputo.Infrastructure.Migrations
 
                     b.Property<string>("Nombre")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("SedeId")
                         .HasColumnType("int");
@@ -45,7 +44,7 @@ namespace InventarioComputo.Infrastructure.Migrations
 
                     b.HasIndex("SedeId");
 
-                    b.ToTable("Areas", (string)null);
+                    b.ToTable("Areas");
                 });
 
             modelBuilder.Entity("InventarioComputo.Domain.Entities.EquipoComputo", b =>
@@ -107,10 +106,15 @@ namespace InventarioComputo.Infrastructure.Migrations
 
                     b.HasIndex("EstadoId");
 
+                    b.HasIndex("EtiquetaInventario")
+                        .IsUnique();
+
                     b.HasIndex("NumeroSerie")
                         .IsUnique();
 
                     b.HasIndex("TipoEquipoId");
+
+                    b.HasIndex("UsuarioId");
 
                     b.HasIndex("ZonaId");
 
@@ -146,7 +150,91 @@ namespace InventarioComputo.Infrastructure.Migrations
                     b.HasIndex("Nombre")
                         .IsUnique();
 
-                    b.ToTable("Estados", (string)null);
+                    b.ToTable("Estados");
+                });
+
+            modelBuilder.Entity("InventarioComputo.Domain.Entities.HistorialMovimiento", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("EquipoComputoId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("FechaMovimiento")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Motivo")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int?>("UsuarioAnteriorId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("UsuarioNuevoId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UsuarioResponsableId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ZonaAnteriorId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ZonaNuevaId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EquipoComputoId");
+
+                    b.HasIndex("UsuarioAnteriorId");
+
+                    b.HasIndex("UsuarioNuevoId");
+
+                    b.HasIndex("UsuarioResponsableId");
+
+                    b.HasIndex("ZonaAnteriorId");
+
+                    b.HasIndex("ZonaNuevaId");
+
+                    b.ToTable("HistorialMovimientos", (string)null);
+                });
+
+            modelBuilder.Entity("InventarioComputo.Domain.Entities.Rol", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Nombre")
+                        .IsUnique();
+
+                    b.ToTable("Roles", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Nombre = "Administrador"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Nombre = "Consulta"
+                        });
                 });
 
             modelBuilder.Entity("InventarioComputo.Domain.Entities.Sede", b =>
@@ -162,12 +250,11 @@ namespace InventarioComputo.Infrastructure.Migrations
 
                     b.Property<string>("Nombre")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Sedes", (string)null);
+                    b.ToTable("Sedes");
                 });
 
             modelBuilder.Entity("InventarioComputo.Domain.Entities.TipoEquipo", b =>
@@ -183,15 +270,11 @@ namespace InventarioComputo.Infrastructure.Migrations
 
                     b.Property<string>("Nombre")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Nombre")
-                        .IsUnique();
-
-                    b.ToTable("TiposEquipo", (string)null);
+                    b.ToTable("TiposEquipo");
                 });
 
             modelBuilder.Entity("InventarioComputo.Domain.Entities.Unidad", b =>
@@ -223,7 +306,55 @@ namespace InventarioComputo.Infrastructure.Migrations
                     b.HasIndex("Nombre")
                         .IsUnique();
 
-                    b.ToTable("Unidades", (string)null);
+                    b.ToTable("Unidades");
+                });
+
+            modelBuilder.Entity("InventarioComputo.Domain.Entities.Usuario", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("NombreCompleto")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("NombreUsuario")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NombreUsuario")
+                        .IsUnique();
+
+                    b.ToTable("Usuarios", (string)null);
+                });
+
+            modelBuilder.Entity("InventarioComputo.Domain.Entities.UsuarioRol", b =>
+                {
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RolId")
+                        .HasColumnType("int");
+
+                    b.HasKey("UsuarioId", "RolId");
+
+                    b.HasIndex("RolId");
+
+                    b.ToTable("UsuarioRoles", (string)null);
                 });
 
             modelBuilder.Entity("InventarioComputo.Domain.Entities.Zona", b =>
@@ -242,14 +373,13 @@ namespace InventarioComputo.Infrastructure.Migrations
 
                     b.Property<string>("Nombre")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("AreaId");
 
-                    b.ToTable("Zonas", (string)null);
+                    b.ToTable("Zonas");
                 });
 
             modelBuilder.Entity("InventarioComputo.Domain.Entities.Area", b =>
@@ -277,16 +407,89 @@ namespace InventarioComputo.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("InventarioComputo.Domain.Entities.Usuario", "Usuario")
+                        .WithMany("EquiposAsignados")
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("InventarioComputo.Domain.Entities.Zona", "Zona")
                         .WithMany()
                         .HasForeignKey("ZonaId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Estado");
 
                     b.Navigation("TipoEquipo");
 
+                    b.Navigation("Usuario");
+
                     b.Navigation("Zona");
+                });
+
+            modelBuilder.Entity("InventarioComputo.Domain.Entities.HistorialMovimiento", b =>
+                {
+                    b.HasOne("InventarioComputo.Domain.Entities.EquipoComputo", "EquipoComputo")
+                        .WithMany()
+                        .HasForeignKey("EquipoComputoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("InventarioComputo.Domain.Entities.Usuario", "UsuarioAnterior")
+                        .WithMany()
+                        .HasForeignKey("UsuarioAnteriorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("InventarioComputo.Domain.Entities.Usuario", "UsuarioNuevo")
+                        .WithMany()
+                        .HasForeignKey("UsuarioNuevoId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("InventarioComputo.Domain.Entities.Usuario", "UsuarioResponsable")
+                        .WithMany()
+                        .HasForeignKey("UsuarioResponsableId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("InventarioComputo.Domain.Entities.Zona", "ZonaAnterior")
+                        .WithMany()
+                        .HasForeignKey("ZonaAnteriorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("InventarioComputo.Domain.Entities.Zona", "ZonaNueva")
+                        .WithMany()
+                        .HasForeignKey("ZonaNuevaId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("EquipoComputo");
+
+                    b.Navigation("UsuarioAnterior");
+
+                    b.Navigation("UsuarioNuevo");
+
+                    b.Navigation("UsuarioResponsable");
+
+                    b.Navigation("ZonaAnterior");
+
+                    b.Navigation("ZonaNueva");
+                });
+
+            modelBuilder.Entity("InventarioComputo.Domain.Entities.UsuarioRol", b =>
+                {
+                    b.HasOne("InventarioComputo.Domain.Entities.Rol", "Rol")
+                        .WithMany("UsuarioRoles")
+                        .HasForeignKey("RolId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("InventarioComputo.Domain.Entities.Usuario", "Usuario")
+                        .WithMany("UsuarioRoles")
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Rol");
+
+                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("InventarioComputo.Domain.Entities.Zona", b =>
@@ -305,9 +508,21 @@ namespace InventarioComputo.Infrastructure.Migrations
                     b.Navigation("Zonas");
                 });
 
+            modelBuilder.Entity("InventarioComputo.Domain.Entities.Rol", b =>
+                {
+                    b.Navigation("UsuarioRoles");
+                });
+
             modelBuilder.Entity("InventarioComputo.Domain.Entities.Sede", b =>
                 {
                     b.Navigation("Areas");
+                });
+
+            modelBuilder.Entity("InventarioComputo.Domain.Entities.Usuario", b =>
+                {
+                    b.Navigation("EquiposAsignados");
+
+                    b.Navigation("UsuarioRoles");
                 });
 #pragma warning restore 612, 618
         }

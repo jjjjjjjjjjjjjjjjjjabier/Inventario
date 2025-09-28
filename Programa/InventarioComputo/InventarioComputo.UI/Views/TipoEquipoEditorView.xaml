@@ -1,17 +1,11 @@
 ﻿<Window x:Class="InventarioComputo.UI.Views.TipoEquipoEditorView"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:vm="clr-namespace:InventarioComputo.UI.ViewModels"
-        mc:Ignorable="d"
-        d:DataContext="{d:DesignInstance Type=vm:TipoEquipoEditorViewModel, IsDesignTimeCreatable=False}"
         Title="{Binding Titulo}"
-        Width="400"
         SizeToContent="Height"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize"
-        ShowInTaskbar="False">
+        Width="400"
+        ResizeMode="NoResize">
     <Grid Margin="15">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -30,8 +24,8 @@
         <CheckBox Grid.Row="1" Grid.Column="1" Content="Activo" IsChecked="{Binding Activo}" Margin="5,10"/>
 
         <StackPanel Grid.Row="3" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="Guardar" Command="{Binding GuardarAsyncCommand}" IsDefault="True" MinWidth="80"/>
-            <Button Content="Cancelar" IsCancel="True" MinWidth="80" Margin="10,0,0,0"/>
+            <Button Content="Guardar" Command="{Binding GuardarCommand}" />
+            <Button Content="Cancelar" Command="{Binding CloseCommand}" />
         </StackPanel>
     </Grid>
 </Window>

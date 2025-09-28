@@ -13,8 +13,6 @@ namespace InventarioComputo.Domain.Entities
         public string Caracteristicas { get; set; }
         public string? Observaciones { get; set; }
         public DateTime? FechaAdquisicion { get; set; }
-
-        // **NUEVA PROPIEDAD**
         public bool Activo { get; set; } = true;
 
         public int TipoEquipoId { get; set; }
@@ -30,5 +28,7 @@ namespace InventarioComputo.Domain.Entities
         public virtual Zona? Zona { get; set; }
 
         public int? UsuarioId { get; set; }
+        [ForeignKey("UsuarioId")]
+        public virtual Usuario? Usuario { get; set; }
     }
 }

@@ -1,4 +1,7 @@
-﻿using System.Windows.Controls;
+﻿using System;
+using System.Windows;
+using System.Windows.Controls;
+using InventarioComputo.UI.ViewModels;
 
 namespace InventarioComputo.UI.Views
 {
@@ -7,6 +10,14 @@ namespace InventarioComputo.UI.Views
         public EstadosView()
         {
             InitializeComponent();
+        }
+
+        private void UserControl_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is EstadosViewModel viewModel)
+            {
+                viewModel.LoadedCommand.Execute(null);
+            }
         }
     }
 }

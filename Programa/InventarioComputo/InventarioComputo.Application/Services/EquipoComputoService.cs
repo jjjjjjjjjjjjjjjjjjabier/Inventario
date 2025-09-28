@@ -17,37 +17,41 @@ namespace InventarioComputo.Application.Services
             _repo = repo;
         }
 
-        public Task<IReadOnlyList<EquipoComputo>> ObtenerTodosAsync(bool incluirInactivos, CancellationToken ct = default)
+        public async Task<IReadOnlyList<EquipoComputo>> ObtenerTodosAsync(bool incluirInactivos, CancellationToken ct = default)
         {
-            return _repo.ObtenerTodosAsync(incluirInactivos, ct);
+            return await _repo.ObtenerTodosAsync(incluirInactivos, ct);
         }
 
-        public Task<EquipoComputo?> ObtenerPorIdAsync(int id, CancellationToken ct = default)
+        public async Task<EquipoComputo?> ObtenerPorIdAsync(int id, CancellationToken ct = default)
         {
-            return _repo.ObtenerPorIdAsync(id, ct);
+            return await _repo.ObtenerPorIdAsync(id, ct);
         }
 
         public async Task<EquipoComputo> AgregarAsync(EquipoComputo equipo, CancellationToken ct = default)
         {
+            // Validar que no exista otro equipo con el mismo número de serie
             if (await _repo.ExistsByNumeroSerieAsync(equipo.NumeroSerie, null, ct))
             {
                 throw new InvalidOperationException($"Ya existe un equipo con el número de serie '{equipo.NumeroSerie}'.");
             }
+
             return await _repo.AgregarAsync(equipo, ct);
         }
 
         public async Task ActualizarAsync(EquipoComputo equipo, CancellationToken ct = default)
         {
+            // Validar que no exista otro equipo con el mismo número de serie
             if (await _repo.ExistsByNumeroSerieAsync(equipo.NumeroSerie, equipo.Id, ct))
             {
                 throw new InvalidOperationException($"Ya existe otro equipo con el número de serie '{equipo.NumeroSerie}'.");
             }
+
             await _repo.ActualizarAsync(equipo, ct);
         }
 
-        public Task EliminarAsync(int id, CancellationToken ct = default)
+        public async Task EliminarAsync(int id, CancellationToken ct = default)
         {
-            return _repo.EliminarAsync(id, ct);
+            await _repo.EliminarAsync(id, ct);
         }
     }
 }

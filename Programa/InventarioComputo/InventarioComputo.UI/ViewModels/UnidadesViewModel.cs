@@ -15,23 +15,39 @@ namespace InventarioComputo.UI.ViewModels
     {
         private readonly IUnidadService _srv;
         private readonly IDialogService _dialogService;
+        private readonly ISessionService _sessionService;
 
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(EditarCommand))]
         [NotifyCanExecuteChangedFor(nameof(EliminarCommand))]
         private Unidad? _unidadSeleccionada;
 
+        [ObservableProperty]
+        private bool _mostrarInactivos;
+
+        [ObservableProperty]
+        private bool _esAdministrador;
+
         public ObservableCollection<Unidad> Unidades { get; } = new();
 
-        public UnidadesViewModel(IUnidadService srv, IDialogService dialogService, ILogger<UnidadesViewModel> log)
+        public UnidadesViewModel(
+            IUnidadService srv,
+            IDialogService dialogService,
+            ISessionService sessionService,
+            ILogger<UnidadesViewModel> log)
         {
             _srv = srv;
             _dialogService = dialogService;
+            _sessionService = sessionService;
             Logger = log;
+
+            EsAdministrador = _sessionService.TieneRol("Administrador");
         }
 
+        partial void OnMostrarInactivosChanged(bool value) => _ = BuscarAsync();
+
         [RelayCommand]
-        private async Task LoadedAsync() => await BuscarAsync();
+        public async Task LoadedAsync() => await BuscarAsync();
 
         [RelayCommand]
         private async Task BuscarAsync()
@@ -40,7 +56,7 @@ namespace InventarioComputo.UI.ViewModels
             try
             {
                 Unidades.Clear();
-                var lista = await _srv.BuscarAsync(null, true);
+                var lista = await _srv.BuscarAsync(null, MostrarInactivos);
                 foreach (var item in lista) Unidades.Add(item);
             }
             catch (Exception ex)
@@ -54,7 +70,7 @@ namespace InventarioComputo.UI.ViewModels
             }
         }
 
-        [RelayCommand]
+        [RelayCommand(CanExecute = nameof(PuedeCrearEditar))]
         private async Task CrearAsync()
         {
             var nuevo = new Unidad { Activo = true };
@@ -64,13 +80,24 @@ namespace InventarioComputo.UI.ViewModels
             }
         }
 
-        private bool CanEditarEliminar() => UnidadSeleccionada != null && !IsBusy;
+        private bool PuedeCrearEditar() => EsAdministrador && !IsBusy;
+
+        private bool CanEditarEliminar() => EsAdministrador && UnidadSeleccionada != null && !IsBusy;
 
         [RelayCommand(CanExecute = nameof(CanEditarEliminar))]
         private async Task EditarAsync()
         {
             if (UnidadSeleccionada == null) return;
-            if (_dialogService.ShowDialog<UnidadEditorViewModel>(vm => vm.SetEntidad(UnidadSeleccionada)) == true)
+
+            var copia = new Unidad
+            {
+                Id = UnidadSeleccionada.Id,
+                Nombre = UnidadSeleccionada.Nombre,
+                Abreviatura = UnidadSeleccionada.Abreviatura,
+                Activo = UnidadSeleccionada.Activo
+            };
+
+            if (_dialogService.ShowDialog<UnidadEditorViewModel>(vm => vm.SetEntidad(copia)) == true)
             {
                 await BuscarAsync();
             }
@@ -80,18 +107,18 @@ namespace InventarioComputo.UI.ViewModels
         private async Task EliminarAsync()
         {
             if (UnidadSeleccionada == null) return;
-            if (!_dialogService.Confirm($"¿Eliminar la unidad '{UnidadSeleccionada.Nombre}'?", "Confirmar Eliminación")) return;
+            if (!_dialogService.Confirm($"¿Desactivar la unidad '{UnidadSeleccionada.Nombre}'?", "Confirmar Desactivación")) return;
 
             IsBusy = true;
             try
             {
                 await _srv.EliminarAsync(UnidadSeleccionada.Id);
-                Unidades.Remove(UnidadSeleccionada);
+                await BuscarAsync();
             }
             catch (Exception ex)
             {
-                Logger?.LogError(ex, "Error al eliminar unidad");
-                _dialogService.ShowError("No se pudo eliminar la unidad. Es posible que esté en uso.");
+                Logger?.LogError(ex, "Error al desactivar unidad");
+                _dialogService.ShowError("No se pudo desactivar la unidad. Es posible que esté en uso.");
             }
             finally
             {

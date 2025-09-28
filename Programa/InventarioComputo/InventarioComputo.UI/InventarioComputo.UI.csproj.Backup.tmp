@@ -17,8 +17,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\InventarioComputo.Application\InventarioComputo.Application.csproj" />
     <ProjectReference Include="..\InventarioComputo.Domain\InventarioComputo.Domain.csproj" />
+    <ProjectReference Include="..\InventarioComputo.Application\InventarioComputo.Application.csproj" />
     <ProjectReference Include="..\InventarioComputo.Infrastructure\InventarioComputo.Infrastructure.csproj" />
   </ItemGroup>
 
@@ -26,6 +26,11 @@
     <None Update="jsconfig1.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="Converters\BooleanToVisibilityConverter.cs" />
+    <Compile Include="Converters\ColorFromHexConverter.cs" />
   </ItemGroup>
 
 </Project>

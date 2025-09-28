@@ -1,4 +1,5 @@
 ﻿using InventarioComputo.Application.Contracts.Repositories;
+using InventarioComputo.Domain.DTOs;
 using InventarioComputo.Domain.Entities;
 using InventarioComputo.Infrastructure.Persistencia;
 using Microsoft.EntityFrameworkCore;
@@ -11,77 +12,146 @@ namespace InventarioComputo.Infrastructure.Repositories
 {
     public class EquipoComputoRepository : IEquipoComputoRepository
     {
-        private readonly InventarioDbContext _context;
+        private readonly InventarioDbContext _ctx;
 
-        public EquipoComputoRepository(InventarioDbContext context)
+        public EquipoComputoRepository(InventarioDbContext ctx)
         {
-            _context = context;
+            _ctx = ctx;
         }
 
-        public async Task<EquipoComputo> AgregarAsync(EquipoComputo equipo, CancellationToken ct)
+        public async Task<IReadOnlyList<EquipoComputo>> ObtenerTodosAsync(bool incluirInactivos, CancellationToken ct = default)
         {
-            await _context.EquiposComputo.AddAsync(equipo, ct);
-            await _context.SaveChangesAsync(ct);
-            return equipo;
-        }
-
-        public async Task EliminarAsync(int id, CancellationToken ct)
-        {
-            var equipo = await _context.EquiposComputo.FindAsync(new object[] { id }, ct);
-            if (equipo != null)
-            {
-                // **CAMBIO CLAVE: Implementación de Soft Delete**
-                equipo.Activo = false;
-                _context.Entry(equipo).State = EntityState.Modified;
-                await _context.SaveChangesAsync(ct);
-            }
-        }
-
-        public async Task<bool> ExistsByNumeroSerieAsync(string numeroSerie, int? idExcluir, CancellationToken ct)
-        {
-            var query = _context.EquiposComputo
-                                .Where(e => e.NumeroSerie.ToLower() == numeroSerie.ToLower());
-
-            if (idExcluir.HasValue && idExcluir.Value > 0)
-            {
-                query = query.Where(e => e.Id != idExcluir.Value);
-            }
-
-            return await query.AnyAsync(ct);
-        }
-
-        public async Task<IReadOnlyList<EquipoComputo>> ObtenerTodosAsync(bool incluirInactivos, CancellationToken ct)
-        {
-            var query = _context.EquiposComputo
+            var query = _ctx.EquiposComputo
                 .Include(e => e.TipoEquipo)
                 .Include(e => e.Estado)
                 .Include(e => e.Zona)
-                .AsNoTracking();
+                    .ThenInclude(z => z.Area)
+                        .ThenInclude(a => a.Sede)
+                .AsQueryable();
 
             if (!incluirInactivos)
             {
                 query = query.Where(e => e.Activo);
             }
 
-            return await query.ToListAsync(ct);
+            return await query.AsNoTracking().ToListAsync(ct);
         }
 
-        public async Task<EquipoComputo?> ObtenerPorIdAsync(int id, CancellationToken ct)
+        public async Task<EquipoComputo?> ObtenerPorIdAsync(int id, CancellationToken ct = default)
         {
-            return await _context.EquiposComputo
+            return await _ctx.EquiposComputo
                 .Include(e => e.TipoEquipo)
                 .Include(e => e.Estado)
                 .Include(e => e.Zona)
-                    .ThenInclude(z => z!.Area)
-                        .ThenInclude(a => a!.Sede)
-                .AsNoTracking()
+                    .ThenInclude(z => z.Area)
+                        .ThenInclude(a => a.Sede)
                 .FirstOrDefaultAsync(e => e.Id == id, ct);
         }
 
-        public async Task ActualizarAsync(EquipoComputo equipo, CancellationToken ct)
+        public async Task<EquipoComputo> AgregarAsync(EquipoComputo equipo, CancellationToken ct = default)
         {
-            _context.EquiposComputo.Update(equipo);
-            await _context.SaveChangesAsync(ct);
+            DesacoplarEntidadesRelacionadas(equipo);
+
+            _ctx.EquiposComputo.Add(equipo);
+            await _ctx.SaveChangesAsync(ct);
+            return equipo;
+        }
+
+        public async Task<EquipoComputo> ActualizarAsync(EquipoComputo equipo, CancellationToken ct = default)
+        {
+            DesacoplarEntidadesRelacionadas(equipo);
+
+            // Evitar entidad duplicada trackeada con la misma PK
+            var local = _ctx.EquiposComputo.Local.FirstOrDefault(e => e.Id == equipo.Id);
+            if (local != null)
+            {
+                _ctx.Entry(local).State = EntityState.Detached;
+            }
+
+            _ctx.Attach(equipo);
+
+            var entry = _ctx.Entry(equipo);
+            entry.State = EntityState.Modified;
+
+            // Propiedades clave y FKs
+            entry.Property(e => e.TipoEquipoId).IsModified = true;
+            entry.Property(e => e.EstadoId).IsModified = true;
+            entry.Property(e => e.ZonaId).IsModified = true;
+
+            await _ctx.SaveChangesAsync(ct);
+            return equipo;
+        }
+
+        public async Task EliminarAsync(int id, CancellationToken ct = default)
+        {
+            var equipo = await _ctx.EquiposComputo.FindAsync(new object[] { id }, ct);
+            if (equipo != null)
+            {
+                equipo.Activo = false;
+                _ctx.Entry(equipo).State = EntityState.Modified;
+                await _ctx.SaveChangesAsync(ct);
+            }
+        }
+
+        public async Task<bool> ExistsByNumeroSerieAsync(string numeroSerie, int? idExcluir = null, CancellationToken ct = default)
+        {
+            var query = _ctx.EquiposComputo.AsQueryable();
+
+            if (idExcluir.HasValue)
+            {
+                query = query.Where(e => e.Id != idExcluir.Value);
+            }
+
+            return await query.AnyAsync(e => e.NumeroSerie == numeroSerie, ct);
+        }
+
+        private void DesacoplarEntidadesRelacionadas(EquipoComputo equipo)
+        {
+            equipo.TipoEquipo = null;
+            equipo.Estado = null;
+            equipo.Zona = null;
+            equipo.Usuario = null;
+        }
+
+        public async Task<IReadOnlyList<EquipoComputo>> ObtenerParaReporteAsync(FiltroReporteDTO filtro, CancellationToken ct = default)
+        {
+            var query = _ctx.EquiposComputo
+                .Include(e => e.TipoEquipo)
+                .Include(e => e.Estado)
+                .Include(e => e.Usuario)
+                .Include(e => e.Zona)
+                    .ThenInclude(z => z.Area)
+                        .ThenInclude(a => a.Sede)
+                .AsQueryable();
+
+            if (!filtro.IncluirInactivos)
+                query = query.Where(e => e.Activo);
+
+            if (filtro.SedeId.HasValue)
+                query = query.Where(e => e.Zona != null && e.Zona.Area != null && e.Zona.Area.SedeId == filtro.SedeId);
+
+            if (filtro.AreaId.HasValue)
+                query = query.Where(e => e.Zona != null && e.Zona.AreaId == filtro.AreaId);
+
+            if (filtro.ZonaId.HasValue)
+                query = query.Where(e => e.ZonaId == filtro.ZonaId);
+
+            if (filtro.EstadoId.HasValue)
+                query = query.Where(e => e.EstadoId == filtro.EstadoId);
+
+            if (filtro.TipoEquipoId.HasValue)
+                query = query.Where(e => e.TipoEquipoId == filtro.TipoEquipoId);
+
+            if (filtro.UsuarioId.HasValue)
+                query = query.Where(e => e.UsuarioId == filtro.UsuarioId);
+
+            if (filtro.FechaDesde.HasValue)
+                query = query.Where(e => e.FechaAdquisicion >= filtro.FechaDesde);
+
+            if (filtro.FechaHasta.HasValue)
+                query = query.Where(e => e.FechaAdquisicion <= filtro.FechaHasta);
+
+            return await query.AsNoTracking().ToListAsync(ct);
         }
     }
 }

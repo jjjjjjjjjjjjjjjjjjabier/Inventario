@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using InventarioComputo.UI.ViewModels;
 
 namespace InventarioComputo.UI.Views
 {
@@ -23,6 +24,14 @@ namespace InventarioComputo.UI.Views
         public EquiposComputoView()
         {
             InitializeComponent();
+        }
+
+        private void UserControl_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is EquiposComputoViewModel viewModel)
+            {
+                viewModel.LoadedCommand.Execute(null);
+            }
         }
     }
 }

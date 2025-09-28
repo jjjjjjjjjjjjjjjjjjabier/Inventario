@@ -60,6 +60,14 @@ namespace InventarioComputo.Infrastructure.Repositories
             }
             else
             {
+                // Evitar entidad duplicada trackeada con la misma PK
+                var local = _context.Estados.Local.FirstOrDefault(e => e.Id == entidad.Id);
+                if (local != null)
+                {
+                    _context.Entry(local).State = EntityState.Detached;
+                }
+
+                _context.Attach(entidad);
                 _context.Entry(entidad).State = EntityState.Modified;
             }
 
@@ -72,7 +80,6 @@ namespace InventarioComputo.Infrastructure.Repositories
             var entidad = await _context.Estados.FindAsync(new object[] { id }, ct);
             if (entidad != null)
             {
-                // **CAMBIO CLAVE: Implementación de Soft Delete**
                 entidad.Activo = false;
                 _context.Entry(entidad).State = EntityState.Modified;
                 await _context.SaveChangesAsync(ct);

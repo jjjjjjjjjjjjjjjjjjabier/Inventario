@@ -18,7 +18,6 @@ namespace InventarioComputo.Infrastructure.Repositories
         {
             var query = _context.Sedes.AsQueryable();
 
-            // Por defecto, solo se muestran las sedes activas
             if (!incluirInactivas)
             {
                 query = query.Where(s => s.Activo);
@@ -55,6 +54,13 @@ namespace InventarioComputo.Infrastructure.Repositories
             }
             else
             {
+                var local = _context.Sedes.Local.FirstOrDefault(e => e.Id == entidad.Id);
+                if (local != null)
+                {
+                    _context.Entry(local).State = EntityState.Detached;
+                }
+
+                _context.Attach(entidad);
                 _context.Entry(entidad).State = EntityState.Modified;
             }
             await _context.SaveChangesAsync(ct);
@@ -66,8 +72,6 @@ namespace InventarioComputo.Infrastructure.Repositories
             var entidad = await _context.Sedes.FindAsync(new object[] { id }, ct);
             if (entidad != null)
             {
-                // **CAMBIO CLAVE: Implementación de Soft Delete**
-                // En lugar de borrar, marcamos la entidad como inactiva.
                 entidad.Activo = false;
                 _context.Entry(entidad).State = EntityState.Modified;
                 await _context.SaveChangesAsync(ct);

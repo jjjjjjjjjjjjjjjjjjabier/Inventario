@@ -2,11 +2,14 @@
 using CommunityToolkit.Mvvm.Input;
 using InventarioComputo.Application.Contracts;
 using InventarioComputo.Domain.Entities;
+using InventarioComputo.UI.Extensions;
 using InventarioComputo.UI.Services;
 using InventarioComputo.UI.ViewModels.Base;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace InventarioComputo.UI.ViewModels
 {
@@ -59,19 +62,46 @@ namespace InventarioComputo.UI.ViewModels
         }
 
         [RelayCommand]
-        private async Task GuardarAsync()
+        public async Task GuardarAsync()
         {
+            if (string.IsNullOrWhiteSpace(Nombre) || Nombre.Length > 50)
+            {
+                _dialogService.ShowError("El nombre es obligatorio y debe tener menos de 50 caracteres.");
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(Abreviatura) || Abreviatura.Length > 10)
+            {
+                _dialogService.ShowError("La abreviatura es obligatoria y debe tener menos de 10 caracteres.");
+                return;
+            }
             try
             {
-                // Aquí podrías añadir validaciones antes de guardar
+                if (await _srv.ExisteNombreAsync(Nombre, _entidad.Id))
+                {
+                    _dialogService.ShowError("Ya existe una unidad con ese nombre.");
+                    return;
+                }
+                if (await _srv.ExisteAbreviaturaAsync(Abreviatura, _entidad.Id))
+                {
+                    _dialogService.ShowError("Ya existe una unidad con esa abreviatura.");
+                    return;
+                }
                 await _srv.GuardarAsync(_entidad);
+                _dialogService.ShowInfo("Unidad guardada correctamente.");
                 DialogResult = true;
+                this.CloseWindowOfViewModel();
             }
             catch (Exception ex)
             {
                 Logger?.LogError(ex, "Error al guardar la unidad");
                 _dialogService.ShowError("Ocurrió un error al guardar: " + ex.Message);
             }
+        }
+
+        [RelayCommand]
+        public void Close()
+        {
+            this.CloseWindowOfViewModel();
         }
     }
 }

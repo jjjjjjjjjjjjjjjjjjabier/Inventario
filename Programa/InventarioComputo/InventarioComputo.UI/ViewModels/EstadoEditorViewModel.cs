@@ -2,11 +2,14 @@
 using CommunityToolkit.Mvvm.Input;
 using InventarioComputo.Application.Contracts;
 using InventarioComputo.Domain.Entities;
+using InventarioComputo.UI.Extensions;
 using InventarioComputo.UI.Services;
 using InventarioComputo.UI.ViewModels.Base;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace InventarioComputo.UI.ViewModels
 {
@@ -66,18 +69,40 @@ namespace InventarioComputo.UI.ViewModels
         }
 
         [RelayCommand]
-        private async Task GuardarAsync()
+        public async Task GuardarAsync()
         {
+            if (string.IsNullOrWhiteSpace(Nombre) || Nombre.Length > 50)
+            {
+                _dialogService.ShowError("El nombre es obligatorio y debe tener menos de 50 caracteres.");
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(ColorHex) || ColorHex.Length > 9)
+            {
+                _dialogService.ShowError("El color es obligatorio y debe tener menos de 9 caracteres.");
+                return;
+            }
             try
             {
                 await _srv.GuardarAsync(_entidad);
+                _dialogService.ShowInfo("Estado guardado correctamente.");
                 DialogResult = true;
+                                this.CloseWindowOfViewModel();
+            }
+            catch (InvalidOperationException ex)
+            {
+                _dialogService.ShowError(ex.Message);
             }
             catch (Exception ex)
             {
                 Logger?.LogError(ex, "Error al guardar estado");
                 _dialogService.ShowError("Ocurrió un error al guardar: " + ex.Message);
             }
+        }
+
+        [RelayCommand]
+        public void Close()
+        {
+            this.CloseWindowOfViewModel();
         }
     }
 }

@@ -11,12 +11,13 @@ using System.Threading.Tasks;
 
 namespace InventarioComputo.UI.ViewModels
 {
-    public partial class UbicacionesViewModel : BaseViewModel
+    public partial class UbicacionesViewModel : BaseViewModel, IDisposable
     {
         private readonly ISedeService _sedeSvc;
         private readonly IAreaService _areaSvc;
         private readonly IZonaService _zonaSvc;
         private readonly IDialogService _dialogService;
+        private readonly ISessionService _sessionService;
 
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(CrearAreaCommand))]
@@ -38,32 +39,59 @@ namespace InventarioComputo.UI.ViewModels
         [ObservableProperty]
         private bool _mostrarInactivas;
 
+        [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(CrearSedeCommand))]
+        [NotifyCanExecuteChangedFor(nameof(EditarSedeCommand))]
+        [NotifyCanExecuteChangedFor(nameof(EliminarSedeCommand))]
+        [NotifyCanExecuteChangedFor(nameof(CrearAreaCommand))]
+        [NotifyCanExecuteChangedFor(nameof(EditarAreaCommand))]
+        [NotifyCanExecuteChangedFor(nameof(EliminarAreaCommand))]
+        [NotifyCanExecuteChangedFor(nameof(CrearZonaCommand))]
+        [NotifyCanExecuteChangedFor(nameof(EditarZonaCommand))]
+        [NotifyCanExecuteChangedFor(nameof(EliminarZonaCommand))]
+        private bool _esAdministrador;
+
         public ObservableCollection<Sede> Sedes { get; } = new();
         public ObservableCollection<Area> Areas { get; } = new();
         public ObservableCollection<Zona> Zonas { get; } = new();
 
-        public UbicacionesViewModel(ISedeService sedeSvc, IAreaService areaSvc, IZonaService zonaSvc, IDialogService dialogService, ILogger<UbicacionesViewModel> log)
+        public UbicacionesViewModel(
+            ISedeService sedeSvc,
+            IAreaService areaSvc,
+            IZonaService zonaSvc,
+            IDialogService dialogService,
+            ISessionService sessionService,
+            ILogger<UbicacionesViewModel> log)
         {
             _sedeSvc = sedeSvc;
             _areaSvc = areaSvc;
             _zonaSvc = zonaSvc;
             _dialogService = dialogService;
+            _sessionService = sessionService;
             Logger = log;
+
+            EsAdministrador = _sessionService.TieneRol("Administrador");
+            _sessionService.SesionCambiada += OnSesionCambiada;
+        }
+
+        private void OnSesionCambiada(object? sender, bool estaLogueado)
+        {
+            EsAdministrador = _sessionService.TieneRol("Administrador");
+            ActualizarCanExecute();
         }
 
         partial void OnSedeSeleccionadaChanged(Sede? value) => _ = BuscarAreasAsync();
         partial void OnAreaSeleccionadaChanged(Area? value) => _ = BuscarZonasAsync();
         partial void OnMostrarInactivasChanged(bool value) => _ = BuscarSedesAsync();
 
-
         [RelayCommand]
-        private async Task LoadedAsync() => await BuscarSedesAsync();
+        public async Task LoadedAsync() => await BuscarSedesAsync();
 
         // --- SEDES ---
         [RelayCommand]
         private async Task BuscarSedesAsync()
         {
-            IsBusy = true;
+            SetBusy(true);
             try
             {
                 Sedes.Clear();
@@ -75,14 +103,16 @@ namespace InventarioComputo.UI.ViewModels
             catch (Exception ex)
             {
                 Logger?.LogError(ex, "Error buscando sedes");
-                // **CAMBIO:** Usando el servicio de diálogo.
                 _dialogService.ShowError("Error al cargar sedes.");
             }
-            finally { IsBusy = false; }
+            finally { SetBusy(false); }
         }
 
-        [RelayCommand]
-        private async Task CrearSedeAsync()
+        private bool PuedeCrearEditar() => EsAdministrador && !IsBusy;
+        private bool CanEditDeleteSede() => EsAdministrador && SedeSeleccionada != null && !IsBusy;
+
+        [RelayCommand(CanExecute = nameof(PuedeCrearEditar))]
+        public async Task CrearSedeAsync()
         {
             var nueva = new Sede { Activo = true };
             if (_dialogService.ShowDialog<SedeEditorViewModel>(vm => vm.SetEntidad(nueva)) == true)
@@ -91,28 +121,43 @@ namespace InventarioComputo.UI.ViewModels
             }
         }
 
-        private bool CanEditDeleteSede() => SedeSeleccionada != null && !IsBusy;
-
         [RelayCommand(CanExecute = nameof(CanEditDeleteSede))]
-        private async Task EditarSedeAsync()
+        public async Task EditarSedeAsync()
         {
             if (SedeSeleccionada == null) return;
-            if (_dialogService.ShowDialog<SedeEditorViewModel>(vm => vm.SetEntidad(SedeSeleccionada)) == true)
+
+            var copia = new Sede
+            {
+                Id = SedeSeleccionada.Id,
+                Nombre = SedeSeleccionada.Nombre,
+                Activo = SedeSeleccionada.Activo
+            };
+
+            if (_dialogService.ShowDialog<SedeEditorViewModel>(vm => vm.SetEntidad(copia)) == true)
             {
                 await BuscarSedesAsync();
             }
         }
 
         [RelayCommand(CanExecute = nameof(CanEditDeleteSede))]
-        private async Task EliminarSedeAsync()
+        public async Task EliminarSedeAsync()
         {
             if (SedeSeleccionada == null) return;
-            // **CAMBIO:** Usando el servicio de diálogo.
-            if (_dialogService.Confirm($"¿Está seguro de querer desactivar la sede '{SedeSeleccionada.Nombre}'? Sus áreas y zonas asociadas no serán visibles.", "Confirmar Desactivación"))
+            if (!_dialogService.Confirm($"¿Está seguro de querer desactivar la sede '{SedeSeleccionada.Nombre}'? Sus áreas y zonas asociadas no serán visibles.", "Confirmar Desactivación"))
+                return;
+
+            SetBusy(true);
+            try
             {
                 await _sedeSvc.EliminarAsync(SedeSeleccionada.Id);
                 await BuscarSedesAsync();
             }
+            catch (Exception ex)
+            {
+                Logger?.LogError(ex, "Error al desactivar sede");
+                _dialogService.ShowError("No se pudo desactivar la sede. Es posible que esté en uso.");
+            }
+            finally { SetBusy(false); }
         }
 
         // --- AREAS ---
@@ -120,15 +165,25 @@ namespace InventarioComputo.UI.ViewModels
         {
             Areas.Clear();
             Zonas.Clear();
-            if (SedeSeleccionada != null && (SedeSeleccionada.Activo || MostrarInactivas))
+            if (SedeSeleccionada != null)
             {
-                var areas = await _areaSvc.BuscarAsync(SedeSeleccionada.Id, null, default);
-                foreach (var a in areas) Areas.Add(a);
+                try
+                {
+                    var areas = await _areaSvc.BuscarAsync(SedeSeleccionada.Id, null, MostrarInactivas, default);
+                    foreach (var a in areas) Areas.Add(a);
+                }
+                catch (Exception ex)
+                {
+                    Logger?.LogError(ex, "Error buscando áreas");
+                    _dialogService.ShowError("Error al cargar áreas.");
+                }
             }
         }
 
+        private bool CanEditDeleteArea() => EsAdministrador && AreaSeleccionada != null && !IsBusy;
+
         [RelayCommand(CanExecute = nameof(CanEditDeleteSede))]
-        private async Task CrearAreaAsync()
+        public async Task CrearAreaAsync()
         {
             if (SedeSeleccionada == null) return;
             var nueva = new Area { Activo = true, SedeId = SedeSeleccionada.Id };
@@ -138,43 +193,69 @@ namespace InventarioComputo.UI.ViewModels
             }
         }
 
-        private bool CanEditDeleteArea() => AreaSeleccionada != null && !IsBusy;
-
         [RelayCommand(CanExecute = nameof(CanEditDeleteArea))]
-        private async Task EditarAreaAsync()
+        public async Task EditarAreaAsync()
         {
             if (AreaSeleccionada == null || SedeSeleccionada == null) return;
-            if (_dialogService.ShowDialog<AreaEditorViewModel>(vm => vm.SetEntidad(AreaSeleccionada, SedeSeleccionada)) == true)
+
+            var copia = new Area
+            {
+                Id = AreaSeleccionada.Id,
+                SedeId = AreaSeleccionada.SedeId,
+                Nombre = AreaSeleccionada.Nombre,
+                Activo = AreaSeleccionada.Activo
+            };
+
+            if (_dialogService.ShowDialog<AreaEditorViewModel>(vm => vm.SetEntidad(copia, SedeSeleccionada)) == true)
             {
                 await BuscarAreasAsync();
             }
         }
 
         [RelayCommand(CanExecute = nameof(CanEditDeleteArea))]
-        private async Task EliminarAreaAsync()
+        public async Task EliminarAreaAsync()
         {
             if (AreaSeleccionada == null) return;
-            // **CAMBIO:** Usando el servicio de diálogo.
-            if (_dialogService.Confirm($"¿Desactivar el área '{AreaSeleccionada.Nombre}'?", "Confirmar"))
+            if (!_dialogService.Confirm($"¿Desactivar el área '{AreaSeleccionada.Nombre}'?", "Confirmar"))
+                return;
+
+            SetBusy(true);
+            try
             {
                 await _areaSvc.EliminarAsync(AreaSeleccionada.Id, default);
                 await BuscarAreasAsync();
             }
+            catch (Exception ex)
+            {
+                Logger?.LogError(ex, "Error al desactivar área");
+                _dialogService.ShowError("No se pudo desactivar el área. Es posible que esté en uso.");
+            }
+            finally { SetBusy(false); }
         }
 
         // --- ZONAS ---
         private async Task BuscarZonasAsync()
         {
             Zonas.Clear();
-            if (AreaSeleccionada != null && (AreaSeleccionada.Activo || MostrarInactivas))
+            if (AreaSeleccionada != null)
             {
-                var zonas = await _zonaSvc.BuscarAsync(AreaSeleccionada.Id, null, default);
-                foreach (var z in zonas) Zonas.Add(z);
+                try
+                {
+                    var zonas = await _zonaSvc.BuscarAsync(AreaSeleccionada.Id, null, MostrarInactivas, default);
+                    foreach (var z in zonas) Zonas.Add(z);
+                }
+                catch (Exception ex)
+                {
+                    Logger?.LogError(ex, "Error buscando zonas");
+                    _dialogService.ShowError("Error al cargar zonas.");
+                }
             }
         }
 
+        private bool CanEditDeleteZona() => EsAdministrador && ZonaSeleccionada != null && !IsBusy;
+
         [RelayCommand(CanExecute = nameof(CanEditDeleteArea))]
-        private async Task CrearZonaAsync()
+        public async Task CrearZonaAsync()
         {
             if (AreaSeleccionada == null) return;
             var nueva = new Zona { Activo = true, AreaId = AreaSeleccionada.Id };
@@ -184,28 +265,68 @@ namespace InventarioComputo.UI.ViewModels
             }
         }
 
-        private bool CanEditDeleteZona() => ZonaSeleccionada != null && !IsBusy;
-
         [RelayCommand(CanExecute = nameof(CanEditDeleteZona))]
-        private async Task EditarZonaAsync()
+        public async Task EditarZonaAsync()
         {
             if (ZonaSeleccionada == null || AreaSeleccionada == null) return;
-            if (_dialogService.ShowDialog<ZonaEditorViewModel>(vm => vm.SetEntidad(ZonaSeleccionada, AreaSeleccionada)) == true)
+
+            var copia = new Zona
+            {
+                Id = ZonaSeleccionada.Id,
+                AreaId = ZonaSeleccionada.AreaId,
+                Nombre = ZonaSeleccionada.Nombre,
+                Activo = ZonaSeleccionada.Activo
+            };
+
+            if (_dialogService.ShowDialog<ZonaEditorViewModel>(vm => vm.SetEntidad(copia, AreaSeleccionada)) == true)
             {
                 await BuscarZonasAsync();
             }
         }
 
         [RelayCommand(CanExecute = nameof(CanEditDeleteZona))]
-        private async Task EliminarZonaAsync()
+        public async Task EliminarZonaAsync()
         {
             if (ZonaSeleccionada == null) return;
-            // **CAMBIO:** Usando el servicio de diálogo.
-            if (_dialogService.Confirm($"¿Desactivar la zona '{ZonaSeleccionada.Nombre}'?", "Confirmar"))
+            if (!_dialogService.Confirm($"¿Desactivar la zona '{ZonaSeleccionada.Nombre}'?", "Confirmar"))
+                return;
+
+            SetBusy(true);
+            try
             {
                 await _zonaSvc.EliminarAsync(ZonaSeleccionada.Id, default);
                 await BuscarZonasAsync();
             }
+            catch (Exception ex)
+            {
+                Logger?.LogError(ex, "Error al desactivar zona");
+                _dialogService.ShowError("No se pudo desactivar la zona. Es posible que esté en uso.");
+            }
+            finally { SetBusy(false); }
+        }
+
+        private void SetBusy(bool value)
+        {
+            IsBusy = value;
+            ActualizarCanExecute();
+        }
+
+        private void ActualizarCanExecute()
+        {
+            CrearSedeCommand?.NotifyCanExecuteChanged();
+            EditarSedeCommand?.NotifyCanExecuteChanged();
+            EliminarSedeCommand?.NotifyCanExecuteChanged();
+            CrearAreaCommand?.NotifyCanExecuteChanged();
+            EditarAreaCommand?.NotifyCanExecuteChanged();
+            EliminarAreaCommand?.NotifyCanExecuteChanged();
+            CrearZonaCommand?.NotifyCanExecuteChanged();
+            EditarZonaCommand?.NotifyCanExecuteChanged();
+            EliminarZonaCommand?.NotifyCanExecuteChanged();
+        }
+
+        public void Dispose()
+        {
+            _sessionService.SesionCambiada -= OnSesionCambiada;
         }
     }
 }

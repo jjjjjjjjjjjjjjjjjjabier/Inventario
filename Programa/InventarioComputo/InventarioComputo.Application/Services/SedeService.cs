@@ -3,7 +3,6 @@ using InventarioComputo.Application.Contracts.Repositories;
 using InventarioComputo.Domain.Entities;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -18,10 +17,10 @@ namespace InventarioComputo.Application.Services
             _repo = repo;
         }
 
-        public async Task<List<Sede>> BuscarAsync(string? filtro, bool incluirInactivas, CancellationToken ct = default)
+        public async Task<IReadOnlyList<Sede>> BuscarAsync(string? filtro, bool incluirInactivas, CancellationToken ct = default)
         {
             var data = await _repo.BuscarAsync(filtro, incluirInactivas, ct);
-            return data.ToList();
+            return data;
         }
 
         public Task<Sede?> ObtenerPorIdAsync(int id, CancellationToken ct = default)

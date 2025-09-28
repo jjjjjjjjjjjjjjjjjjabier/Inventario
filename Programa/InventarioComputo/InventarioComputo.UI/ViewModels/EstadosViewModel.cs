@@ -15,9 +15,8 @@ namespace InventarioComputo.UI.ViewModels
     {
         private readonly IEstadoService _srv;
         private readonly IDialogService _dialogService;
+        private readonly ISessionService _sessionService;
 
-        // **LA CORRECCIÓN MÁS IMPORTANTE ESTÁ AQUÍ**
-        // Se usan strings con los nombres exactos de los comandos generados por el Toolkit.
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(EditarCommand))]
         [NotifyCanExecuteChangedFor(nameof(EliminarCommand))]
@@ -26,43 +25,29 @@ namespace InventarioComputo.UI.ViewModels
         [ObservableProperty]
         private bool _mostrarInactivos;
 
+        [ObservableProperty]
+        private bool _esAdministrador;
+
         public ObservableCollection<Estado> Estados { get; } = new();
 
-        public EstadosViewModel(IEstadoService srv, IDialogService dialogService, ILogger<EstadosViewModel> log)
+        public EstadosViewModel(
+            IEstadoService srv,
+            IDialogService dialogService,
+            ISessionService sessionService,
+            ILogger<EstadosViewModel> log)
         {
             _srv = srv;
             _dialogService = dialogService;
+            _sessionService = sessionService;
             Logger = log;
+
+            EsAdministrador = _sessionService.TieneRol("Administrador");
         }
 
         partial void OnMostrarInactivosChanged(bool value) => _ = BuscarAsync();
 
-        [RelayCommand]
-        private async Task LoadedAsync() => await BuscarAsync();
-
-        [RelayCommand]
-        private async Task BuscarAsync()
-        {
-            IsBusy = true;
-            try
-            {
-                Estados.Clear();
-                var lista = await _srv.BuscarAsync(null, MostrarInactivos);
-                foreach (var e in lista) Estados.Add(e);
-            }
-            catch (Exception ex)
-            {
-                Logger?.LogError(ex, "Error al buscar estados");
-                _dialogService.ShowError("Ocurrió un error al cargar los estados.");
-            }
-            finally
-            {
-                IsBusy = false;
-            }
-        }
-
-        [RelayCommand]
-        private async Task CrearAsync()
+        [RelayCommand(CanExecute = nameof(PuedeCrearEditar))]
+        public async Task CrearAsync()
         {
             var nuevo = new Estado { Activo = true, ColorHex = "#FFFFFF" };
             if (_dialogService.ShowDialog<EstadoEditorViewModel>(vm => vm.SetEstado(nuevo)) == true)
@@ -71,15 +56,49 @@ namespace InventarioComputo.UI.ViewModels
             }
         }
 
-        private bool CanEditarEliminar() => EstadoSeleccionado != null && !IsBusy;
+        private bool PuedeCrearEditar() => EsAdministrador && !IsBusy;
+
+        private bool CanEditarEliminar() => EsAdministrador && EstadoSeleccionado != null && !IsBusy;
 
         [RelayCommand(CanExecute = nameof(CanEditarEliminar))]
-        private async Task EditarAsync()
+        public async Task EditarAsync()
         {
             if (EstadoSeleccionado == null) return;
-            if (_dialogService.ShowDialog<EstadoEditorViewModel>(vm => vm.SetEstado(EstadoSeleccionado)) == true)
+
+            // Clonar para evitar editar la instancia mostrada en la grilla
+            var copia = new Estado
+            {
+                Id = EstadoSeleccionado.Id,
+                Nombre = EstadoSeleccionado.Nombre,
+                Descripcion = EstadoSeleccionado.Descripcion,
+                ColorHex = EstadoSeleccionado.ColorHex,
+                Activo = EstadoSeleccionado.Activo
+            };
+
+            if (_dialogService.ShowDialog<EstadoEditorViewModel>(vm => vm.SetEstado(copia)) == true)
             {
                 await BuscarAsync();
+            }
+        }
+
+        [RelayCommand]
+        public async Task BuscarAsync()
+        {
+            IsBusy = true;
+            try
+            {
+                Estados.Clear();
+                var lista = await _srv.BuscarAsync(null, MostrarInactivos);
+                foreach (var item in lista) Estados.Add(item);
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError(ex, "Error buscando estados");
+                _dialogService.ShowError("Ocurrió un error al cargar los estados.");
+            }
+            finally
+            {
+                IsBusy = false;
             }
         }
 
@@ -105,5 +124,8 @@ namespace InventarioComputo.UI.ViewModels
                 IsBusy = false;
             }
         }
+
+        [RelayCommand]
+        public async Task LoadedAsync() => await BuscarAsync();
     }
 }

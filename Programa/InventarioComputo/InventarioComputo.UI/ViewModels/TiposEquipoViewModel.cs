@@ -11,12 +11,14 @@ using System.Threading.Tasks;
 
 namespace InventarioComputo.UI.ViewModels
 {
-    public partial class TiposEquipoViewModel : BaseViewModel
+    public partial class TiposEquipoViewModel : BaseViewModel, IDisposable
     {
         private readonly ITipoEquipoService _srv;
         private readonly IDialogService _dialogService;
+        private readonly ISessionService _sessionService;
 
         [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(CrearCommand))]
         [NotifyCanExecuteChangedFor(nameof(EditarCommand))]
         [NotifyCanExecuteChangedFor(nameof(EliminarCommand))]
         private TipoEquipo? _tipoEquipoSeleccionado;
@@ -24,24 +26,44 @@ namespace InventarioComputo.UI.ViewModels
         [ObservableProperty]
         private bool _mostrarInactivos;
 
+        [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(CrearCommand))]
+        [NotifyCanExecuteChangedFor(nameof(EditarCommand))]
+        [NotifyCanExecuteChangedFor(nameof(EliminarCommand))]
+        private bool _esAdministrador;
+
         public ObservableCollection<TipoEquipo> TiposEquipo { get; } = new();
 
-        public TiposEquipoViewModel(ITipoEquipoService srv, IDialogService dialogService, ILogger<TiposEquipoViewModel> log)
+        public TiposEquipoViewModel(
+            ITipoEquipoService srv,
+            IDialogService dialogService,
+            ISessionService sessionService,
+            ILogger<TiposEquipoViewModel> log)
         {
             _srv = srv;
             _dialogService = dialogService;
+            _sessionService = sessionService;
             Logger = log;
+
+            EsAdministrador = _sessionService.TieneRol("Administrador");
+            _sessionService.SesionCambiada += OnSesionCambiada;
+        }
+
+        private void OnSesionCambiada(object? sender, bool estaLogueado)
+        {
+            EsAdministrador = _sessionService.TieneRol("Administrador");
+            ActualizarCanExecute();
         }
 
         partial void OnMostrarInactivosChanged(bool value) => _ = BuscarAsync();
 
         [RelayCommand]
-        private async Task LoadedAsync() => await BuscarAsync();
+        public async Task LoadedAsync() => await BuscarAsync();
 
         [RelayCommand]
         private async Task BuscarAsync()
         {
-            IsBusy = true;
+            SetBusy(true);
             try
             {
                 TiposEquipo.Clear();
@@ -50,16 +72,16 @@ namespace InventarioComputo.UI.ViewModels
             }
             catch (Exception ex)
             {
-                Logger?.LogError(ex, "Error al buscar tipos de equipo.");
+                Logger?.LogError(ex, "Error buscando tipos de equipo");
                 _dialogService.ShowError("Ocurrió un error al cargar los tipos de equipo.");
             }
             finally
             {
-                IsBusy = false;
+                SetBusy(false);
             }
         }
 
-        [RelayCommand]
+        [RelayCommand(CanExecute = nameof(PuedeCrearEditar))]
         private async Task CrearAsync()
         {
             var nuevo = new TipoEquipo { Activo = true };
@@ -69,13 +91,23 @@ namespace InventarioComputo.UI.ViewModels
             }
         }
 
-        private bool CanEditarEliminar() => TipoEquipoSeleccionado != null && !IsBusy;
+        private bool PuedeCrearEditar() => EsAdministrador && !IsBusy;
+
+        private bool CanEditarEliminar() => EsAdministrador && TipoEquipoSeleccionado != null && !IsBusy;
 
         [RelayCommand(CanExecute = nameof(CanEditarEliminar))]
         private async Task EditarAsync()
         {
             if (TipoEquipoSeleccionado == null) return;
-            if (_dialogService.ShowDialog<TipoEquipoEditorViewModel>(vm => vm.SetEntidad(TipoEquipoSeleccionado)) == true)
+
+            var copia = new TipoEquipo
+            {
+                Id = TipoEquipoSeleccionado.Id,
+                Nombre = TipoEquipoSeleccionado.Nombre,
+                Activo = TipoEquipoSeleccionado.Activo
+            };
+
+            if (_dialogService.ShowDialog<TipoEquipoEditorViewModel>(vm => vm.SetEntidad(copia)) == true)
             {
                 await BuscarAsync();
             }
@@ -85,23 +117,41 @@ namespace InventarioComputo.UI.ViewModels
         private async Task EliminarAsync()
         {
             if (TipoEquipoSeleccionado == null) return;
-            if (!_dialogService.Confirm($"¿Está seguro de querer desactivar el tipo de equipo '{TipoEquipoSeleccionado.Nombre}'?", "Confirmar Desactivación")) return;
+            if (!_dialogService.Confirm($"¿Desactivar el tipo de equipo '{TipoEquipoSeleccionado.Nombre}'?", "Confirmar Desactivación")) return;
 
-            IsBusy = true;
+            SetBusy(true);
             try
             {
                 await _srv.EliminarAsync(TipoEquipoSeleccionado.Id);
-                await BuscarAsync(); // Refrescar la lista
+                await BuscarAsync();
             }
             catch (Exception ex)
             {
-                Logger?.LogError(ex, "Error al eliminar tipo de equipo.");
-                _dialogService.ShowError("No se pudo desactivar. Es posible que esté en uso por algún equipo.");
+                Logger?.LogError(ex, "Error al desactivar tipo de equipo");
+                _dialogService.ShowError("No se pudo desactivar el tipo de equipo. Es posible que esté en uso.");
             }
             finally
             {
-                IsBusy = false;
+                SetBusy(false);
             }
+        }
+
+        private void SetBusy(bool value)
+        {
+            IsBusy = value;
+            ActualizarCanExecute();
+        }
+
+        private void ActualizarCanExecute()
+        {
+            CrearCommand?.NotifyCanExecuteChanged();
+            EditarCommand?.NotifyCanExecuteChanged();
+            EliminarCommand?.NotifyCanExecuteChanged();
+        }
+
+        public void Dispose()
+        {
+            _sessionService.SesionCambiada -= OnSesionCambiada;
         }
     }
 }

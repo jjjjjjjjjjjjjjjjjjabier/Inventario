@@ -11,16 +11,16 @@ namespace InventarioComputo.Infrastructure.Repositories
 {
     public class UnidadRepository : IUnidadRepository
     {
-        private readonly InventarioDbContext _ctx;
+        private readonly InventarioDbContext _context;
 
-        public UnidadRepository(InventarioDbContext ctx)
+        public UnidadRepository(InventarioDbContext context)
         {
-            _ctx = ctx;
+            _context = context;
         }
 
-        public async Task<IReadOnlyList<Unidad>> BuscarAsync(string? filtro, bool incluirInactivas, CancellationToken ct)
+        public async Task<IReadOnlyList<Unidad>> BuscarAsync(string? filtro, bool incluirInactivas, CancellationToken ct = default)
         {
-            var query = _ctx.Unidades.AsQueryable();
+            var query = _context.Unidades.AsQueryable();
 
             if (!incluirInactivas)
             {
@@ -29,63 +29,68 @@ namespace InventarioComputo.Infrastructure.Repositories
 
             if (!string.IsNullOrWhiteSpace(filtro))
             {
-                var filtroLower = filtro.ToLower();
-                query = query.Where(u =>
-                    (u.Nombre != null && u.Nombre.ToLower().Contains(filtroLower)) ||
-                    (u.Abreviatura != null && u.Abreviatura.ToLower().Contains(filtroLower))
-                );
+                query = query.Where(u => u.Nombre.Contains(filtro) || u.Abreviatura.Contains(filtro));
             }
 
             return await query.OrderBy(u => u.Nombre).AsNoTracking().ToListAsync(ct);
         }
 
-        public Task<Unidad?> ObtenerPorIdAsync(int id, CancellationToken ct)
+        public Task<Unidad?> ObtenerPorIdAsync(int id, CancellationToken ct = default)
         {
-            return _ctx.Unidades.FindAsync(new object[] { id }, ct).AsTask();
+            return _context.Unidades.FirstOrDefaultAsync(u => u.Id == id, ct);
         }
 
-        public async Task<Unidad> GuardarAsync(Unidad entidad, CancellationToken ct)
+        public async Task<Unidad> GuardarAsync(Unidad entidad, CancellationToken ct = default)
         {
-            if (entidad.Id > 0)
+            if (entidad.Id == 0)
             {
-                _ctx.Entry(entidad).State = EntityState.Modified;
+                await _context.Unidades.AddAsync(entidad, ct);
             }
             else
             {
-                _ctx.Unidades.Add(entidad);
+                var local = _context.Unidades.Local.FirstOrDefault(e => e.Id == entidad.Id);
+                if (local != null)
+                {
+                    _context.Entry(local).State = EntityState.Detached;
+                }
+
+                _context.Attach(entidad);
+                _context.Entry(entidad).State = EntityState.Modified;
             }
-            await _ctx.SaveChangesAsync(ct);
+
+            await _context.SaveChangesAsync(ct);
             return entidad;
         }
 
-        public async Task EliminarAsync(int id, CancellationToken ct)
+        public async Task EliminarAsync(int id, CancellationToken ct = default)
         {
-            var entidad = await _ctx.Unidades.FindAsync(new object[] { id }, ct);
+            var entidad = await _context.Unidades.FindAsync(new object[] { id }, ct);
             if (entidad != null)
             {
-                _ctx.Unidades.Remove(entidad);
-                await _ctx.SaveChangesAsync(ct);
+                entidad.Activo = false;
+                _context.Entry(entidad).State = EntityState.Modified;
+                await _context.SaveChangesAsync(ct);
             }
         }
 
-        public async Task<bool> ExisteNombreAsync(string nombre, int? idExcluir, CancellationToken ct)
+        public Task<bool> ExisteNombreAsync(string nombre, int? idExcluir = null, CancellationToken ct = default)
         {
-            var query = _ctx.Unidades.Where(u => u.Nombre.ToLower() == nombre.ToLower());
+            var query = _context.Unidades.Where(u => u.Nombre.ToLower() == nombre.ToLower());
             if (idExcluir.HasValue)
             {
                 query = query.Where(u => u.Id != idExcluir.Value);
             }
-            return await query.AnyAsync(ct);
+            return query.AsNoTracking().AnyAsync(ct);
         }
 
-        public async Task<bool> ExisteAbreviaturaAsync(string abreviatura, int? idExcluir, CancellationToken ct)
+        public Task<bool> ExisteAbreviaturaAsync(string abreviatura, int? idExcluir = null, CancellationToken ct = default)
         {
-            var query = _ctx.Unidades.Where(u => u.Abreviatura.ToLower() == abreviatura.ToLower());
+            var query = _context.Unidades.Where(u => u.Abreviatura.ToLower() == abreviatura.ToLower());
             if (idExcluir.HasValue)
             {
                 query = query.Where(u => u.Id != idExcluir.Value);
             }
-            return await query.AnyAsync(ct);
+            return query.AsNoTracking().AnyAsync(ct);
         }
     }
 }

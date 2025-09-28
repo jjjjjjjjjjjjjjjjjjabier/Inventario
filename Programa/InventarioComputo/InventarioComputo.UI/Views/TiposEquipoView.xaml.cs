@@ -1,15 +1,23 @@
-﻿using System.Windows.Controls;
+﻿using System;
+using System.Windows;
+using System.Windows.Controls;
+using InventarioComputo.UI.ViewModels;
 
 namespace InventarioComputo.UI.Views
 {
-    /// <summary>
-    /// Lógica de interacción para TiposEquipoView.xaml
-    /// </summary>
     public partial class TiposEquipoView : UserControl
     {
         public TiposEquipoView()
         {
             InitializeComponent();
+        }
+
+        private void UserControl_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is TiposEquipoViewModel viewModel)
+            {
+                viewModel.LoadedCommand.Execute(null);
+            }
         }
     }
 }
