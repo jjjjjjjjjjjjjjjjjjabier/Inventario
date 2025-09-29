@@ -165,15 +165,14 @@ namespace InventarioComputo.UI.ViewModels
         [RelayCommand]
         public async Task GuardarAsync()
         {
-            // Validaciones de campos obligatorios y longitud
             if (string.IsNullOrWhiteSpace(NumeroSerie) || NumeroSerie.Length > 100)
             {
                 _dialogService.ShowError("El número de serie es obligatorio y debe tener menos de 100 caracteres.");
                 return;
             }
-            if (string.IsNullOrWhiteSpace(EtiquetaInventario) || EtiquetaInventario.Length > 50)
+            if (string.IsNullOrWhiteSpace(EtiquetaInventario) || EtiquetaInventario.Length > 100)
             {
-                _dialogService.ShowError("La etiqueta es obligatoria y debe tener menos de 50 caracteres.");
+                _dialogService.ShowError("La etiqueta es obligatoria y debe tener menos de 100 caracteres.");
                 return;
             }
             if (string.IsNullOrWhiteSpace(Marca) || Marca.Length > 100)
@@ -206,17 +205,13 @@ namespace InventarioComputo.UI.ViewModels
                 _dialogService.ShowError("Debe seleccionar un estado.");
                 return;
             }
-            if (ZonaSeleccionada == null)
-            {
-                _dialogService.ShowError("Debe seleccionar una ubicación.");
-                return;
-            }
+            // Ubicación opcional: no forzamos ZonaSeleccionada
 
             try
             {
                 _entidad.TipoEquipoId = TipoEquipoSeleccionado.Id;
                 _entidad.EstadoId = EstadoSeleccionado.Id;
-                _entidad.ZonaId = ZonaSeleccionada.Id;
+                _entidad.ZonaId = ZonaSeleccionada?.Id; // opcional
 
                 if (_entidad.Id == 0)
                     await _equipoSrv.AgregarAsync(_entidad);

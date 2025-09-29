@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace InventarioComputo.UI.ViewModels
 {
-    public partial class EstadosViewModel : BaseViewModel
+    public partial class EstadosViewModel : BaseViewModel, IDisposable
     {
         private readonly IEstadoService _srv;
         private readonly IDialogService _dialogService;
@@ -26,6 +26,9 @@ namespace InventarioComputo.UI.ViewModels
         private bool _mostrarInactivos;
 
         [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(CrearCommand))]
+        [NotifyCanExecuteChangedFor(nameof(EditarCommand))]
+        [NotifyCanExecuteChangedFor(nameof(EliminarCommand))]
         private bool _esAdministrador;
 
         public ObservableCollection<Estado> Estados { get; } = new();
@@ -42,6 +45,20 @@ namespace InventarioComputo.UI.ViewModels
             Logger = log;
 
             EsAdministrador = _sessionService.TieneRol("Administrador");
+            _sessionService.SesionCambiada += OnSesionCambiada;
+        }
+
+        private void OnSesionCambiada(object? sender, bool estaLogueado)
+        {
+            EsAdministrador = _sessionService.TieneRol("Administrador");
+            ActualizarCanExecute();
+        }
+
+        private void ActualizarCanExecute()
+        {
+            CrearCommand?.NotifyCanExecuteChanged();
+            EditarCommand?.NotifyCanExecuteChanged();
+            EliminarCommand?.NotifyCanExecuteChanged();
         }
 
         partial void OnMostrarInactivosChanged(bool value) => _ = BuscarAsync();
@@ -65,7 +82,6 @@ namespace InventarioComputo.UI.ViewModels
         {
             if (EstadoSeleccionado == null) return;
 
-            // Clonar para evitar editar la instancia mostrada en la grilla
             var copia = new Estado
             {
                 Id = EstadoSeleccionado.Id,
@@ -99,6 +115,7 @@ namespace InventarioComputo.UI.ViewModels
             finally
             {
                 IsBusy = false;
+                ActualizarCanExecute();
             }
         }
 
@@ -122,10 +139,16 @@ namespace InventarioComputo.UI.ViewModels
             finally
             {
                 IsBusy = false;
+                ActualizarCanExecute();
             }
         }
 
         [RelayCommand]
         public async Task LoadedAsync() => await BuscarAsync();
+
+        public void Dispose()
+        {
+            _sessionService.SesionCambiada -= OnSesionCambiada;
+        }
     }
 }

@@ -8,6 +8,7 @@ namespace InventarioComputo.Application.Contracts
     public interface IEquipoComputoService
     {
         Task<IReadOnlyList<EquipoComputo>> ObtenerTodosAsync(bool incluirInactivos, CancellationToken ct = default);
+        Task<IReadOnlyList<EquipoComputo>> BuscarAsync(string? filtro, bool incluirInactivos, CancellationToken ct = default);
         Task<EquipoComputo?> ObtenerPorIdAsync(int id, CancellationToken ct = default);
         Task<EquipoComputo> AgregarAsync(EquipoComputo equipo, CancellationToken ct = default);
         Task ActualizarAsync(EquipoComputo equipo, CancellationToken ct = default);

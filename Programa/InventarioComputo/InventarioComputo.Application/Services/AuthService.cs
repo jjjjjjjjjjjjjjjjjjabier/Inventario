@@ -75,7 +75,7 @@ namespace InventarioComputo.Application.Services
             {
                 NombreUsuario = adminUser,
                 NombreCompleto = "Administrador del Sistema",
-                PasswordHash = _passwordHasher.HashPassword("admin123"),
+                PasswordHash = _passwordHasher.HashPassword("admin123"), // contraseña semilla
                 Activo = true
             };
 

@@ -20,10 +20,21 @@ namespace InventarioComputo.Infrastructure.Persistencia
         public DbSet<Rol> Roles { get; set; }
         public DbSet<UsuarioRol> UsuarioRoles { get; set; }
         public DbSet<HistorialMovimiento> HistorialMovimientos { get; set; }
+        public DbSet<BitacoraEvento> BitacoraEventos { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<BitacoraEvento>(entity =>
+            {
+                entity.ToTable("BitacoraEventos");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Fecha).IsRequired();
+                entity.Property(e => e.Entidad).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Accion).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Detalles).HasMaxLength(1000);
+            });
 
             // --- Configuraciones explícitas y completas para cada tabla ---
 
@@ -159,6 +170,50 @@ namespace InventarioComputo.Infrastructure.Persistencia
                     .WithMany()
                     .HasForeignKey(h => h.UsuarioResponsableId)
                     .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            // TipoEquipo: Nombre único y longitud
+            modelBuilder.Entity<TipoEquipo>(entity =>
+            {
+                entity.ToTable("TiposEquipo");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
+                entity.HasIndex(e => e.Nombre).IsUnique();
+                entity.Property(e => e.Activo).IsRequired();
+            });
+
+            // Sede: Nombre único y longitud
+            modelBuilder.Entity<Sede>(entity =>
+            {
+                entity.ToTable("Sedes");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
+                entity.HasIndex(e => e.Nombre).IsUnique();
+                entity.Property(e => e.Activo).IsRequired();
+                entity.HasMany(s => s.Areas).WithOne(a => a.Sede).HasForeignKey(a => a.SedeId);
+            });
+
+            // Area: (SedeId, Nombre) único
+            modelBuilder.Entity<Area>(entity =>
+            {
+                entity.ToTable("Areas");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Activo).IsRequired();
+                entity.HasIndex(e => new { e.SedeId, e.Nombre }).IsUnique();
+                entity.HasOne(a => a.Sede).WithMany(s => s.Areas).HasForeignKey(a => a.SedeId);
+                entity.HasMany(a => a.Zonas).WithOne(z => z.Area).HasForeignKey(z => z.AreaId);
+            });
+
+            // Zona: (AreaId, Nombre) único
+            modelBuilder.Entity<Zona>(entity =>
+            {
+                entity.ToTable("Zonas");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Activo).IsRequired();
+                entity.HasIndex(e => new { e.AreaId, e.Nombre }).IsUnique();
+                entity.HasOne(z => z.Area).WithMany(a => a.Zonas).HasForeignKey(z => z.AreaId);
             });
 
             // Datos iniciales para roles

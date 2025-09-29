@@ -9,10 +9,19 @@
         </Grid.RowDefinitions>
 
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-            <CheckBox Content="Mostrar inactivos" IsChecked="{Binding MostrarInactivos}" Margin="0,0,12,0"/>
             <Button Content="Nuevo" Command="{Binding CrearCommand}" Padding="16,6" Margin="0,0,8,0"/>
             <Button Content="Editar" Command="{Binding EditarCommand}" Padding="16,6" Margin="0,0,8,0"/>
             <Button Content="Desactivar" Command="{Binding EliminarCommand}" Padding="16,6"/>
+        </StackPanel>
+
+        <!-- Barra de búsqueda -->
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+            <TextBox Width="240" Margin="0,0,8,0"
+                     Text="{Binding FiltroTexto, UpdateSourceTrigger=PropertyChanged}"
+                     ToolTip="Buscar por serie, etiqueta, usuario, marca o modelo"/>
+            <Button Content="Buscar" Command="{Binding BuscarCommand}" />
+            <CheckBox Content="Mostrar inactivos" Margin="12,0,0,0"
+                      IsChecked="{Binding MostrarInactivos}"/>
         </StackPanel>
 
         <DataGrid Grid.Row="2" ItemsSource="{Binding Equipos}" AutoGenerateColumns="False"

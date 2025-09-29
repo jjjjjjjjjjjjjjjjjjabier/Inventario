@@ -1,18 +1,19 @@
 using System;
 using System.Security.Cryptography;
-using System.Text;
 using InventarioComputo.Application.Contracts;
 
 namespace InventarioComputo.Infrastructure.Security
 {
-    // Formato del hash: {iteraciones}.{saltBase64}.{hashBase64}
+    // Formatos admitidos:
+    // 1) Nuevo:   {iter}.{saltBase64}.{hashBase64}
+    // 2) Legado:  {hashBase64}:{saltBase64}:{iter}:{algorithm}
     public sealed class PasswordHasher : IPasswordHasher
     {
-        private const int Iterations = 100_000;
+        private const int DefaultIterations = 100_000;
         private const int SaltSize = 16;   // 128-bit
         private const int KeySize  = 32;   // 256-bit
 
-        public string Hash(string password)
+        public string HashPassword(string password)
         {
             if (password is null) throw new ArgumentNullException(nameof(password));
 
@@ -20,45 +21,59 @@ namespace InventarioComputo.Infrastructure.Security
             var salt = new byte[SaltSize];
             rng.GetBytes(salt);
 
-            var hash = Pbkdf2(password, salt, Iterations, KeySize);
-            return $"{Iterations}.{Convert.ToBase64String(salt)}.{Convert.ToBase64String(hash)}";
+            var hash = Pbkdf2(password, salt, DefaultIterations, KeySize, HashAlgorithmName.SHA256);
+            return $"{DefaultIterations}.{Convert.ToBase64String(salt)}.{Convert.ToBase64String(hash)}";
         }
 
-        public bool Verify(string password, string hash)
+        public bool VerifyPassword(string password, string hashString)
         {
             if (password is null) throw new ArgumentNullException(nameof(password));
-            if (string.IsNullOrWhiteSpace(hash)) return false;
+            if (string.IsNullOrWhiteSpace(hashString)) return false;
 
-            var parts = hash.Split('.', 3);
-            if (parts.Length != 3) return false;
+            // Intento con formato nuevo (iter.salt.hash)
+            var dotParts = hashString.Split('.', 3);
+            if (dotParts.Length == 3 &&
+                int.TryParse(dotParts[0], out var iterDot))
+            {
+                try
+                {
+                    var salt = Convert.FromBase64String(dotParts[1]);
+                    var expectedHash = Convert.FromBase64String(dotParts[2]);
+                    var actualHash = Pbkdf2(password, salt, iterDot, expectedHash.Length, HashAlgorithmName.SHA256);
+                    return CryptographicOperations.FixedTimeEquals(actualHash, expectedHash);
+                }
+                catch
+                {
+                    // Si falla el parseo base64, intentamos con el formato legado
+                }
+            }
 
-            if (!int.TryParse(parts[0], out var iterations)) return false;
-            var salt = Convert.FromBase64String(parts[1]);
-            var expectedHash = Convert.FromBase64String(parts[2]);
+            // Intento con formato legado (hash:salt:iter:alg)
+            var colonParts = hashString.Split(':');
+            if (colonParts.Length == 4 &&
+                int.TryParse(colonParts[2], out var iterColon))
+            {
+                try
+                {
+                    var storedHash = Convert.FromBase64String(colonParts[0]);
+                    var salt = Convert.FromBase64String(colonParts[1]);
+                    var algName = new HashAlgorithmName(colonParts[3]);
+                    var actualHash = Pbkdf2(password, salt, iterColon, storedHash.Length, algName);
+                    return CryptographicOperations.FixedTimeEquals(storedHash, actualHash);
+                }
+                catch
+                {
+                    return false;
+                }
+            }
 
-            var actualHash = Pbkdf2(password, salt, iterations, expectedHash.Length);
-            return CryptographicOperations.FixedTimeEquals(actualHash, expectedHash);
+            return false;
         }
 
-        private static byte[] Pbkdf2(string password, byte[] salt, int iterations, int length)
+        private static byte[] Pbkdf2(string password, byte[] salt, int iterations, int length, HashAlgorithmName alg)
         {
-            using var pbkdf2 = new Rfc2898DeriveBytes(
-                password,
-                salt,
-                iterations,
-                HashAlgorithmName.SHA256
-            );
+            using var pbkdf2 = new Rfc2898DeriveBytes(password, salt, iterations, alg);
             return pbkdf2.GetBytes(length);
-        }
-
-        public string HashPassword(string password)
-        {
-            throw new NotImplementedException();
-        }
-
-        public bool VerifyPassword(string hashedPassword, string providedPassword)
-        {
-            throw new NotImplementedException();
         }
     }
 }

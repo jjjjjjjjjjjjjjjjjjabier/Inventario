@@ -38,6 +38,8 @@ namespace InventarioComputo.UI
                 {
                     config.SetBasePath(context.HostingEnvironment.ContentRootPath);
                     config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+                    var env = context.HostingEnvironment.EnvironmentName;
+                    config.AddJsonFile($"appsettings.{env}.json", optional: true, reloadOnChange: true);
                 })
                 .ConfigureServices((hostContext, services) =>
                 {
@@ -75,9 +77,9 @@ namespace InventarioComputo.UI
                     services.AddScoped<ISessionService, SessionService>();
                     services.AddScoped<IUsuarioService, UsuarioService>();
                     services.AddScoped<IReporteService, ReporteService>();
-
-                    // Servicio de Movimientos
                     services.AddScoped<IMovimientoService, MovimientoService>();
+                    services.AddScoped<IRolService, RolService>();
+                    services.AddScoped<IBitacoraService, InventarioComputo.Infrastructure.Services.BitacoraService>();
 
                     // Servicios de la UI
                     services.AddSingleton<DialogService>();
@@ -153,13 +155,11 @@ namespace InventarioComputo.UI
                 try
                 {
                     var resetOnStartup = config.GetValue<bool>("Database:ResetOnStartup");
-                    if (resetOnStartup && env.IsDevelopment())
+                    if (resetOnStartup)
                     {
                         await db.Database.EnsureDeletedAsync();
                     }
-
                     await db.Database.MigrateAsync();
-
                     var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
                     await authService.CrearUsuarioAdministradorSiNoExisteAsync();
                 }
@@ -186,10 +186,49 @@ namespace InventarioComputo.UI
                 {
                     var mainWindow = _host.Services.GetRequiredService<MainWindow>();
                     Current.MainWindow = mainWindow;
+                    Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
                     mainWindow.Show();
 
-                    // Ya tenemos ventana principal visible
-                    Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
+                    // SUSCRIPCIÓN CENTRALIZADA AL LOGOUT
+                    var session = _host.Services.GetRequiredService<ISessionService>();
+                    session.SesionCambiada += (s, loggedIn) =>
+                    {
+                        if (!loggedIn)
+                        {
+                            Dispatcher.Invoke(() =>
+                            {
+                                // Cambiar el ShutdownMode antes de cerrar la ventana principal
+                                Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
+                                // Cerrar ventana principal actual de forma segura
+                                var main = Current.MainWindow;
+                                if (main != null)
+                                {
+                                    // Hide es opcional pero evita parpadeos
+                                    main.Hide();
+                                    main.Close();
+                                }
+
+                                // Mostrar login nuevamente
+                                var vm = _host.Services.GetRequiredService<LoginViewModel>();
+                                var view = new LoginView { DataContext = vm };
+                                var ok = view.ShowDialog();
+
+                                if (vm.LoginExitoso)
+                                {
+                                    var newMain = _host.Services.GetRequiredService<MainWindow>();
+                                    Current.MainWindow = newMain;
+                                    Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
+                                    newMain.Show();
+                                }
+                                else
+                                {
+                                    // No reabrir: cerrar aplicación
+                                    Current.Shutdown();
+                                }
+                            });
+                        }
+                    };
                 }
                 catch (Exception ex)
                 {

@@ -64,9 +64,9 @@ namespace InventarioComputo.UI.ViewModels
         [RelayCommand]
         public async Task GuardarAsync()
         {
-            if (string.IsNullOrWhiteSpace(Nombre) || Nombre.Length > 50)
+            if (string.IsNullOrWhiteSpace(Nombre) || Nombre.Length > 100)
             {
-                _dialogService.ShowError("El nombre es obligatorio y debe tener menos de 50 caracteres.");
+                _dialogService.ShowError("El nombre es obligatorio y debe tener menos de 100 caracteres.");
                 return;
             }
             if (string.IsNullOrWhiteSpace(Abreviatura) || Abreviatura.Length > 10)

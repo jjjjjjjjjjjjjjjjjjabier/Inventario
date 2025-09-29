@@ -3,7 +3,6 @@ using CommunityToolkit.Mvvm.Input;
 using InventarioComputo.Application.Contracts;
 using InventarioComputo.UI.Services;
 using InventarioComputo.UI.ViewModels.Base;
-using Microsoft.Extensions.Logging;
 
 namespace InventarioComputo.UI.ViewModels
 {
@@ -118,16 +117,6 @@ namespace InventarioComputo.UI.ViewModels
         private void CerrarSesion()
         {
             _sessionService.CerrarSesion();
-            
-            // Cerrar la ventana principal
-            var mainWindow = System.Windows.Application.Current.MainWindow;
-            mainWindow.Show();
-            // Mostrar ventana de login
-            var loginView = new Views.LoginView();
-            loginView.Show();
-            
-            // Cerrar la ventana principal
-            mainWindow.Close();
         }
     }
 }

@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace InventarioComputo.UI.ViewModels
 {
-    public partial class UnidadesViewModel : BaseViewModel
+    public partial class UnidadesViewModel : BaseViewModel, IDisposable
     {
         private readonly IUnidadService _srv;
         private readonly IDialogService _dialogService;
@@ -26,6 +26,9 @@ namespace InventarioComputo.UI.ViewModels
         private bool _mostrarInactivos;
 
         [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(CrearCommand))]
+        [NotifyCanExecuteChangedFor(nameof(EditarCommand))]
+        [NotifyCanExecuteChangedFor(nameof(EliminarCommand))]
         private bool _esAdministrador;
 
         public ObservableCollection<Unidad> Unidades { get; } = new();
@@ -42,6 +45,20 @@ namespace InventarioComputo.UI.ViewModels
             Logger = log;
 
             EsAdministrador = _sessionService.TieneRol("Administrador");
+            _sessionService.SesionCambiada += OnSesionCambiada;
+        }
+
+        private void OnSesionCambiada(object? sender, bool estaLogueado)
+        {
+            EsAdministrador = _sessionService.TieneRol("Administrador");
+            ActualizarCanExecute();
+        }
+
+        private void ActualizarCanExecute()
+        {
+            CrearCommand?.NotifyCanExecuteChanged();
+            EditarCommand?.NotifyCanExecuteChanged();
+            EliminarCommand?.NotifyCanExecuteChanged();
         }
 
         partial void OnMostrarInactivosChanged(bool value) => _ = BuscarAsync();
@@ -67,6 +84,7 @@ namespace InventarioComputo.UI.ViewModels
             finally
             {
                 IsBusy = false;
+                ActualizarCanExecute();
             }
         }
 
@@ -123,7 +141,13 @@ namespace InventarioComputo.UI.ViewModels
             finally
             {
                 IsBusy = false;
+                ActualizarCanExecute();
             }
+        }
+
+        public void Dispose()
+        {
+            _sessionService.SesionCambiada -= OnSesionCambiada;
         }
     }
 }

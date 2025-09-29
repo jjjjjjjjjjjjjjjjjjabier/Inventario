@@ -4,11 +4,11 @@ using InventarioComputo.Domain.DTOs;
 using InventarioComputo.Domain.Entities;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
+using QuestPDF.Infrastructure;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -23,187 +23,157 @@ namespace InventarioComputo.Application.Services
             _equipoRepo = equipoRepo;
         }
 
-        public async Task<IReadOnlyList<EquipoComputo>> ObtenerEquiposFiltradosAsync(FiltroReporteDTO filtro, CancellationToken ct = default)
-        {
-            return await _equipoRepo.ObtenerParaReporteAsync(filtro, ct);
-        }
+        public Task<IReadOnlyList<EquipoComputo>> ObtenerEquiposFiltradosAsync(FiltroReporteDTO filtro, CancellationToken ct = default)
+            => _equipoRepo.ObtenerParaReporteAsync(filtro, ct);
 
         public async Task<byte[]> ExportarExcelAsync(IReadOnlyList<ReporteEquipoDTO> datos, CancellationToken ct = default)
         {
-            // Configurar licencia de EPPlus
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
-            using (var package = new ExcelPackage())
+            using var package = new ExcelPackage();
+            var ws = package.Workbook.Worksheets.Add("Inventario Equipos");
+
+            // Encabezados
+            ws.Cells[1, 1].Value = "Etiqueta";
+            ws.Cells[1, 2].Value = "Número de Serie";
+            ws.Cells[1, 3].Value = "Marca";
+            ws.Cells[1, 4].Value = "Modelo";
+            ws.Cells[1, 5].Value = "Tipo";
+            ws.Cells[1, 6].Value = "Estado";
+            ws.Cells[1, 7].Value = "Ubicación";
+            ws.Cells[1, 8].Value = "Usuario Asignado";
+            ws.Cells[1, 9].Value = "Fecha Adquisición";
+            ws.Cells[1, 10].Value = "Activo";
+
+            using (var header = ws.Cells[1, 1, 1, 10])
             {
-                var worksheet = package.Workbook.Worksheets.Add("Inventario Equipos");
+                header.Style.Font.Bold = true;
+                header.Style.Fill.PatternType = ExcelFillStyle.Solid;
+                header.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                header.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+            }
 
-                // Encabezados
-                worksheet.Cells[1, 1].Value = "Etiqueta";
-                worksheet.Cells[1, 2].Value = "Número Serie";
-                worksheet.Cells[1, 3].Value = "Marca";
-                worksheet.Cells[1, 4].Value = "Modelo";
-                worksheet.Cells[1, 5].Value = "Tipo";
-                worksheet.Cells[1, 6].Value = "Estado";
-                worksheet.Cells[1, 7].Value = "Ubicación";
-                worksheet.Cells[1, 8].Value = "Usuario Asignado";
-                worksheet.Cells[1, 9].Value = "Fecha Adquisición";
-                worksheet.Cells[1, 10].Value = "Activo";
+            // Datos
+            for (int i = 0; i < datos.Count; i++)
+            {
+                var r = i + 2;
+                var e = datos[i];
 
-                // Formatear encabezados
-                using (var headerRange = worksheet.Cells[1, 1, 1, 10])
+                ws.Cells[r, 1].Value = e.EtiquetaInventario;
+                ws.Cells[r, 2].Value = e.NumeroSerie;
+                ws.Cells[r, 3].Value = e.Marca;
+                ws.Cells[r, 4].Value = e.Modelo;
+                ws.Cells[r, 5].Value = e.TipoEquipo;
+                ws.Cells[r, 6].Value = e.Estado;
+                ws.Cells[r, 7].Value = e.Ubicacion;
+                ws.Cells[r, 8].Value = e.UsuarioAsignado;
+
+                if (e.FechaAdquisicion.HasValue)
                 {
-                    headerRange.Style.Font.Bold = true;
-                    headerRange.Style.Fill.PatternType = ExcelFillStyle.Solid;
-                    headerRange.Style.Fill.BackgroundColor.SetColor(Color.LightGray);
-                    headerRange.Style.Border.Bottom.Style = ExcelBorderStyle.Thin;
+                    ws.Cells[r, 9].Value = e.FechaAdquisicion.Value;
+                    ws.Cells[r, 9].Style.Numberformat.Format = "dd/mm/yyyy";
                 }
 
-                // Datos
-                for (int i = 0; i < datos.Count; i++)
+                ws.Cells[r, 10].Value = e.Activo ? "Sí" : "No";
+            }
+
+            ws.Cells.AutoFitColumns();
+            ws.Cells[1, 1, datos.Count + 1, 10].AutoFilter = true;
+
+            return await package.GetAsByteArrayAsync(ct);
+        }
+
+        public Task<byte[]> ExportarPDFAsync(IReadOnlyList<ReporteEquipoDTO> datos, CancellationToken ct = default)
+        {
+            if (datos == null) throw new ArgumentNullException(nameof(datos));
+
+            QuestPDF.Settings.License = LicenseType.Community;
+
+            var document = Document.Create(container =>
+            {
+                container.Page(page =>
                 {
-                    var equipo = datos[i];
-                    int row = i + 2;
+                    page.Size(PageSizes.A4.Landscape());
+                    page.Margin(20);
 
-                    worksheet.Cells[row, 1].Value = equipo.EtiquetaInventario;
-                    worksheet.Cells[row, 2].Value = equipo.NumeroSerie;
-                    worksheet.Cells[row, 3].Value = equipo.Marca;
-                    worksheet.Cells[row, 4].Value = equipo.Modelo;
-                    worksheet.Cells[row, 5].Value = equipo.TipoEquipo;
-                    worksheet.Cells[row, 6].Value = equipo.Estado;
-                    worksheet.Cells[row, 7].Value = equipo.Ubicacion;
-                    worksheet.Cells[row, 8].Value = equipo.UsuarioAsignado;
-
-                    if (equipo.FechaAdquisicion.HasValue)
+                    page.Header().Row(row =>
                     {
-                        worksheet.Cells[row, 9].Value = equipo.FechaAdquisicion.Value;
-                        worksheet.Cells[row, 9].Style.Numberformat.Format = "dd/mm/yyyy";
-                    }
+                        row.RelativeItem().Text("Inventario de Equipos - Henniges Automotive Planta 1")
+                            .SemiBold().FontSize(13);
 
-                    worksheet.Cells[row, 10].Value = equipo.Activo ? "Sí" : "No";
-                }
+                        row.ConstantItem(120).AlignRight().Text(txt =>
+                        {
+                            txt.DefaultTextStyle(TextStyle.Default.FontSize(9));
+                            txt.Span("Generado: ").SemiBold();
+                            txt.Span(DateTime.Now.ToString("yyyy-MM-dd HH:mm"));
+                        });
+                    });
 
-                // Autoajustar columnas
-                worksheet.Cells.AutoFitColumns();
+                    page.Content().PaddingTop(8).Table(table =>
+                    {
+                        table.ColumnsDefinition(columns =>
+                        {
+                            columns.ConstantColumn(90);   // Serie
+                            columns.ConstantColumn(90);   // Etiqueta
+                            columns.RelativeColumn(1);    // Marca
+                            columns.RelativeColumn(1);    // Modelo
+                            columns.RelativeColumn(1);    // Tipo
+                            columns.RelativeColumn(1);    // Estado
+                            columns.RelativeColumn(1.2f); // Usuario
+                            columns.RelativeColumn(1.6f); // Ubicación
+                        });
 
-                // Configurar filtros automáticos
-                var dataRange = worksheet.Cells[1, 1, datos.Count + 1, 10];
-                dataRange.AutoFilter = true;
+                        table.Header(h =>
+                        {
+                            h.Cell().Background(Colors.Grey.Lighten2).Padding(4).Text("Serie").SemiBold().FontSize(9);
+                            h.Cell().Background(Colors.Grey.Lighten2).Padding(4).Text("Etiqueta").SemiBold().FontSize(9);
+                            h.Cell().Background(Colors.Grey.Lighten2).Padding(4).Text("Marca").SemiBold().FontSize(9);
+                            h.Cell().Background(Colors.Grey.Lighten2).Padding(4).Text("Modelo").SemiBold().FontSize(9);
+                            h.Cell().Background(Colors.Grey.Lighten2).Padding(4).Text("Tipo").SemiBold().FontSize(9);
+                            h.Cell().Background(Colors.Grey.Lighten2).Padding(4).Text("Estado").SemiBold().FontSize(9);
+                            h.Cell().Background(Colors.Grey.Lighten2).Padding(4).Text("Usuario").SemiBold().FontSize(9);
+                            h.Cell().Background(Colors.Grey.Lighten2).Padding(4).Text("Ubicación").SemiBold().FontSize(9);
+                        });
 
-                // Devolver el archivo como array de bytes
-                return await package.GetAsByteArrayAsync(ct);
-            }
-        }
+                        var zebra = false;
+                        foreach (var e in datos)
+                        {
+                            var bg = zebra ? Colors.Grey.Lighten4 : Colors.White;
+                            zebra = !zebra;
 
-        public async Task<byte[]> ExportarPDFAsync(IReadOnlyList<ReporteEquipoDTO> datos, CancellationToken ct = default)
-        {
-            // Este método requeriría una librería como iText7 o QuestPDF para implementarse correctamente
-            // Por ahora, implementamos una versión simple generando HTML y convirtiéndolo a PDF con una librería externa
-            // o usando una herramienta de terceros.
+                            table.Cell().Background(bg).Padding(3).Text(e.NumeroSerie ?? "").FontSize(9);
+                            table.Cell().Background(bg).Padding(3).Text(e.EtiquetaInventario ?? "").FontSize(9);
+                            table.Cell().Background(bg).Padding(3).Text(e.Marca ?? "").FontSize(9);
+                            table.Cell().Background(bg).Padding(3).Text(e.Modelo ?? "").FontSize(9);
+                            table.Cell().Background(bg).Padding(3).Text(e.TipoEquipo ?? "").FontSize(9);
+                            table.Cell().Background(bg).Padding(3).Text(e.Estado ?? "").FontSize(9);
 
-            // Nota: Este es un ejemplo simplificado, necesitarías instalar una librería para PDF
-            string html = GenerarHTMLReporte(datos);
+                            var usuario = e.UsuarioAsignado ?? e.Usuario ?? "";
+                            table.Cell().Background(bg).Padding(3).Text(usuario).FontSize(9);
 
-            // Convertir HTML a PDF (usando alguna biblioteca como SelectPdf, DinkToPdf, etc.)
-            // Por el momento, retornamos una representación del HTML como bytes
-            return System.Text.Encoding.UTF8.GetBytes(html);
-        }
+                            var ubic = !string.IsNullOrWhiteSpace(e.Ubicacion)
+                                ? e.Ubicacion
+                                : string.Join(" / ", new[] { e.Sede, e.Area, e.Zona });
+                            table.Cell().Background(bg).Padding(3).Text(ubic).FontSize(9);
+                        }
 
-        private string GenerarHTMLReporte(IReadOnlyList<ReporteEquipoDTO> datos)
-        {
-            var html = new System.Text.StringBuilder();
-            html.Append("<html><head>");
-            html.Append("<style>");
-            html.Append("body { font-family: Arial, sans-serif; }");
-            html.Append("table { width: 100%; border-collapse: collapse; }");
-            html.Append("th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }");
-            html.Append("th { background-color: #f2f2f2; }");
-            html.Append("</style>");
-            html.Append("</head><body>");
-            html.Append("<h1>Reporte de Equipos</h1>");
-            html.Append("<table>");
-            html.Append("<tr><th>Etiqueta</th><th>Número Serie</th><th>Marca</th><th>Modelo</th><th>Tipo</th>");
-            html.Append("<th>Estado</th><th>Ubicación</th><th>Usuario</th><th>F. Adquisición</th><th>Activo</th></tr>");
+                        table.Cell().ColumnSpan(8).PaddingTop(6).AlignRight()
+                             .Text($"Total: {datos.Count} equipos").SemiBold().FontSize(9);
+                    });
 
-            foreach (var equipo in datos)
-            {
-                html.Append("<tr>");
-                html.AppendFormat("<td>{0}</td>", equipo.EtiquetaInventario);
-                html.AppendFormat("<td>{0}</td>", equipo.NumeroSerie);
-                html.AppendFormat("<td>{0}</td>", equipo.Marca);
-                html.AppendFormat("<td>{0}</td>", equipo.Modelo);
-                html.AppendFormat("<td>{0}</td>", equipo.TipoEquipo);
-                html.AppendFormat("<td>{0}</td>", equipo.Estado);
-                html.AppendFormat("<td>{0}</td>", equipo.Ubicacion);
-                html.AppendFormat("<td>{0}</td>", equipo.UsuarioAsignado);
-                html.AppendFormat("<td>{0}</td>", equipo.FechaAdquisicion?.ToString("dd/MM/yyyy") ?? "");
-                html.AppendFormat("<td>{0}</td>", equipo.Activo ? "Sí" : "No");
-                html.Append("</tr>");
-            }
+                    page.Footer().AlignRight().Text(x =>
+                    {
+                        x.DefaultTextStyle(TextStyle.Default.FontSize(9));
+                        x.Span("Página ");
+                        x.CurrentPageNumber();
+                        x.Span(" de ");
+                        x.TotalPages();
+                    });
+                });
+            });
 
-            html.Append("</table>");
-            html.Append("</body></html>");
-            return html.ToString();
-        }
-
-        public async Task<byte[]> GenerarHojaAsignacionPDFAsync(int equipoId, CancellationToken ct = default)
-        {
-            // Este método implementaría la generación de una hoja de asignación para un equipo específico
-            // Similar a ExportarPDFAsync, pero con formato de hoja de asignación
-            
-            // Obtener datos del equipo
-            var equipo = await _equipoRepo.ObtenerPorIdAsync(equipoId, ct);
-            if (equipo == null)
-                throw new ArgumentException("Equipo no encontrado");
-
-            // Generar HTML
-            string html = GenerarHTMLHojaAsignacion(equipo);
-
-            // Convertir HTML a PDF
-            return System.Text.Encoding.UTF8.GetBytes(html);
-        }
-
-        private string GenerarHTMLHojaAsignacion(EquipoComputo equipo)
-        {
-            var html = new System.Text.StringBuilder();
-            html.Append("<html><head>");
-            html.Append("<style>");
-            html.Append("body { font-family: Arial, sans-serif; }");
-            html.Append("table { width: 100%; border-collapse: collapse; }");
-            html.Append("th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }");
-            html.Append("th { background-color: #f2f2f2; }");
-            html.Append(".header { text-align: center; margin-bottom: 20px; }");
-            html.Append(".firma { margin-top: 50px; border-top: 1px solid black; width: 200px; text-align: center; }");
-            html.Append("</style>");
-            html.Append("</head><body>");
-            html.Append("<div class='header'><h1>Hoja de Asignación de Equipo</h1></div>");
-            
-            html.Append("<h2>Datos del Equipo</h2>");
-            html.Append("<table>");
-            html.AppendFormat("<tr><th>Etiqueta</th><td>{0}</td></tr>", equipo.EtiquetaInventario);
-            html.AppendFormat("<tr><th>Número Serie</th><td>{0}</td></tr>", equipo.NumeroSerie);
-            html.AppendFormat("<tr><th>Tipo</th><td>{0}</td></tr>", equipo.TipoEquipo?.Nombre ?? "");
-            html.AppendFormat("<tr><th>Marca</th><td>{0}</td></tr>", equipo.Marca);
-            html.AppendFormat("<tr><th>Modelo</th><td>{0}</td></tr>", equipo.Modelo);
-            html.AppendFormat("<tr><th>Estado</th><td>{0}</td></tr>", equipo.Estado?.Nombre ?? "");
-            html.AppendFormat("<tr><th>Características</th><td>{0}</td></tr>", equipo.Caracteristicas);
-            html.Append("</table>");
-            
-            html.Append("<h2>Ubicación</h2>");
-            html.Append("<table>");
-            html.AppendFormat("<tr><th>Sede</th><td>{0}</td></tr>", equipo.Zona?.Area?.Sede?.Nombre ?? "");
-            html.AppendFormat("<tr><th>Área</th><td>{0}</td></tr>", equipo.Zona?.Area?.Nombre ?? "");
-            html.AppendFormat("<tr><th>Zona</th><td>{0}</td></tr>", equipo.Zona?.Nombre ?? "");
-            html.Append("</table>");
-            
-            html.Append("<h2>Usuario Asignado</h2>");
-            html.Append("<table>");
-            html.AppendFormat("<tr><th>Nombre</th><td>{0}</td></tr>", equipo.Usuario?.NombreCompleto ?? "");
-            html.Append("</table>");
-            
-            html.Append("<div class='firma'>Firma de Recibido</div>");
-            
-            html.Append("</body></html>");
-            return html.ToString();
+            var bytes = document.GeneratePdf();
+            return Task.FromResult(bytes);
         }
     }
 }
