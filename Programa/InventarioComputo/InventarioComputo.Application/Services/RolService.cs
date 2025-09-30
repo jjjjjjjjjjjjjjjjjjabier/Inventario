@@ -12,8 +12,11 @@ namespace InventarioComputo.Application.Services
         private readonly IRolRepository _repo;
         public RolService(IRolRepository repo) => _repo = repo;
 
-        public Task<IReadOnlyList<Rol>> ObtenerTodosAsync(CancellationToken ct = default)
+        public Task<IReadOnlyList<Rol>> ObtenerTodosAsync(bool incluirInactivos = false, CancellationToken ct = default)
             => _repo.ObtenerTodosAsync(ct);
+
+        public Task<Rol?> ObtenerPorNombreAsync(string nombre, CancellationToken ct = default)
+            => _repo.ObtenerPorNombreAsync(nombre, ct);
 
         public Task<Rol?> ObtenerPorIdAsync(int id, CancellationToken ct = default)
             => _repo.ObtenerPorIdAsync(id, ct);

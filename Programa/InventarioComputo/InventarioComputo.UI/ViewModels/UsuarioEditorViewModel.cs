@@ -83,7 +83,7 @@ namespace InventarioComputo.UI.ViewModels
             {
                 Roles.Clear();
 
-                var rolesDisponibles = await _rolSrv.ObtenerTodosAsync(ct);
+                var rolesDisponibles = await _rolSrv.ObtenerTodosAsync(true, ct);
                 var rolesUsuario = _entidad.Id > 0
                     ? await _srv.ObtenerRolesDeUsuarioAsync(_entidad.Id, ct)
                     : Array.Empty<Rol>();

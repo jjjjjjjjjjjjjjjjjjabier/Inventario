@@ -88,92 +88,86 @@ namespace InventarioComputo.Application.Services
             if (datos == null) throw new ArgumentNullException(nameof(datos));
 
             QuestPDF.Settings.License = LicenseType.Community;
+            var now = DateTime.Now;
 
-            var document = Document.Create(container =>
+            var pdfBytes = Document.Create(container =>
             {
                 container.Page(page =>
                 {
                     page.Size(PageSizes.A4.Landscape());
                     page.Margin(20);
+                    page.DefaultTextStyle(x => x.FontSize(10));
 
                     page.Header().Row(row =>
                     {
-                        row.RelativeItem().Text("Inventario de Equipos - Henniges Automotive Planta 1")
-                            .SemiBold().FontSize(13);
-
-                        row.ConstantItem(120).AlignRight().Text(txt =>
-                        {
-                            txt.DefaultTextStyle(TextStyle.Default.FontSize(9));
-                            txt.Span("Generado: ").SemiBold();
-                            txt.Span(DateTime.Now.ToString("yyyy-MM-dd HH:mm"));
-                        });
+                        row.RelativeItem().Text("Inventario de Equipos de Cómputo").SemiBold().FontSize(16);
+                        row.ConstantItem(200).AlignRight().Text($"Fecha: {now:dd/MM/yyyy HH:mm}");
                     });
 
-                    page.Content().PaddingTop(8).Table(table =>
+                    page.Content().Table(table =>
                     {
                         table.ColumnsDefinition(columns =>
                         {
-                            columns.ConstantColumn(90);   // Serie
-                            columns.ConstantColumn(90);   // Etiqueta
-                            columns.RelativeColumn(1);    // Marca
-                            columns.RelativeColumn(1);    // Modelo
-                            columns.RelativeColumn(1);    // Tipo
-                            columns.RelativeColumn(1);    // Estado
-                            columns.RelativeColumn(1.2f); // Usuario
-                            columns.RelativeColumn(1.6f); // Ubicación
+                            columns.RelativeColumn(2);  // Etiqueta
+                            columns.RelativeColumn(2);  // Núm. Serie
+                            columns.RelativeColumn(2);  // Marca
+                            columns.RelativeColumn(2);  // Modelo
+                            columns.RelativeColumn(2);  // Tipo
+                            columns.RelativeColumn(2);  // Estado
+                            columns.RelativeColumn(3);  // Usuario
+                            columns.RelativeColumn(4);  // Ubicación
+                            columns.RelativeColumn(2);  // Fecha Adq.
+                            columns.RelativeColumn(1);  // Activo
                         });
 
-                        table.Header(h =>
-                        {
-                            h.Cell().Background(Colors.Grey.Lighten2).Padding(4).Text("Serie").SemiBold().FontSize(9);
-                            h.Cell().Background(Colors.Grey.Lighten2).Padding(4).Text("Etiqueta").SemiBold().FontSize(9);
-                            h.Cell().Background(Colors.Grey.Lighten2).Padding(4).Text("Marca").SemiBold().FontSize(9);
-                            h.Cell().Background(Colors.Grey.Lighten2).Padding(4).Text("Modelo").SemiBold().FontSize(9);
-                            h.Cell().Background(Colors.Grey.Lighten2).Padding(4).Text("Tipo").SemiBold().FontSize(9);
-                            h.Cell().Background(Colors.Grey.Lighten2).Padding(4).Text("Estado").SemiBold().FontSize(9);
-                            h.Cell().Background(Colors.Grey.Lighten2).Padding(4).Text("Usuario").SemiBold().FontSize(9);
-                            h.Cell().Background(Colors.Grey.Lighten2).Padding(4).Text("Ubicación").SemiBold().FontSize(9);
-                        });
+                        void Header(string t) => table.Cell().Element(h => h
+                            .PaddingVertical(4).PaddingHorizontal(3)
+                            .Background(Colors.Grey.Lighten3)
+                            .Border(1).BorderColor(Colors.Grey.Lighten2))
+                            .Text(t).SemiBold();
 
-                        var zebra = false;
+                        Header("Etiqueta");
+                        Header("Núm. Serie");
+                        Header("Marca");
+                        Header("Modelo");
+                        Header("Tipo");
+                        Header("Estado");
+                        Header("Usuario");
+                        Header("Ubicación");
+                        Header("Fecha Adq.");
+                        Header("Activo");
+
                         foreach (var e in datos)
                         {
-                            var bg = zebra ? Colors.Grey.Lighten4 : Colors.White;
-                            zebra = !zebra;
-
-                            table.Cell().Background(bg).Padding(3).Text(e.NumeroSerie ?? "").FontSize(9);
-                            table.Cell().Background(bg).Padding(3).Text(e.EtiquetaInventario ?? "").FontSize(9);
-                            table.Cell().Background(bg).Padding(3).Text(e.Marca ?? "").FontSize(9);
-                            table.Cell().Background(bg).Padding(3).Text(e.Modelo ?? "").FontSize(9);
-                            table.Cell().Background(bg).Padding(3).Text(e.TipoEquipo ?? "").FontSize(9);
-                            table.Cell().Background(bg).Padding(3).Text(e.Estado ?? "").FontSize(9);
-
-                            var usuario = e.UsuarioAsignado ?? e.Usuario ?? "";
-                            table.Cell().Background(bg).Padding(3).Text(usuario).FontSize(9);
-
-                            var ubic = !string.IsNullOrWhiteSpace(e.Ubicacion)
-                                ? e.Ubicacion
-                                : string.Join(" / ", new[] { e.Sede, e.Area, e.Zona });
-                            table.Cell().Background(bg).Padding(3).Text(ubic).FontSize(9);
+                            Cell(e.EtiquetaInventario);
+                            Cell(e.NumeroSerie);
+                            Cell(e.Marca);
+                            Cell(e.Modelo);
+                            Cell(e.TipoEquipo);
+                            Cell(e.Estado);
+                            Cell(e.UsuarioAsignado ?? "-");
+                            Cell(string.IsNullOrWhiteSpace(e.Ubicacion) ? "-" : e.Ubicacion);
+                            Cell(e.FechaAdquisicion?.ToString("dd/MM/yyyy") ?? "-");
+                            Cell(e.Activo ? "Sí" : "No");
                         }
 
-                        table.Cell().ColumnSpan(8).PaddingTop(6).AlignRight()
-                             .Text($"Total: {datos.Count} equipos").SemiBold().FontSize(9);
+                        void Cell(string? t) => table.Cell().Element(b => b
+                            .PaddingVertical(2).PaddingHorizontal(3)
+                            .BorderBottom(1).BorderColor(Colors.Grey.Lighten3))
+                            .Text(t ?? string.Empty);
                     });
 
                     page.Footer().AlignRight().Text(x =>
                     {
-                        x.DefaultTextStyle(TextStyle.Default.FontSize(9));
                         x.Span("Página ");
                         x.CurrentPageNumber();
                         x.Span(" de ");
                         x.TotalPages();
                     });
                 });
-            });
+            }).GeneratePdf();
 
-            var bytes = document.GeneratePdf();
-            return Task.FromResult(bytes);
+            return Task.FromResult(pdfBytes);
         }
     }
 }

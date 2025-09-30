@@ -5,54 +5,137 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:InventarioComputo.UI.Views"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800"
+             d:DesignHeight="600" d:DesignWidth="800"
              Loaded="UserControl_Loaded">
 
     <UserControl.Resources>
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <Style x:Key="ActionButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#0078D7"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="15,5"/>
+            <Setter Property="MinWidth" Value="80"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}"
+                                CornerRadius="20">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#0063B1"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Background" Value="#CCCCCC"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SecondaryButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#EFEFEF"/>
+            <Setter Property="Foreground" Value="#333333"/>
+            <Setter Property="Padding" Value="15,5"/>
+            <Setter Property="MinWidth" Value="80"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}"
+                                CornerRadius="20">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#DDDDDD"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
 
-    <Grid Margin="10">
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Panel superior: Filtros y acciones -->
-        <Grid Grid.Row="0" Margin="0,0,0,10">
+        <!-- Header -->
+        <TextBlock Grid.Row="0" 
+                   Text="Tipos de Equipo"
+                   FontSize="24" 
+                   FontWeight="Bold"
+                   Margin="0,0,0,20"
+                   Foreground="#2C3E50"/>
+
+        <!-- Toolbar -->
+        <Grid Grid.Row="1" Margin="0,0,0,10">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Filtros -->
-            <StackPanel Grid.Column="0" Orientation="Horizontal">
-                <CheckBox Content="Mostrar inactivos" IsChecked="{Binding MostrarInactivos}" VerticalAlignment="Center"/>
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                <CheckBox Content="Mostrar inactivos" 
+                          IsChecked="{Binding MostrarInactivos}"
+                          VerticalAlignment="Center"/>
             </StackPanel>
 
-            <!-- Botones de acción (solo para administradores) -->
-            <StackPanel Grid.Column="2" Orientation="Horizontal" 
-                      Visibility="{Binding EsAdministrador, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <Button Content="Nuevo" Command="{Binding CrearCommand}" Padding="10,5" Margin="0,0,5,0"/>
-                <Button Content="Editar" Command="{Binding EditarCommand}" Padding="10,5" Margin="0,0,5,0"/>
-                <Button Content="Desactivar" Command="{Binding EliminarCommand}" Padding="10,5"/>
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Content="Nuevo" 
+                        Style="{StaticResource ActionButtonStyle}"
+                        Command="{Binding CrearCommand}"
+                        Margin="5,0"/>
+
+                <Button Content="Editar" 
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Command="{Binding EditarCommand}"
+                        Margin="5,0"/>
+
+                <Button Content="Desactivar" 
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Command="{Binding EliminarCommand}"
+                        Margin="5,0"/>
             </StackPanel>
         </Grid>
 
-        <!-- Lista de tipos de equipo -->
-        <DataGrid Grid.Row="1" 
-                  ItemsSource="{Binding TiposEquipo}" 
+        <!-- DataGrid -->
+        <DataGrid Grid.Row="2" 
+                  ItemsSource="{Binding TiposEquipo}"
                   SelectedItem="{Binding TipoEquipoSeleccionado}"
-                  AutoGenerateColumns="False" 
-                  IsReadOnly="True"
-                  SelectionMode="Single"
-                  HorizontalGridLinesBrush="#EEEEEE"
-                  VerticalGridLinesBrush="#EEEEEE">
+                  Margin="0,10,0,0">
             <DataGrid.Columns>
+                <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="80"/>
                 <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" Width="*"/>
-                <DataGridCheckBoxColumn Header="Activo" Binding="{Binding Activo}" Width="80"/>
+                <DataGridTextColumn Header="Estado" Binding="{Binding Activo, Converter={StaticResource BoolToStringConverter}}" Width="100"/>
             </DataGrid.Columns>
         </DataGrid>
+
+        <!-- Loading indicator -->
+        <Grid Grid.Row="0" Grid.RowSpan="4" Background="#80FFFFFF"
+              Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                <TextBlock Text="Cargando..." 
+                           FontSize="16"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,10"/>
+                <ProgressBar IsIndeterminate="True" 
+                             Width="200" 
+                             Height="10"/>
+            </StackPanel>
+        </Grid>
     </Grid>
 </UserControl>

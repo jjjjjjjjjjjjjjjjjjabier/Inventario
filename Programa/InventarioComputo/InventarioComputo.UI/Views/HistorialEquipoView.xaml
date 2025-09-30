@@ -4,42 +4,111 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="{Binding Titulo}" 
-        Width="800" Height="450"
-        WindowStartupLocation="CenterOwner">
-    <Grid Margin="15">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+        Title="Historial del Equipo"
+        Height="500" Width="700"
+        WindowStartupLocation="CenterOwner"
+        Background="White">
 
-        <!-- Informaci&#243;n del Equipo -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,10">
-            <TextBlock Text="{Binding EquipoInfo}" FontWeight="Bold" FontSize="14" Margin="0,0,0,5"/>
-            <TextBlock Text="{Binding DetalleEquipo}" TextWrapping="Wrap"/>
-        </StackPanel>
+    <Border Padding="20">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
-        <!-- Lista de Movimientos -->
-        <DataGrid Grid.Row="1" 
-                  ItemsSource="{Binding Movimientos}" 
-                  AutoGenerateColumns="False"
-                  CanUserAddRows="False"
-                  IsReadOnly="True"
-                  AlternatingRowBackground="#F5F5F5"
-                  Margin="0,0,0,10">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Fecha" Binding="{Binding FechaMovimiento, StringFormat={}{0:dd/MM/yyyy HH:mm}}" Width="130"/>
-                <DataGridTextColumn Header="Usuario Anterior" Binding="{Binding UsuarioAnterior.NombreCompleto, TargetNullValue='(Sin asignar)'}" Width="150"/>
-                <DataGridTextColumn Header="Usuario Nuevo" Binding="{Binding UsuarioNuevo.NombreCompleto, TargetNullValue='(Sin asignar)'}" Width="150"/>
-                <DataGridTextColumn Header="Ubicaci&#243;n Anterior" Binding="{Binding ZonaAnterior.Nombre, TargetNullValue='(Sin ubicaci&#243;n)'}" Width="150"/>
-                <DataGridTextColumn Header="Ubicaci&#243;n Nueva" Binding="{Binding ZonaNueva.Nombre, TargetNullValue='(Sin ubicaci&#243;n)'}" Width="150"/>
-                <DataGridTextColumn Header="Motivo" Binding="{Binding Motivo}" Width="*"/>
-                <DataGridTextColumn Header="Registrado Por" Binding="{Binding UsuarioResponsable.NombreCompleto}" Width="150"/>
-            </DataGrid.Columns>
-        </DataGrid>
+            <!-- Header -->
+            <TextBlock Grid.Row="0" 
+                       Text="Historial de Movimientos"
+                       FontSize="20" 
+                       FontWeight="Bold"
+                       Margin="0,0,0,10"
+                       Foreground="#2C3E50"/>
 
-        <Button Grid.Row="2" Content="Cerrar" Command="{Binding CloseCommand}"
-                HorizontalAlignment="Right" Width="100" Height="30"/>
-    </Grid>
+            <!-- Informacion del Equipo -->
+            <Border Grid.Row="1" 
+                    Background="#F5F5F5" 
+                    BorderBrush="#DDDDDD" 
+                    BorderThickness="1"
+                    Padding="15" 
+                    Margin="0,0,0,15"
+                    CornerRadius="4">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Grid.Column="0">
+                        <TextBlock Text="Etiqueta:" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding Equipo.EtiquetaInventario}" Margin="0,0,0,5"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="0" Grid.Column="1">
+                        <TextBlock Text="Numero de Serie:" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding Equipo.NumeroSerie}" Margin="0,0,0,5"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="1" Grid.Column="0">
+                        <TextBlock Text="Tipo:" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding Equipo.TipoEquipo.Nombre}" Margin="0,0,0,5"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="1" Grid.Column="1">
+                        <TextBlock Text="Estado Actual:" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding Equipo.Estado.Nombre}" Margin="0,0,0,5"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Historial -->
+            <DataGrid Grid.Row="2" 
+                      ItemsSource="{Binding Movimientos}"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Fecha" 
+                                        Binding="{Binding FechaMovimiento, StringFormat=dd/MM/yyyy HH:mm}" 
+                                        Width="150"/>
+                    <DataGridTextColumn Header="Tipo de Movimiento" 
+                                        Binding="{Binding TipoMovimiento}" 
+                                        Width="150"/>
+                    <DataGridTextColumn Header="Usuario" 
+                                        Binding="{Binding UsuarioResponsable.NombreCompleto}" 
+                                        Width="150"/>
+                    <DataGridTextColumn Header="Descripcion" 
+                                        Binding="{Binding Descripcion}" 
+                                        Width="*"/>
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <!-- Boton Cerrar -->
+            <Button Grid.Row="3" 
+                    Content="Cerrar" 
+                    Command="{Binding CerrarCommand}"
+                    Style="{StaticResource ActionButtonStyle}"
+                    HorizontalAlignment="Right"
+                    Margin="0,15,0,0"/>
+
+            <!-- Loading indicator -->
+            <Grid Grid.Row="0" Grid.RowSpan="4" 
+                  Background="#80FFFFFF"
+                  Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <TextBlock Text="Cargando..." 
+                               FontSize="16"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,10"/>
+                    <ProgressBar IsIndeterminate="True" 
+                                 Width="200" 
+                                 Height="10"/>
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Border>
 </Window>

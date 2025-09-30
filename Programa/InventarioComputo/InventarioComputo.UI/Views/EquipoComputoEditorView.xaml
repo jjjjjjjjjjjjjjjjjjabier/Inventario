@@ -1,86 +1,241 @@
 ﻿<Window x:Class="InventarioComputo.UI.Views.EquipoComputoEditorView"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
         Title="{Binding Titulo}"
         Height="600" Width="800"
         WindowStartupLocation="CenterOwner"
-        MinWidth="600" MinHeight="500"
-        ResizeMode="NoResize">
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <Grid Margin="20">
+        Background="White">
+
+    <Border Padding="25">
+        <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="130"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
 
-            <!-- Campos -->
-            <Label Grid.Row="0" Content="Número de Serie:"/>
-            <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding NumeroSerie}" Margin="0,5"/>
+            <TextBlock Grid.Row="0"
+                       Text="{Binding Titulo}"
+                       FontSize="20"
+                       FontWeight="Bold"
+                       Margin="0,0,0,20"
+                       Foreground="#2C3E50"/>
 
-            <Label Grid.Row="1" Content="Etiqueta:"/>
-            <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding EtiquetaInventario}" Margin="0,5"/>
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
 
-            <Label Grid.Row="2" Content="Marca:"/>
-            <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Marca}" Margin="0,5"/>
+                    <!-- Información básica -->
+                    <Border Background="#F9F9F9" BorderBrush="#DDDDDD" BorderThickness="1"
+                            Padding="15" Margin="0,0,0,15" CornerRadius="4">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
 
-            <Label Grid.Row="3" Content="Modelo:"/>
-            <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding Modelo}" Margin="0,5"/>
+                            <TextBlock Text="Información básica"
+                                       FontSize="16" FontWeight="SemiBold"
+                                       Margin="0,0,0,10" Foreground="#2C3E50"/>
 
-            <Label Grid.Row="4" Content="Características:"/>
-            <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding Caracteristicas}" 
-                     TextWrapping="Wrap" AcceptsReturn="True" Height="60" Margin="0,5"/>
+                            <Grid Grid.Row="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
 
-            <Label Grid.Row="5" Content="Observaciones:"/>
-            <TextBox Grid.Row="5" Grid.Column="1" Text="{Binding Observaciones}"
-                     TextWrapping="Wrap" AcceptsReturn="True" Height="60" Margin="0,5"/>
+                                <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                                    <TextBlock Text="Numero de serie:" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox Text="{Binding NumeroSerie, UpdateSourceTrigger=PropertyChanged}"
+                                             Height="35" Padding="10,5"
+                                             VerticalContentAlignment="Center"
+                                             BorderThickness="1" BorderBrush="#CCCCCC"
+                                             Margin="0,0,0,15"/>
 
-            <Label Grid.Row="6" Content="Fecha Adquisición:"/>
-            <DatePicker Grid.Row="6" Grid.Column="1" SelectedDate="{Binding FechaAdquisicion}" Margin="0,5"/>
+                                    <TextBlock Text="Marca:" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox Text="{Binding Marca, UpdateSourceTrigger=PropertyChanged}"
+                                             Height="35" Padding="10,5"
+                                             VerticalContentAlignment="Center"
+                                             BorderThickness="1" BorderBrush="#CCCCCC"
+                                             Margin="0,0,0,15"/>
+                                </StackPanel>
 
-            <Label Grid.Row="7" Content="Tipo de Equipo:"/>
-            <ComboBox Grid.Row="7" Grid.Column="1" 
-                      ItemsSource="{Binding TiposEquipo}"
-                      SelectedItem="{Binding TipoEquipoSeleccionado}"
-                      DisplayMemberPath="Nombre" Margin="0,5"/>
+                                <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                                    <TextBlock Text="Etiqueta de inventario:" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox Text="{Binding EtiquetaInventario, UpdateSourceTrigger=PropertyChanged}"
+                                             Height="35" Padding="10,5"
+                                             VerticalContentAlignment="Center"
+                                             BorderThickness="1" BorderBrush="#CCCCCC"
+                                             Margin="0,0,0,15"/>
 
-            <Label Grid.Row="8" Content="Estado:"/>
-            <ComboBox Grid.Row="8" Grid.Column="1"
-                      ItemsSource="{Binding Estados}"
-                      SelectedItem="{Binding EstadoSeleccionado}"
-                      DisplayMemberPath="Nombre" Margin="0,5"/>
+                                    <TextBlock Text="Modelo:" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox Text="{Binding Modelo, UpdateSourceTrigger=PropertyChanged}"
+                                             Height="35" Padding="10,5"
+                                             VerticalContentAlignment="Center"
+                                             BorderThickness="1" BorderBrush="#CCCCCC"
+                                             Margin="0,0,0,15"/>
+                                </StackPanel>
+                            </Grid>
 
-            <Label Grid.Row="9" Content="Ubicación:"/>
-            <StackPanel Grid.Row="9" Grid.Column="1" Margin="0,5">
-                <ComboBox ItemsSource="{Binding Sedes}"
-                         SelectedItem="{Binding SedeSeleccionada}"
-                         DisplayMemberPath="Nombre" Margin="0,0,0,5"/>
-                <ComboBox ItemsSource="{Binding Areas}"
-                         SelectedItem="{Binding AreaSeleccionada}"
-                         DisplayMemberPath="Nombre" Margin="0,0,0,5"/>
-                <ComboBox ItemsSource="{Binding Zonas}"
-                         SelectedItem="{Binding ZonaSeleccionada}"
-                         DisplayMemberPath="Nombre"/>
-            </StackPanel>
+                            <StackPanel Grid.Row="2">
+                                <TextBlock Text="Fecha de adquisicion:" Style="{StaticResource LabelStyle}"/>
+                                <DatePicker SelectedDate="{Binding FechaAdquisicion}"
+                                            Width="200" Height="35"
+                                            HorizontalAlignment="Left"
+                                            VerticalContentAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Características -->
+                    <Border Background="#F9F9F9" BorderBrush="#DDDDDD" BorderThickness="1"
+                            Padding="15" Margin="0,0,0,15" CornerRadius="4">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Text="Caracteristicas y observaciones"
+                                       FontSize="16" FontWeight="SemiBold"
+                                       Margin="0,0,0,10" Foreground="#2C3E50"/>
+
+                            <Grid Grid.Row="1">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <StackPanel Grid.Row="0" Margin="0,0,0,15">
+                                    <TextBlock Text="Caracteristicas:" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox Text="{Binding Caracteristicas, UpdateSourceTrigger=PropertyChanged}"
+                                             TextWrapping="Wrap" AcceptsReturn="True"
+                                             Height="80" Padding="10,5"
+                                             VerticalContentAlignment="Top"
+                                             VerticalScrollBarVisibility="Auto"
+                                             BorderThickness="1" BorderBrush="#CCCCCC"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="1">
+                                    <TextBlock Text="Observaciones:" Style="{StaticResource LabelStyle}"/>
+                                    <TextBox Text="{Binding Observaciones, UpdateSourceTrigger=PropertyChanged}"
+                                             TextWrapping="Wrap" AcceptsReturn="True"
+                                             Height="80" Padding="10,5"
+                                             VerticalContentAlignment="Top"
+                                             VerticalScrollBarVisibility="Auto"
+                                             BorderThickness="1" BorderBrush="#CCCCCC"/>
+                                </StackPanel>
+                            </Grid>
+                        </Grid>
+                    </Border>
+
+                    <!-- Clasificación y ubicación -->
+                    <Border Background="#F9F9F9" BorderBrush="#DDDDDD" BorderThickness="1"
+                            Padding="15" Margin="0,0,0,15" CornerRadius="4">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Text="Clasificacion y ubicacion"
+                                       FontSize="16" FontWeight="SemiBold"
+                                       Margin="0,0,0,10" Foreground="#2C3E50"/>
+
+                            <Grid Grid.Row="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,10,0">
+                                    <TextBlock Text="Tipo de equipo:" Style="{StaticResource LabelStyle}"/>
+                                    <ComboBox ItemsSource="{Binding TiposEquipo}"
+                                              SelectedItem="{Binding TipoEquipoSeleccionado}"
+                                              DisplayMemberPath="Nombre"
+                                              Height="35" Padding="10,5"
+                                              VerticalContentAlignment="Center"
+                                              BorderThickness="1" BorderBrush="#CCCCCC"
+                                              Margin="0,0,0,15"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="0" Grid.Column="1" Margin="10,0,0,0">
+                                    <TextBlock Text="Estado:" Style="{StaticResource LabelStyle}"/>
+                                    <ComboBox ItemsSource="{Binding Estados}"
+                                              SelectedItem="{Binding EstadoSeleccionado}"
+                                              DisplayMemberPath="Nombre"
+                                              Height="35" Padding="10,5"
+                                              VerticalContentAlignment="Center"
+                                              BorderThickness="1" BorderBrush="#CCCCCC"
+                                              Margin="0,0,0,15"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,10,0">
+                                    <TextBlock Text="Sede:" Style="{StaticResource LabelStyle}"/>
+                                    <ComboBox ItemsSource="{Binding Sedes}"
+                                              SelectedItem="{Binding SedeSeleccionada}"
+                                              DisplayMemberPath="Nombre"
+                                              Height="35" Padding="10,5"
+                                              VerticalContentAlignment="Center"
+                                              BorderThickness="1" BorderBrush="#CCCCCC"
+                                              Margin="0,0,0,15"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="1" Grid.Column="1" Margin="10,0,0,0">
+                                    <TextBlock Text="Area:" Style="{StaticResource LabelStyle}"/>
+                                    <ComboBox ItemsSource="{Binding Areas}"
+                                              SelectedItem="{Binding AreaSeleccionada}"
+                                              DisplayMemberPath="Nombre"
+                                              Height="35" Padding="10,5"
+                                              VerticalContentAlignment="Center"
+                                              BorderThickness="1" BorderBrush="#CCCCCC"
+                                              Margin="0,0,0,15"/>
+                                </StackPanel>
+
+                                <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,10,0">
+                                    <TextBlock Text="Zona:" Style="{StaticResource LabelStyle}"/>
+                                    <ComboBox ItemsSource="{Binding Zonas}"
+                                              SelectedItem="{Binding ZonaSeleccionada}"
+                                              DisplayMemberPath="Nombre"
+                                              Height="35" Padding="10,5"
+                                              VerticalContentAlignment="Center"
+                                              BorderThickness="1" BorderBrush="#CCCCCC"/>
+                                </StackPanel>
+                            </Grid>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
 
             <!-- Botones -->
-            <StackPanel Grid.Row="10" Grid.ColumnSpan="2" Orientation="Horizontal"
-                        HorizontalAlignment="Right" Margin="0,15,0,0">
-                <Button Content="Guardar" Command="{Binding GuardarCommand}" />
-                <Button Content="Cancelar" Command="{Binding CloseCommand}" />
+            <StackPanel Grid.Row="2" Orientation="Horizontal"
+                        HorizontalAlignment="Right" Margin="0,20,0,0">
+                <Button Content="Guardar"
+                        Command="{Binding GuardarCommand}"
+                        Style="{StaticResource ActionButtonStyle}"
+                        Margin="0,0,10,0"/>
+                <Button Content="Cancelar"
+                        Command="{Binding CloseCommand}"
+                        Style="{StaticResource SecondaryButtonStyle}"/>
             </StackPanel>
+
+            <!-- Loading -->
+            <Grid Grid.Row="0" Grid.RowSpan="3"
+                  Background="#80FFFFFF"
+                  Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <TextBlock Text="Cargando..." FontSize="16" Margin="0,0,0,10"/>
+                    <ProgressBar IsIndeterminate="True" Width="200" Height="10"/>
+                </StackPanel>
+            </Grid>
         </Grid>
-    </ScrollViewer>
+    </Border>
 </Window>

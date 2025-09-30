@@ -1,9 +1,10 @@
 ﻿using InventarioComputo.Application.Contracts;
 using InventarioComputo.Application.Contracts.Repositories;
 using InventarioComputo.Application.Services;
+using InventarioComputo.Domain.Entities;
+using InventarioComputo.Infrastructure.Persistencia;
 using InventarioComputo.Infrastructure.Repositories;
 using InventarioComputo.Infrastructure.Security;
-using InventarioComputo.Infrastructure.Persistencia; 
 using InventarioComputo.UI.Services;
 using InventarioComputo.UI.ViewModels;
 using InventarioComputo.UI.Views;
@@ -15,7 +16,7 @@ using Microsoft.Extensions.Hosting;
 using Serilog;
 using System;
 using System.Windows;
-using InventarioComputo.Domain.Entities;
+using System.Windows.Threading;
 
 namespace InventarioComputo.UI
 {
@@ -105,6 +106,7 @@ namespace InventarioComputo.UI
                     services.AddTransient<ReportesViewModel>();
                     services.AddTransient<UsuariosViewModel>();
                     services.AddTransient<UsuarioEditorViewModel>();
+                    services.AddTransient<UsuarioRolesViewModel>();
 
                     // Services
                     services.AddTransient<EstadoEditorView>();
@@ -121,6 +123,7 @@ namespace InventarioComputo.UI
                     services.AddTransient<ReportesView>();
                     services.AddTransient<UsuariosView>();
                     services.AddTransient<UsuarioEditorView>();
+                    services.AddTransient<UsuarioRolesView>();
 
                     // Servicios de transacción
                     services.AddScoped<IUnitOfWork, EfUnitOfWork>();
@@ -134,7 +137,7 @@ namespace InventarioComputo.UI
 
             // Obtener el DialogService del contenedor de DI en lugar de crear uno nuevo
             var dialogService = _host.Services.GetRequiredService<DialogService>();
-            
+
             // Registrar las vistas
             dialogService.Register<TipoEquipoEditorViewModel, Views.TipoEquipoEditorView>();
             dialogService.Register<UnidadEditorViewModel, Views.UnidadEditorView>();
@@ -145,6 +148,7 @@ namespace InventarioComputo.UI
             dialogService.Register<EquipoComputoEditorViewModel, Views.EquipoComputoEditorView>();
             dialogService.Register<HistorialEquipoViewModel, Views.HistorialEquipoView>();
             dialogService.Register<UsuarioEditorViewModel, Views.UsuarioEditorView>();
+            dialogService.Register<UsuarioRolesViewModel, Views.UsuarioRolesView>();
 
             using (var scope = _host.Services.CreateScope())
             {

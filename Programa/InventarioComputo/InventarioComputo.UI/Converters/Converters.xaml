@@ -1,39 +1,18 @@
-<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:conv="clr-namespace:InventarioComputo.UI.Converters">
-
-  <!-- Visibility -->
-  <!-- Usa el convertidor integrado de WPF para evitar conflictos de nombres -->
-  <BooleanToVisibilityConverter x:Key="BoolToVis"/>
-  <conv:InvertedBooleanToVisibilityConverter x:Key="NotBoolToVis"/>
-
-  <!-- Null / NotNull -->
-  <conv:NullToBoolConverter x:Key="NullToBoolConverter"/>
-  <conv:NotNullConverter x:Key="NotNullConverter"/>
-  <conv:NotNullToBoolConverter x:Key="NotNullToBoolConverter"/>
-
-  <!-- Booleanos -->
-  <conv:InvertBooleanConverter x:Key="InvertBooleanConverter"/>
-  <conv:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
-
-  <!-- Visibilidad con múltiples condiciones -->
-  <conv:MultiAndBoolToVisibilityConverter x:Key="MultiAndBoolToVisibilityConverter"/>
-
-  <!-- Estado/color -->
-  <conv:StatusColorConverter x:Key="StatusColorConverter"/>
-  <conv:BoolToStatusColor x:Key="BoolToStatusColor"/>
-  <conv:BoolToStatusBrush x:Key="BoolToStatusBrush"/>
-  <conv:BoolToStatusText x:Key="BoolToStatusText"/>
-  <conv:BoolToActivoConverter x:Key="BoolToActivoConverter"/>
-  <conv:ActiveStatusConverter x:Key="ActiveStatusConverter"/>
-  <conv:ActiveStatusTextConverter x:Key="ActiveStatusTextConverter"/>
-
-  <!-- Colores -->
-  <conv:ColorHexToBrushConverter x:Key="ColorHexToBrushConverter"/>
-  <conv:ColorFromHexConverter x:Key="ColorFromHexConverter"/>
-  <conv:StringToColorConverter x:Key="StringToColorConverter"/>
-
-  <!-- Varios -->
-  <conv:MenuWidthConverter x:Key="MenuWidthConverter"/>
-  <conv:BoolToNumConverter x:Key="BoolToNumConverter"/>
+<ResourceDictionary 
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:conv="clr-namespace:InventarioComputo.UI.Converters">
+    
+    <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    <conv:InvertedBooleanToVisibilityConverter x:Key="InvertedBooleanToVisibilityConverter" />
+    <conv:BoolToActivoConverter x:Key="BoolToActivoConverter" />
+    <conv:BoolToStatusText x:Key="BoolToStatusText" />
+    <conv:BoolToStatusBrush x:Key="BoolToStatusBrush" />
+    <conv:BoolToStatusColor x:Key="StatusColorConverter" />
+    <conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+    <conv:InvertBooleanConverter x:Key="InvertBooleanConverter" />
+    <conv:NotNullToBoolConverter x:Key="NotNullToBoolConverter" />
+    <conv:NullToBoolConverter x:Key="NullToBoolConverter" />
+    <conv:MultiAndBoolToVisibilityConverter x:Key="MultiAndBoolToVisibilityConverter" />
+    <conv:BoolToNumConverter x:Key="BoolToNumConverter" />
 </ResourceDictionary>

@@ -1,55 +1,66 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
-    <UseWPF>true</UseWPF>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-  </PropertyGroup>
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net8.0-windows</TargetFramework>
+        <UseWPF>true</UseWPF>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        
+        <!-- Desactivar la inclusión automática de archivos -->
+        <EnableDefaultPageItems>false</EnableDefaultPageItems>
+        <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
+        <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    </PropertyGroup>
 
-  <!-- LIMPIEZA: elimina cualquier ApplicationDefinition que no sea App.xaml y evita que App.xaml entre como Page -->
-  <ItemGroup>
-    <ApplicationDefinition Remove="**\*.xaml" />
-    <Page Remove="App.xaml" />
-  </ItemGroup>
+    <ItemGroup>
+        <!-- Definir todo explícitamente -->
+        
+        <!-- Incluir todos los archivos XAML excepto App.xaml -->
+        <Page Include="**\*.xaml" />
+        
+        <!-- Incluir todos los archivos .cs -->
+        <Compile Include="**\*.cs" Exclude="obj\**;bin\**" />
+    </ItemGroup>
 
-  <!-- ÚNICO ApplicationDefinition permitido -->
-  <ItemGroup>
-    <ApplicationDefinition Include="App.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </ApplicationDefinition>
+    <ItemGroup>
+      <Page Remove="App.xaml" />
+      <Page Remove="Converters\Converters.xaml" />
+    </ItemGroup>
 
-    <!-- Todas las otras XAML de vistas deben ser <Page Include="...xaml" /> (esto lo maneja VS automáticamente).
-         Revisa que no exista otra ApplicationDefinition duplicada (a veces queda App.xaml en otra ruta). -->
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+        <PackageReference Include="EPPlus" Version="6.2.4" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.4">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
+        <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
+        <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
+        <PackageReference Include="Serilog.Extensions.Hosting" Version="8.0.0" />
+        <PackageReference Include="Serilog.Settings.Configuration" Version="9.0.1-dev-02317" />
+        <PackageReference Include="Serilog.Sinks.Console" Version="6.0.1-dev-00953" />
+        <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-    <PackageReference Include="EPPlus" Version="6.2.4" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.4">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
-    <PackageReference Include="Serilog.Extensions.Hosting" Version="8.0.0" />
-    <PackageReference Include="Serilog.Settings.Configuration" Version="9.0.1-dev-02317" />
-    <PackageReference Include="Serilog.Sinks.Console" Version="6.0.1-dev-00953" />
-    <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\InventarioComputo.Application\InventarioComputo.Application.csproj" />
+        <ProjectReference Include="..\InventarioComputo.Infrastructure\InventarioComputo.Infrastructure.csproj" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\InventarioComputo.Application\InventarioComputo.Application.csproj" />
-    <ProjectReference Include="..\InventarioComputo.Infrastructure\InventarioComputo.Infrastructure.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+      <ApplicationDefinition Include="App.xaml" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <None Update="appsettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
+    <ItemGroup>
+      <XamlAppDef Include="Converters\Converters.xaml" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Update="appsettings.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
 </Project>

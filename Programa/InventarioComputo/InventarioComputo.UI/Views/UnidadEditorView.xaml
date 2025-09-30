@@ -3,40 +3,70 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:InventarioComputo.UI.Views"
         mc:Ignorable="d"
-        Title="{Binding Titulo}" 
-        Height="320" Width="450"
-        WindowStartupLocation="CenterOwner">
-    <Grid Margin="10">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+        Title="{Binding Titulo}"
+        Height="350" Width="450"
+        WindowStartupLocation="CenterOwner"
+        Background="White">
 
-        <!-- Título -->
-        <TextBlock Text="{Binding Titulo}" 
-                   FontSize="18" 
-                   FontWeight="Bold" 
-                   Margin="0,0,0,15"/>
+    <Border Padding="25">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
 
-        <!-- Formulario -->
-        <StackPanel Grid.Row="1" Margin="0,0,0,15">
-            <Label Content="Nombre:" Margin="0,0,0,5"/>
-            <TextBox Text="{Binding Nombre, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"/>
+            <!-- Título -->
+            <TextBlock Grid.Row="0" 
+                       Text="{Binding Titulo}" 
+                       FontSize="20" 
+                       FontWeight="Bold"
+                       Margin="0,0,0,20"
+                       Foreground="#2C3E50"/>
 
-            <Label Content="Abreviatura:" Margin="0,0,0,5"/>
-            <TextBox Text="{Binding Abreviatura, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10"/>
+            <!-- Campos -->
+            <StackPanel Grid.Row="1">
+                <TextBlock Text="Nombre:" Style="{StaticResource LabelStyle}"/>
+                <TextBox Text="{Binding Nombre, UpdateSourceTrigger=PropertyChanged}"
+                         Height="35"
+                         Padding="10,5"
+                         VerticalContentAlignment="Center"
+                         BorderThickness="1"
+                         BorderBrush="#CCCCCC"
+                         Margin="0,0,0,15"/>
 
-            <CheckBox Content="Activo" IsChecked="{Binding Activo}" Margin="0,5,0,0"/>
-        </StackPanel>
+                <TextBlock Text="Abreviatura:" Style="{StaticResource LabelStyle}"/>
+                <TextBox Text="{Binding Abreviatura, UpdateSourceTrigger=PropertyChanged}"
+                         Height="35"
+                         Padding="10,5"
+                         VerticalContentAlignment="Center"
+                         BorderThickness="1"
+                         BorderBrush="#CCCCCC"
+                         Margin="0,0,0,15"/>
+            </StackPanel>
 
-        <!-- Botones -->
-        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="Guardar" Command="{Binding GuardarCommand}" Width="80" Margin="0,0,10,0"/>
-            <Button Content="Cancelar" Command="{Binding CloseCommand}" Width="80"/>
-        </StackPanel>
-    </Grid>
+            <!-- Activo -->
+            <CheckBox Grid.Row="2" 
+                      Content="Activo" 
+                      IsChecked="{Binding Activo}"
+                      Margin="0,0,0,20"/>
+
+            <!-- Botones -->
+            <StackPanel Grid.Row="4" 
+                        Orientation="Horizontal" 
+                        HorizontalAlignment="Right">
+                <Button Content="Guardar" 
+                        Command="{Binding GuardarCommand}"
+                        Style="{StaticResource ActionButtonStyle}"
+                        Margin="0,0,10,0"/>
+
+                <Button Content="Cancelar" 
+                        Command="{Binding CloseCommand}"
+                        Style="{StaticResource SecondaryButtonStyle}"/>
+            </StackPanel>
+        </Grid>
+    </Border>
 </Window>

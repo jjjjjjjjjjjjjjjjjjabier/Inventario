@@ -17,21 +17,15 @@ namespace InventarioComputo.UI.ViewModels
         private readonly IDialogService _dialogService;
         private readonly IAuthService _authService;
 
-        [ObservableProperty]
-        private string _usuario = string.Empty;
-
-        [ObservableProperty]
-        private string _password = string.Empty;
-
-        [ObservableProperty]
-        private bool _loginInProgress;
+        [ObservableProperty] private string _usuario = string.Empty;
+        [ObservableProperty] private string _password = string.Empty;
+        [ObservableProperty] private bool _loginInProgress;
 
         public bool LoginExitoso { get; private set; }
 
-        // Constructor de LoginViewModel
         public LoginViewModel(
             IAuthService authService,
-            ISessionService sessionService, 
+            ISessionService sessionService,
             IDialogService dialogService,
             ILogger<LoginViewModel> logger)
         {
@@ -57,9 +51,8 @@ namespace InventarioComputo.UI.ViewModels
 
             try
             {
-                var resultado = await _sessionService.IniciarSesionAsync(usuario, password);
-
-                if (resultado)
+                var ok = await _sessionService.IniciarSesionAsync(usuario, password);
+                if (ok)
                 {
                     LoginExitoso = true;
 

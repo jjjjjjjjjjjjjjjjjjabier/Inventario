@@ -1,38 +1,206 @@
 <Window x:Class="InventarioComputo.UI.Views.AsignarEquipoView"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid Margin="12">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-        </Grid.RowDefinitions>
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:InventarioComputo.UI.Views"
+        mc:Ignorable="d"
+        Title="Asignar Equipo a Usuario"
+        Height="450" Width="650"
+        WindowStartupLocation="CenterOwner"
+        Background="White">
 
-        <!-- Contenido de asignación (simplificado para evitar errores de diccionarios) -->
-        <StackPanel>
-            <TextBlock Text="Asignación de Equipo" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,12"/>
+    <Window.Resources>
+        <Style x:Key="FormButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#0078D7"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="20,8"/>
+            <Setter Property="MinWidth" Value="100"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}"
+                                CornerRadius="20">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#0063B1"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Background" Value="#CCCCCC"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                <TextBlock Text="Equipo:" Width="120" VerticalAlignment="Center"/>
-                <TextBox Text="{Binding EquipoSeleccionado.NumeroSerie}" IsReadOnly="True" Width="220"/>
+        <Style x:Key="CancelButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#E0E0E0"/>
+            <Setter Property="Foreground" Value="#333333"/>
+            <Setter Property="Padding" Value="20,8"/>
+            <Setter Property="MinWidth" Value="100"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Padding="{TemplateBinding Padding}"
+                                CornerRadius="20">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#CCCCCC"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="TextBlock" x:Key="LabelStyle">
+            <Setter Property="Margin" Value="0,0,0,5"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="#333333"/>
+        </Style>
+
+        <Style TargetType="ComboBox">
+            <Setter Property="Height" Value="35"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#CCCCCC"/>
+        </Style>
+
+        <Style TargetType="TextBox">
+            <Setter Property="Height" Value="35"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#CCCCCC"/>
+        </Style>
+    </Window.Resources>
+
+    <Border Padding="30">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <TextBlock Grid.Row="0" 
+                       Text="Asignar Equipo a Usuario"
+                       FontSize="20" 
+                       FontWeight="Bold"
+                       Margin="0,0,0,20"
+                       Foreground="#2C3E50"/>
+
+            <!-- Información del Equipo -->
+            <Border Grid.Row="1" 
+                    Background="#F5F5F5" 
+                    BorderBrush="#DDDDDD" 
+                    BorderThickness="1"
+                    Padding="15" 
+                    Margin="0,0,0,15"
+                    CornerRadius="4">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Grid.Column="0">
+                        <TextBlock Text="Etiqueta:" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding Equipo.EtiquetaInventario}" Margin="0,0,0,5"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="0" Grid.Column="1">
+                        <TextBlock Text="Número de Serie:" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding Equipo.NumeroSerie}" Margin="0,0,0,5"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="1" Grid.Column="0">
+                        <TextBlock Text="Tipo:" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding Equipo.TipoEquipo.Nombre}" Margin="0,0,0,5"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="1" Grid.Column="1">
+                        <TextBlock Text="Estado Actual:" FontWeight="SemiBold"/>
+                        <TextBlock Text="{Binding Equipo.Estado.Nombre}" Margin="0,0,0,5"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Formulario de Asignación -->
+            <Grid Grid.Row="2" Margin="0,10,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                    <TextBlock Text="Usuario:" Style="{StaticResource LabelStyle}"/>
+                    <ComboBox ItemsSource="{Binding Usuarios}"
+                              SelectedItem="{Binding UsuarioSeleccionado}"
+                              DisplayMemberPath="NombreCompleto"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                    <TextBlock Text="Observaciones:" Style="{StaticResource LabelStyle}"/>
+                    <TextBox Text="{Binding Observaciones, UpdateSourceTrigger=PropertyChanged}"
+                             Height="70"
+                             TextWrapping="Wrap"
+                             AcceptsReturn="True"
+                             VerticalAlignment="Stretch"
+                             VerticalContentAlignment="Top"
+                             VerticalScrollBarVisibility="Auto"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Botones -->
+            <StackPanel Grid.Row="4" 
+                        Orientation="Horizontal" 
+                        HorizontalAlignment="Right"
+                        Margin="0,20,0,0">
+                <Button Content="Asignar" 
+                        Command="{Binding AsignarCommand}"
+                        Style="{StaticResource FormButtonStyle}"
+                        Margin="0,0,10,0"/>
+
+                <Button Content="Cancelar" 
+                        Command="{Binding CancelarCommand}"
+                        Style="{StaticResource CancelButtonStyle}"/>
             </StackPanel>
 
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                <TextBlock Text="Usuario:" Width="120" VerticalAlignment="Center"/>
-                <ComboBox ItemsSource="{Binding Usuarios}" SelectedItem="{Binding UsuarioSeleccionado}" Width="220"/>
-            </StackPanel>
-
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                <TextBlock Text="Ubicación (Zona):" Width="120" VerticalAlignment="Center"/>
-                <ComboBox ItemsSource="{Binding Zonas}" SelectedItem="{Binding ZonaSeleccionada}" Width="220"/>
-            </StackPanel>
-        </StackPanel>
-
-        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
-            <!-- Usa el converter global, asignado en App.xaml, en una propiedad booleana -->
-            <Button Content="Guardar" Command="{Binding GuardarCommand}"
-                    IsEnabled="{Binding UsuarioSeleccionado, Converter={StaticResource NotNullToBoolConverter}}"
-                    Style="{StaticResource ActionButtonStyle}" Background="{StaticResource AccentBrush}" Margin="0,0,8,0"/>
-            <Button Content="Cancelar" Command="{Binding CloseCommand}" Style="{StaticResource ActionButtonStyle}" Background="#888"/>
-        </StackPanel>
-    </Grid>
+            <!-- Loading indicator -->
+            <Grid Grid.Row="0" Grid.RowSpan="5" Background="#80FFFFFF"
+                  Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <TextBlock Text="Cargando..." 
+                               FontSize="16"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,10"/>
+                    <ProgressBar IsIndeterminate="True" 
+                                 Width="200" 
+                                 Height="10"/>
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Border>
 </Window>

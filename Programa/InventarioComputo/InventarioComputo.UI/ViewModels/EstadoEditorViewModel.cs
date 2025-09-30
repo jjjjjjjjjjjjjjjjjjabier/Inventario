@@ -71,14 +71,19 @@ namespace InventarioComputo.UI.ViewModels
         [RelayCommand]
         public async Task GuardarAsync()
         {
-            if (string.IsNullOrWhiteSpace(Nombre) || Nombre.Length > 50)
+            if (string.IsNullOrWhiteSpace(Nombre) || Nombre.Length > 100)
             {
-                _dialogService.ShowError("El nombre es obligatorio y debe tener menos de 50 caracteres.");
+                _dialogService.ShowError("El nombre es obligatorio y no debe exceder 100 caracteres.");
+                return;
+            }
+            if (Descripcion?.Length > 255)
+            {
+                _dialogService.ShowError("La descripción no debe exceder 255 caracteres.");
                 return;
             }
             if (string.IsNullOrWhiteSpace(ColorHex) || ColorHex.Length > 9)
             {
-                _dialogService.ShowError("El color es obligatorio y debe tener menos de 9 caracteres.");
+                _dialogService.ShowError("El color es obligatorio y no debe exceder 9 caracteres (#RRGGBB o #AARRGGBB).");
                 return;
             }
             try
@@ -86,7 +91,7 @@ namespace InventarioComputo.UI.ViewModels
                 await _srv.GuardarAsync(_entidad);
                 _dialogService.ShowInfo("Estado guardado correctamente.");
                 DialogResult = true;
-                                this.CloseWindowOfViewModel();
+                this.CloseWindowOfViewModel();
             }
             catch (InvalidOperationException ex)
             {

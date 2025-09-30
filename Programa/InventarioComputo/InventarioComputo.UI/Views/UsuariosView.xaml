@@ -2,55 +2,134 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:InventarioComputo.UI.Views"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="600" d:DesignWidth="800"
+             Loaded="UserControl_Loaded">
+
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/InventarioComputo.UI;component/Resources/Converters.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <StackPanel Orientation="Horizontal" Margin="10">
-            <Button Content="Nuevo Usuario" 
-                    Command="{Binding CrearCommand}"
-                    Margin="0,0,10,0" Padding="8,3"/>
-            <Button Content="Editar" 
-                    Command="{Binding EditarCommand}"
-                    Margin="0,0,10,0" Padding="8,3"/>
-            <Button Content="Eliminar" 
-                    Command="{Binding EliminarCommand}"
-                    Margin="0,0,10,0" Padding="8,3"/>
-            <CheckBox Content="Mostrar inactivos" 
-                      IsChecked="{Binding MostrarInactivos}" 
-                      VerticalAlignment="Center" 
-                      Margin="10,0,0,0"/>
-        </StackPanel>
+        <!-- Header -->
+        <TextBlock Grid.Row="0" 
+                   Text="Gestion de Usuarios"
+                   FontSize="24" 
+                   FontWeight="Bold"
+                   Margin="0,0,0,20"
+                   Foreground="#2C3E50"/>
 
-        <DataGrid Grid.Row="1" 
-                  ItemsSource="{Binding Usuarios}" 
+        <!-- Toolbar -->
+        <Grid Grid.Row="1" Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                <CheckBox Content="Mostrar inactivos" 
+                          IsChecked="{Binding MostrarInactivos}"
+                          VerticalAlignment="Center"
+                          Margin="0,0,20,0"/>
+
+                <TextBox Width="250" 
+                         Height="35"
+                         Padding="10,0"
+                         VerticalContentAlignment="Center"
+                         Text="{Binding FiltroTexto, UpdateSourceTrigger=PropertyChanged}"
+                         BorderBrush="#CCCCCC"
+                         Margin="0,0,0,0">
+                    <TextBox.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="4"/>
+                        </Style>
+                    </TextBox.Resources>
+                    <TextBox.Style>
+                        <Style TargetType="TextBox">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="TextBox">
+                                        <Border Background="{TemplateBinding Background}"
+                                                BorderBrush="{TemplateBinding BorderBrush}"
+                                                BorderThickness="{TemplateBinding BorderThickness}"
+                                                CornerRadius="4">
+                                            <Grid>
+                                                <TextBlock Text="Buscar usuarios..."
+                                                           Foreground="#AAAAAA"
+                                                           VerticalAlignment="Center"
+                                                           HorizontalAlignment="Left"
+                                                           Margin="10,0,0,0"
+                                                           Visibility="{Binding Text.IsEmpty, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                                <ScrollViewer x:Name="PART_ContentHost"
+                                                              Margin="{TemplateBinding Padding}"
+                                                              VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </TextBox.Style>
+                </TextBox>
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Content="Nuevo Usuario" 
+                        Style="{StaticResource ActionButtonStyle}"
+                        Command="{Binding CrearCommand}"
+                        Margin="5,0"/>
+
+                <Button Content="Editar" 
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Command="{Binding EditarCommand}"
+                        Margin="5,0"/>
+
+                <Button Content="Desactivar" 
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Command="{Binding EliminarCommand}"
+                        Margin="5,0"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- DataGrid -->
+        <DataGrid Grid.Row="2" 
+                  ItemsSource="{Binding Usuarios}"
                   SelectedItem="{Binding UsuarioSeleccionado}"
-                  AutoGenerateColumns="False" 
-                  IsReadOnly="True"
-                  SelectionMode="Single"
-                  CanUserAddRows="False"
-                  CanUserDeleteRows="False"
-                  Margin="10">
+                  Margin="0,10,0,0">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="50"/>
-                <DataGridTextColumn Header="Usuario" Binding="{Binding NombreUsuario}" Width="150"/>
-                <DataGridTextColumn Header="Nombre Completo" Binding="{Binding NombreCompleto}" Width="200"/>
-                <DataGridTemplateColumn Header="Activo" Width="80">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <CheckBox IsChecked="{Binding Activo, Mode=OneWay}" 
-                                      IsEnabled="False" 
-                                      HorizontalAlignment="Center"/>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="Usuario" Binding="{Binding NombreUsuario}" Width="120"/>
+                <DataGridTextColumn Header="Nombre Completo" Binding="{Binding NombreCompleto}" Width="*"/>
+                <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="200"/>
+                <DataGridTextColumn Header="Roles" Binding="{Binding RolesAsText}" Width="200"/>
+                <DataGridTextColumn Header="Estado" Binding="{Binding Activo, Converter={StaticResource BoolToStringConverter}}" Width="80"/>
             </DataGrid.Columns>
         </DataGrid>
+
+        <!-- Loading indicator -->
+        <Grid Grid.Row="0" Grid.RowSpan="4" 
+              Background="#80FFFFFF"
+              Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                <TextBlock Text="Cargando..." 
+                           FontSize="16"
+                           HorizontalAlignment="Center"
+                           Margin="0,0,0,10"/>
+                <ProgressBar IsIndeterminate="True" 
+                             Width="200" 
+                             Height="10"/>
+            </StackPanel>
+        </Grid>
     </Grid>
 </UserControl>
