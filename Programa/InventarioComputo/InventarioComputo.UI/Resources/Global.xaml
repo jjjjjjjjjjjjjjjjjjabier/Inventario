@@ -1,0 +1,12 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Efecto de sombra del menu lateral -->
+    <DropShadowEffect x:Key="MenuShadowEffect"
+                    BlurRadius="10"
+                    ShadowDepth="2"
+                    Direction="0"
+                    Opacity="0.25"
+                    Color="#000000" />
+
+</ResourceDictionary>
