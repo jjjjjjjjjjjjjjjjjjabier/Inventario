@@ -98,28 +98,73 @@ namespace InventarioComputo.UI.ViewModels
 
         partial void OnSedeSeleccionadaChanged(Sede? value)
         {
-            _ = CargarAreasAsync();
+            // Limpiar selecciones dependientes
+            AreaSeleccionada = null;
             ZonaSeleccionada = null;
-        }
 
-        partial void OnAreaSeleccionadaChanged(Area? value) => _ = CargarZonasAsync();
+            // Disparar la carga de áreas
+            _ = CargarAreasAsync();
+        }
 
         private async Task CargarAreasAsync()
         {
             Areas.Clear();
             Zonas.Clear();
-            if (SedeSeleccionada != null)
+
+            if (SedeSeleccionada == null)
+                return;
+
+            try
             {
-                foreach (var a in await _areaService.BuscarAsync(SedeSeleccionada.Id, null, true)) Areas.Add(a);
+                IsBusy = true;
+                var areas = await _areaService.BuscarAsync(SedeSeleccionada.Id, null, true);
+                foreach (var area in areas)
+                {
+                    Areas.Add(area);
+                }
             }
+            catch (Exception ex)
+            {
+                Logger?.LogError(ex, "Error cargando áreas");
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        partial void OnAreaSeleccionadaChanged(Area? value)
+        {
+            // Limpiar selección dependiente
+            ZonaSeleccionada = null;
+
+            // Disparar carga de zonas
+            _ = CargarZonasAsync();
         }
 
         private async Task CargarZonasAsync()
         {
             Zonas.Clear();
-            if (AreaSeleccionada != null)
+
+            if (AreaSeleccionada == null)
+                return;
+
+            try
             {
-                foreach (var z in await _zonaService.BuscarAsync(AreaSeleccionada.Id, null, true)) Zonas.Add(z);
+                IsBusy = true;
+                var zonas = await _zonaService.BuscarAsync(AreaSeleccionada.Id, null, true);
+                foreach (var zona in zonas)
+                {
+                    Zonas.Add(zona);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError(ex, "Error cargando zonas");
+            }
+            finally
+            {
+                IsBusy = false;
             }
         }
 

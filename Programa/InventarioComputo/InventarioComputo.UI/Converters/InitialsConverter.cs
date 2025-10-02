@@ -9,32 +9,29 @@ namespace InventarioComputo.UI.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is string name && !string.IsNullOrWhiteSpace(name))
+            if (value is string fullName && !string.IsNullOrWhiteSpace(fullName))
             {
-                // Dividir el nombre por espacios y tomar la inicial de cada palabra
-                var parts = name.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                // Dividir el nombre en palabras
+                var words = fullName.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                 
-                if (parts.Length > 0)
+                // Tomar la primera letra de hasta dos palabras
+                if (words.Length >= 2)
                 {
-                    // Si hay más de una palabra, tomar la inicial de la primera y última
-                    if (parts.Length > 1)
-                    {
-                        return $"{parts.First().Substring(0, 1)}{parts.Last().Substring(0, 1)}".ToUpper();
-                    }
-                    
-                    // Si solo hay una palabra, tomar las dos primeras letras o la primera si es muy corta
-                    return parts[0].Length > 1 ? 
-                        parts[0].Substring(0, 2).ToUpper() : 
-                        parts[0].Substring(0, 1).ToUpper();
+                    return $"{words[0][0]}{words[1][0]}".ToUpper();
+                }
+                else if (words.Length == 1 && words[0].Length > 0)
+                {
+                    return words[0][0].ToString().ToUpper();
                 }
             }
             
-            return "U";
+            // Valor por defecto si no se puede obtener iniciales
+            return "?";
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException("La conversión inversa no está soportada para InitialsConverter");
         }
     }
 }

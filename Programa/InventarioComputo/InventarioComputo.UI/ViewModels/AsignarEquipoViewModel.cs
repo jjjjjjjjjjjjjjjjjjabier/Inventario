@@ -1,3 +1,7 @@
+using System;
+using System.Collections.ObjectModel;
+using System.Threading.Tasks;
+using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using InventarioComputo.Application.Contracts;
@@ -5,243 +9,224 @@ using InventarioComputo.Domain.Entities;
 using InventarioComputo.UI.Services;
 using InventarioComputo.UI.ViewModels.Base;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows;
 
 namespace InventarioComputo.UI.ViewModels
 {
-    public partial class AsignarEquipoViewModel : BaseViewModel, IEditorViewModel
+    public partial class AsignarEquipoViewModel : BaseViewModel
     {
-        private readonly IEquipoComputoService _equipoSrv;
-        private readonly IMovimientoService _movimientoSrv;
-        private readonly IUsuarioService _usuarioSrv;
-        private readonly ISessionService _sessionService;
-        private readonly ISedeService _sedeSrv;
-        private readonly IAreaService _areaSrv;
-        private readonly IZonaService _zonaSrv;
+        private readonly IMovimientoService _movimientoSvc;
+        private readonly IUsuarioService _usuarioSvc;
+        private readonly IZonaService _zonaSvc;
+        private readonly IAreaService _areaSvc;
+        private readonly ISedeService _sedeSvc;
         private readonly IDialogService _dialogService;
+        private readonly ISessionService _sessionService;
 
-        private EquipoComputo _equipo = new();
-
-        [ObservableProperty]
-        private string _titulo = "Asignar Equipo";
-
-        [ObservableProperty]
-        private Usuario? _usuarioActual;
+        private int _equipoId;
+        private EquipoComputo _equipo;
 
         [ObservableProperty]
-        private Zona? _zonaActual;
+        private string _titulo;
 
         [ObservableProperty]
-        private string _motivo = string.Empty;
-
-        // Propiedades para selecciones
-        [ObservableProperty]
-        private Usuario? _usuarioSeleccionado;
+        private string _motivoMovimiento = string.Empty;
 
         [ObservableProperty]
-        private Sede? _sedeSeleccionada;
+        private Usuario _usuarioSeleccionado;
 
         [ObservableProperty]
-        private Area? _areaSeleccionada;
+        private Sede _sedeSeleccionada;
 
         [ObservableProperty]
-        private Zona? _zonaSeleccionada;
+        private Area _areaSeleccionada;
 
-        // Colecciones para los combos
+        [ObservableProperty]
+        private Zona _zonaSeleccionada;
+
+        public event EventHandler RequestClose;
+        public bool DialogResult { get; set; }
+
         public ObservableCollection<Usuario> Usuarios { get; } = new();
         public ObservableCollection<Sede> Sedes { get; } = new();
         public ObservableCollection<Area> Areas { get; } = new();
         public ObservableCollection<Zona> Zonas { get; } = new();
 
-        public bool DialogResult { get; set; }
-
         public AsignarEquipoViewModel(
-            IEquipoComputoService equipoSrv,
-            IMovimientoService movimientoSrv,
-            IUsuarioService usuarioSrv,
-            ISessionService sessionService,
-            ISedeService sedeSrv,
-            IAreaService areaSrv,
-            IZonaService zonaSrv,
+            IMovimientoService movimientoSvc,
+            IUsuarioService usuarioSvc,
+            IZonaService zonaSvc,
+            IAreaService areaSvc,
+            ISedeService sedeSvc,
             IDialogService dialogService,
+            ISessionService sessionService,
             ILogger<AsignarEquipoViewModel> logger)
         {
-            _equipoSrv = equipoSrv;
-            _movimientoSrv = movimientoSrv;
-            _usuarioSrv = usuarioSrv;
-            _sessionService = sessionService;
-            _sedeSrv = sedeSrv;
-            _areaSrv = areaSrv;
-            _zonaSrv = zonaSrv;
+            _movimientoSvc = movimientoSvc;
+            _usuarioSvc = usuarioSvc;
+            _zonaSvc = zonaSvc;
+            _areaSvc = areaSvc;
+            _sedeSvc = sedeSvc;
             _dialogService = dialogService;
+            _sessionService = sessionService;
             Logger = logger;
+            Titulo = "Asignar Equipo";
         }
 
-        public void SetEquipo(EquipoComputo equipo)
+        partial void OnSedeSeleccionadaChanged(Sede value)
+        {
+            Areas.Clear();
+            Zonas.Clear();
+            AreaSeleccionada = null;
+            ZonaSeleccionada = null;
+            _ = CargarAreasAsync();
+        }
+
+        partial void OnAreaSeleccionadaChanged(Area value)
+        {
+            Zonas.Clear();
+            ZonaSeleccionada = null;
+            _ = CargarZonasAsync();
+        }
+
+        public async Task InitializeAsync(EquipoComputo equipo)
         {
             _equipo = equipo;
-            Titulo = $"Asignar/Mover Equipo: {equipo.NumeroSerie}";
-            
-            // Cargar datos actuales
-            _ = CargarDatosAsync();
+            _equipoId = equipo.Id;
+            Titulo = $"Asignar Equipo: {equipo.NumeroSerie}";
+
+            await CargarUsuariosAsync();
+            await CargarSedesAsync();
+
+            if (equipo.UsuarioId.HasValue)
+            {
+                UsuarioSeleccionado = Usuarios.FirstOrDefault(u => u.Id == equipo.UsuarioId);
+            }
+
+            if (equipo.SedeId.HasValue)
+            {
+                SedeSeleccionada = Sedes.FirstOrDefault(s => s.Id == equipo.SedeId);
+                if (SedeSeleccionada != null && equipo.AreaId.HasValue)
+                {
+                    await CargarAreasAsync();
+                    AreaSeleccionada = Areas.FirstOrDefault(a => a.Id == equipo.AreaId);
+                    if (AreaSeleccionada != null && equipo.ZonaId.HasValue)
+                    {
+                        await CargarZonasAsync();
+                        ZonaSeleccionada = Zonas.FirstOrDefault(z => z.Id == equipo.ZonaId);
+                    }
+                }
+            }
         }
 
-        private async Task CargarDatosAsync()
+        private async Task CargarUsuariosAsync()
         {
-            IsBusy = true;
             try
             {
-                // 1. Cargar usuario y zona actuales
-                if (_equipo.UsuarioId.HasValue)
-                {
-                    UsuarioActual = await _usuarioSrv.ObtenerPorIdAsync(_equipo.UsuarioId.Value);
-                }
-
-                if (_equipo.ZonaId.HasValue)
-                {
-                    ZonaActual = await _zonaSrv.ObtenerPorIdAsync(_equipo.ZonaId.Value);
-                }
-
-                // 2. Cargar listas para selección
-                var usuarios = await _usuarioSrv.BuscarAsync(null, false);
                 Usuarios.Clear();
-                foreach (var u in usuarios) Usuarios.Add(u);
-
-                var sedes = await _sedeSrv.BuscarAsync(null, false);
-                Sedes.Clear();
-                foreach (var s in sedes) Sedes.Add(s);
-
-                // 3. Preseleccionar sede y área actuales si existen
-                if (ZonaActual != null)
+                var usuarios = await _usuarioSvc.BuscarAsync(null, false);
+                foreach (var usuario in usuarios)
                 {
-                    var areaActual = await _areaSrv.ObtenerPorIdAsync(ZonaActual.AreaId);
-                    if (areaActual != null)
-                    {
-                        SedeSeleccionada = Sedes.FirstOrDefault(s => s.Id == areaActual.SedeId);
-                        
-                        // Esto disparará la carga de áreas, y luego:
-                        await CargarAreasAsync();
-                        AreaSeleccionada = Areas.FirstOrDefault(a => a.Id == areaActual.Id);
-                        
-                        // Esto disparará la carga de zonas:
-                        await CargarZonasAsync();
-                        ZonaSeleccionada = Zonas.FirstOrDefault(z => z.Id == ZonaActual.Id);
-                    }
+                    Usuarios.Add(usuario);
                 }
             }
             catch (Exception ex)
             {
-                Logger?.LogError(ex, "Error al cargar datos para asignar equipo");
-                _dialogService.ShowError("Error al cargar los datos necesarios.");
-            }
-            finally
-            {
-                IsBusy = false;
+                Logger?.LogError(ex, "Error al cargar usuarios");
             }
         }
 
-        partial void OnSedeSeleccionadaChanged(Sede? value) => _ = CargarAreasAsync();
-        partial void OnAreaSeleccionadaChanged(Area? value) => _ = CargarZonasAsync();
+        private async Task CargarSedesAsync()
+        {
+            try
+            {
+                Sedes.Clear();
+                var sedes = await _sedeSvc.BuscarAsync(null, false);
+                foreach (var sede in sedes)
+                {
+                    Sedes.Add(sede);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError(ex, "Error al cargar sedes");
+            }
+        }
 
         private async Task CargarAreasAsync()
         {
-            Areas.Clear();
-            Zonas.Clear();
-            ZonaSeleccionada = null;
-            AreaSeleccionada = null;
+            if (SedeSeleccionada == null) return;
 
-            if (SedeSeleccionada != null)
+            try
             {
-                try
+                Areas.Clear();
+                var areas = await _areaSvc.BuscarAsync(SedeSeleccionada.Id, null, false);
+                foreach (var area in areas)
                 {
-                    var areas = await _areaSrv.BuscarAsync(SedeSeleccionada.Id, null, default);
-                    foreach (var a in areas) Areas.Add(a);
+                    Areas.Add(area);
                 }
-                catch (Exception ex)
-                {
-                    Logger?.LogError(ex, "Error al cargar áreas para sede {SedeId}", SedeSeleccionada.Id);
-                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError(ex, "Error al cargar áreas");
             }
         }
 
         private async Task CargarZonasAsync()
         {
-            Zonas.Clear();
-            ZonaSeleccionada = null;
+            if (AreaSeleccionada == null) return;
 
-            if (AreaSeleccionada != null)
+            try
             {
-                try
+                Zonas.Clear();
+                var zonas = await _zonaSvc.BuscarAsync(AreaSeleccionada.Id, null, false);
+                foreach (var zona in zonas)
                 {
-                    var zonas = await _zonaSrv.BuscarAsync(AreaSeleccionada.Id, null, default);
-                    foreach (var z in zonas) Zonas.Add(z);
+                    Zonas.Add(zona);
                 }
-                catch (Exception ex)
-                {
-                    Logger?.LogError(ex, "Error al cargar zonas para área {AreaId}", AreaSeleccionada.Id);
-                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError(ex, "Error al cargar zonas");
             }
         }
 
         [RelayCommand]
-        public async Task GuardarAsync()
+        private async Task GuardarAsync()
         {
-            // Validaciones
-            if (string.IsNullOrWhiteSpace(Motivo))
+            if (string.IsNullOrWhiteSpace(MotivoMovimiento))
             {
-                _dialogService.ShowError("Debe proporcionar un motivo para el movimiento.");
-                return;
-            }
-
-            if (UsuarioSeleccionado == null && ZonaSeleccionada == null)
-            {
-                _dialogService.ShowError("Debe seleccionar un nuevo usuario o ubicación.");
-                return;
-            }
-
-            if (Motivo.Length > 500)
-            {
-                _dialogService.ShowError("El motivo no puede exceder 500 caracteres.");
-                return;
-            }
-
-            // Verificar si hay cambio efectivo
-            bool hayNuevoUsuario = UsuarioSeleccionado != null && 
-                                  (UsuarioActual == null || UsuarioSeleccionado.Id != UsuarioActual.Id);
-            
-            bool hayNuevaZona = ZonaSeleccionada != null && 
-                               (ZonaActual == null || ZonaSeleccionada.Id != ZonaActual.Id);
-
-            if (!hayNuevoUsuario && !hayNuevaZona)
-            {
-                _dialogService.ShowError("No se detectaron cambios en la asignación.");
+                _dialogService.ShowError("Debe ingresar un motivo para el movimiento.");
                 return;
             }
 
             IsBusy = true;
             try
             {
-                // Registrar el movimiento (esto actualiza el equipo y crea la entrada en el historial)
-                await _movimientoSrv.RegistrarMovimientoAsync(
-                    _equipo.Id,
-                    UsuarioSeleccionado?.Id,
-                    ZonaSeleccionada?.Id,
-                    Motivo,
-                    _sessionService.UsuarioActual!.Id);
+                int? usuarioId = UsuarioSeleccionado?.Id;
+                int? zonaId = ZonaSeleccionada?.Id;
 
-                _dialogService.ShowInfo("Movimiento registrado correctamente.");
-                DialogResult = true;
-                System.Windows.Application.Current.Windows.OfType<Window>()
-                    .SingleOrDefault(w => w.DataContext == this)?.Close();
+                if (_sessionService.UsuarioActual != null)
+                {
+                    await _movimientoSvc.RegistrarMovimientoAsync(
+                        _equipoId,
+                        usuarioId,
+                        zonaId,
+                        MotivoMovimiento,
+                        _sessionService.UsuarioActual.Id);
+
+                    DialogResult = true;
+                    _dialogService.ShowInfo("Equipo asignado correctamente.");
+                    RequestClose?.Invoke(this, EventArgs.Empty);
+                }
+                else
+                {
+                    _dialogService.ShowError("No hay una sesión de usuario activa.");
+                }
             }
             catch (Exception ex)
             {
-                Logger?.LogError(ex, "Error al registrar movimiento para equipo {EquipoId}", _equipo.Id);
-                _dialogService.ShowError($"Error al registrar el movimiento: {ex.Message}");
+                Logger?.LogError(ex, "Error al asignar equipo");
+                _dialogService.ShowError($"Error al asignar equipo: {ex.Message}");
             }
             finally
             {
@@ -250,10 +235,10 @@ namespace InventarioComputo.UI.ViewModels
         }
 
         [RelayCommand]
-        public void Close()
+        private void Cancelar()
         {
-            System.Windows.Application.Current.Windows.OfType<Window>()
-                .SingleOrDefault(w => w.DataContext == this)?.Close();
+            DialogResult = false;
+            RequestClose?.Invoke(this, EventArgs.Empty);
         }
     }
 }

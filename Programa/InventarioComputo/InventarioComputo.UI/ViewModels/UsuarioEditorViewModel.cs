@@ -101,6 +101,13 @@ namespace InventarioComputo.UI.ViewModels
             }
         }
 
+        // Corrigiendo el método de validación de contraseña
+        private bool ValidarContraseña(string password)
+        {
+            // Debe tener al menos 6 caracteres
+            return !string.IsNullOrEmpty(password) && password.Length >= 6;
+        }
+
         [RelayCommand]
         public async Task GuardarAsync()
         {
@@ -119,9 +126,14 @@ namespace InventarioComputo.UI.ViewModels
             var crearNuevo = _entidad.Id == 0;
             if (crearNuevo)
             {
-                if (string.IsNullOrWhiteSpace(Password) || Password.Length < 6)
+                if (string.IsNullOrWhiteSpace(Password))
                 {
-                    _dialogService.ShowError("La contraseña es obligatoria y debe tener al menos 6 caracteres.");
+                    _dialogService.ShowError("La contraseña es obligatoria para nuevos usuarios.");
+                    return;
+                }
+                if (!ValidarContraseña(Password))
+                {
+                    _dialogService.ShowError("La contraseña debe tener al menos 6 caracteres.");
                     return;
                 }
                 if (!string.Equals(Password, ConfirmPassword, StringComparison.Ordinal))

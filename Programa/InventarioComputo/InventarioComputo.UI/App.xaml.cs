@@ -152,6 +152,7 @@ namespace InventarioComputo.UI
             dialogService.Register<HistorialEquipoViewModel, Views.HistorialEquipoView>();
             dialogService.Register<UsuarioEditorViewModel, Views.UsuarioEditorView>();
             dialogService.Register<UsuarioRolesViewModel, Views.UsuarioRolesView>();
+            dialogService.Register<AsignarEquipoViewModel, Views.AsignarEquipoView>();
 
             using (var scope = _host.Services.CreateScope())
             {

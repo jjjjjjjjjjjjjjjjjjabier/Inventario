@@ -74,7 +74,7 @@ namespace InventarioComputo.UI
         {
             _menuExpanded = !_menuExpanded;
             AnimateMenuWidth(_menuExpanded ? MENU_EXPANDED_WIDTH : MENU_COLLAPSED_WIDTH);
-
+            
             if (sender is ToggleButton tb)
                 tb.IsChecked = _menuExpanded;
         }

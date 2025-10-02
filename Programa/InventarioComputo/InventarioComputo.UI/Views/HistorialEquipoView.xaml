@@ -90,7 +90,7 @@
             <!-- Boton Cerrar -->
             <Button Grid.Row="3" 
                     Content="Cerrar" 
-                    Command="{Binding CerrarCommand}"
+                    Command="{Binding CloseCommand}"
                     Style="{StaticResource ActionButtonStyle}"
                     HorizontalAlignment="Right"
                     Margin="0,15,0,0"/>
