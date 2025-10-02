@@ -62,6 +62,10 @@ namespace InventarioComputo.Infrastructure.Persistencia
                 entity.Property(e => e.Observaciones).HasMaxLength(1000);
                 entity.Property(e => e.Activo).IsRequired();
                 
+                // Agregar precisión a la propiedad decimal
+                entity.Property(e => e.Costo)
+                      .HasPrecision(18, 2);
+                
                 // Relaciones
                 entity.HasOne(e => e.TipoEquipo)
                       .WithMany()
@@ -123,8 +127,10 @@ namespace InventarioComputo.Infrastructure.Persistencia
             modelBuilder.Entity<UsuarioRol>(entity =>
             {
                 entity.ToTable("UsuarioRoles");
-                entity.HasKey(e => new { e.UsuarioId, e.RolId });
-                
+                entity.HasKey(e => new { e.UsuarioId, e.RolId }); // Esto ya es correcto
+    
+                // No necesita una propiedad Id separada porque ya tiene una clave compuesta
+    
                 entity.HasOne(ur => ur.Usuario)
                     .WithMany(u => u.UsuarioRoles)
                     .HasForeignKey(ur => ur.UsuarioId);
@@ -140,11 +146,13 @@ namespace InventarioComputo.Infrastructure.Persistencia
                 entity.HasKey(h => h.Id);
                 entity.Property(h => h.Motivo).IsRequired().HasMaxLength(500);
 
+                // Define claramente una sola relación con EquipoComputo
                 entity.HasOne(h => h.EquipoComputo)
-                    .WithMany()
+                    .WithMany(e => e.HistorialMovimientos) // Esta es la relación correcta
                     .HasForeignKey(h => h.EquipoComputoId)
                     .OnDelete(DeleteBehavior.Cascade);
 
+                // El resto de las relaciones son correctas
                 entity.HasOne(h => h.UsuarioAnterior)
                     .WithMany()
                     .HasForeignKey(h => h.UsuarioAnteriorId)

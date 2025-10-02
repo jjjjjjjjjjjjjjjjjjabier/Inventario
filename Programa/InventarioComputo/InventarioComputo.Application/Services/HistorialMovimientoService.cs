@@ -12,54 +12,47 @@ namespace InventarioComputo.Application.Services
     {
         private readonly IHistorialMovimientoRepository _repo;
         private readonly IEquipoComputoRepository _equipoRepo;
-        private readonly IUnitOfWork _unitOfWork;
 
         public HistorialMovimientoService(
             IHistorialMovimientoRepository repo,
-            IEquipoComputoRepository equipoRepo,
-            IUnitOfWork unitOfWork)
+            IEquipoComputoRepository equipoRepo)
         {
             _repo = repo;
             _equipoRepo = equipoRepo;
-            _unitOfWork = unitOfWork;
         }
 
-        public async Task<IReadOnlyList<HistorialMovimiento>> ObtenerHistorialEquipoAsync(int equipoId, CancellationToken ct = default)
+        public async Task<IReadOnlyList<HistorialMovimiento>> ObtenerHistorialEquipoAsync(
+            int equipoId, CancellationToken ct = default)
         {
             return await _repo.ObtenerHistorialEquipoAsync(equipoId, ct);
         }
 
-        public async Task RegistrarMovimientoAsync(int equipoId, int? usuarioNuevoId, int? zonaNuevaId,
-            string motivo, int usuarioResponsableId, CancellationToken ct = default)
+        public async Task RegistrarMovimientoAsync(
+            int equipoId, int? usuarioNuevoId, int? zonaNuevaId, string motivo,
+            int usuarioResponsableId, CancellationToken ct = default)
         {
-            if (string.IsNullOrWhiteSpace(motivo))
-                throw new ArgumentException("El motivo del movimiento es obligatorio.");
-                
-            // Obtener equipo actual para conocer su estado
             var equipo = await _equipoRepo.ObtenerPorIdAsync(equipoId, ct)
                 ?? throw new InvalidOperationException($"No se encontró el equipo con ID {equipoId}");
-                
-            // Crear historial
-            var historial = new HistorialMovimiento
+
+            var movimiento = new HistorialMovimiento
             {
                 EquipoComputoId = equipoId,
-                UsuarioAnteriorId = equipo.UsuarioId,
-                UsuarioNuevoId = usuarioNuevoId,
-                ZonaAnteriorId = equipo.ZonaId,
-                ZonaNuevaId = zonaNuevaId,
                 FechaMovimiento = DateTime.Now,
+                // Usamos la propiedad correcta UsuarioId
+                UsuarioAnteriorId = equipo.UsuarioId,
+                ZonaAnteriorId = equipo.ZonaId,
+                UsuarioNuevoId = usuarioNuevoId,
+                ZonaNuevaId = zonaNuevaId,
                 Motivo = motivo,
                 UsuarioResponsableId = usuarioResponsableId
             };
-            
-            // Actualizar equipo
+
+            // Actualizamos el equipo con los nuevos valores
             equipo.UsuarioId = usuarioNuevoId;
             equipo.ZonaId = zonaNuevaId;
             
-            // Guardar en una transacción
-            await _repo.AgregarAsync(historial, ct);
             await _equipoRepo.ActualizarAsync(equipo, ct);
-            await _unitOfWork.SaveChangesAsync(ct);
+            await _repo.AgregarAsync(movimiento, ct);
         }
     }
 }

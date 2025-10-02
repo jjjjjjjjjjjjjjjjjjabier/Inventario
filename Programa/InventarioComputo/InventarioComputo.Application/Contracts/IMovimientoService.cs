@@ -7,16 +7,8 @@ namespace InventarioComputo.Application.Contracts
 {
     public interface IMovimientoService
     {
-        Task<HistorialMovimiento> RegistrarMovimientoAsync(
-            int equipoId,
-            int? nuevoUsuarioId,
-            int? nuevaZonaId,
-            string motivo,
-            int usuarioRegistraId,
-            CancellationToken ct = default);
-
-        Task<IReadOnlyList<HistorialMovimiento>> ObtenerHistorialPorEquipoAsync(
-            int equipoId,
-            CancellationToken ct = default);
+        Task<IReadOnlyList<HistorialMovimiento>> ObtenerHistorialPorEquipoAsync(int equipoId, CancellationToken ct = default);
+        Task AsignarEquipoAsync(int equipoId, int? usuarioId, int? zonaId, string motivo, CancellationToken ct = default);
+        Task RegistrarMovimientoAsync(int equipoId, int? usuarioNuevoId, int? zonaNuevaId, string motivo, int usuarioResponsableId, CancellationToken ct = default);
     }
 }

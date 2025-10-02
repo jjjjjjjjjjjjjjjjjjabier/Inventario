@@ -263,7 +263,7 @@ namespace InventarioComputo.UI.ViewModels
                     Estado = e.Estado?.Nombre,
                     Ubicacion = ubicacion,
                     UsuarioAsignado = e.Usuario?.NombreCompleto,
-                    FechaAdquisicion = e.FechaAdquisicion,
+                    FechaAdquisicion = e.FechaAdquisicion.HasValue ? e.FechaAdquisicion.Value : DateTime.Now,
                     Activo = e.Activo
                 });
             }

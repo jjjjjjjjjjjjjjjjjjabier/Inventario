@@ -9,7 +9,6 @@ using InventarioComputo.UI.Services;
 using InventarioComputo.UI.ViewModels;
 using InventarioComputo.UI.Views;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.SqlServer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -26,6 +25,8 @@ namespace InventarioComputo.UI
 
         public App()
         {
+            InitializeComponent(); // activar carga de App.xaml
+
             _host = Host.CreateDefaultBuilder()
                 .UseSerilog((host, loggerConfig) =>
                 {
@@ -54,8 +55,7 @@ namespace InventarioComputo.UI
                     // Repos
                     services.AddScoped<ISedeRepository, SedeRepository>();
                     services.AddScoped<IAreaRepository, AreaRepository>();
-                    services.AddScoped<IZonaRepository, ZonaRepository>
-                    ();
+                    services.AddScoped<IZonaRepository, ZonaRepository>();
                     services.AddScoped<IEstadoRepository, EstadoRepository>();
                     services.AddScoped<IUnidadRepository, UnidadRepository>();
                     services.AddScoped<ITipoEquipoRepository, TipoEquipoRepository>();
@@ -108,7 +108,7 @@ namespace InventarioComputo.UI
                     services.AddTransient<UsuarioEditorViewModel>();
                     services.AddTransient<UsuarioRolesViewModel>();
 
-                    // Services
+                    // Views
                     services.AddTransient<EstadoEditorView>();
                     services.AddTransient<UnidadEditorView>();
                     services.AddTransient<TipoEquipoEditorView>();
@@ -125,7 +125,7 @@ namespace InventarioComputo.UI
                     services.AddTransient<UsuarioEditorView>();
                     services.AddTransient<UsuarioRolesView>();
 
-                    // Servicios de transacción
+                    // UoW
                     services.AddScoped<IUnitOfWork, EfUnitOfWork>();
                 })
                 .Build();
@@ -135,10 +135,8 @@ namespace InventarioComputo.UI
         {
             await _host.StartAsync();
 
-            // Obtener el DialogService del contenedor de DI en lugar de crear uno nuevo
             var dialogService = _host.Services.GetRequiredService<DialogService>();
 
-            // Registrar las vistas
             dialogService.Register<TipoEquipoEditorViewModel, Views.TipoEquipoEditorView>();
             dialogService.Register<UnidadEditorViewModel, Views.UnidadEditorView>();
             dialogService.Register<EstadoEditorViewModel, Views.EstadoEditorView>();
@@ -176,10 +174,8 @@ namespace InventarioComputo.UI
                 }
             }
 
-            // Evitar que la app cierre al cerrar el Login
             Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
-            // Mostrar Login como diálogo modal
             var loginVM = _host.Services.GetRequiredService<LoginViewModel>();
             var loginView = new LoginView { DataContext = loginVM };
             var resultado = loginView.ShowDialog();
@@ -193,7 +189,6 @@ namespace InventarioComputo.UI
                     Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
                     mainWindow.Show();
 
-                    // SUSCRIPCIÓN CENTRALIZADA AL LOGOUT
                     var session = _host.Services.GetRequiredService<ISessionService>();
                     session.SesionCambiada += (s, loggedIn) =>
                     {
@@ -201,19 +196,15 @@ namespace InventarioComputo.UI
                         {
                             Dispatcher.Invoke(() =>
                             {
-                                // Cambiar el ShutdownMode antes de cerrar la ventana principal
                                 Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
-                                // Cerrar ventana principal actual de forma segura
                                 var main = Current.MainWindow;
                                 if (main != null)
                                 {
-                                    // Hide es opcional pero evita parpadeos
                                     main.Hide();
                                     main.Close();
                                 }
 
-                                // Mostrar login nuevamente
                                 var vm = _host.Services.GetRequiredService<LoginViewModel>();
                                 var view = new LoginView { DataContext = vm };
                                 var ok = view.ShowDialog();
@@ -227,7 +218,6 @@ namespace InventarioComputo.UI
                                 }
                                 else
                                 {
-                                    // No reabrir: cerrar aplicación
                                     Current.Shutdown();
                                 }
                             });
@@ -255,7 +245,6 @@ namespace InventarioComputo.UI
             {
                 await _host.StopAsync(TimeSpan.FromSeconds(5));
             }
-
             base.OnExit(e);
         }
     }

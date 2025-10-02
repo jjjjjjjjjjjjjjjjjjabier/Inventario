@@ -6,23 +6,25 @@ namespace InventarioComputo.Domain.Entities
     public class EquipoComputo
     {
         public int Id { get; set; }
-        public string NumeroSerie { get; set; } = string.Empty; // Inicializar
-        public string EtiquetaInventario { get; set; } = string.Empty; // Inicializar
-        public string Marca { get; set; } = string.Empty; // Inicializar
-        public string Modelo { get; set; } = string.Empty; // Inicializar
-        public string Caracteristicas { get; set; } = string.Empty; // Inicializar
-        public DateTime FechaAdquisicion { get; set; }
+        public string NumeroSerie { get; set; } = string.Empty;
+        public string EtiquetaInventario { get; set; } = string.Empty;
+        public string Marca { get; set; } = string.Empty;
+        public string Modelo { get; set; } = string.Empty;
+        public string Caracteristicas { get; set; } = string.Empty;
+        public string? Observaciones { get; set; } // Propiedad faltante
+        public DateTime? FechaAdquisicion { get; set; } // Cambiado a nullable
         public decimal Costo { get; set; }
         public bool Activo { get; set; }
 
         public int TipoEquipoId { get; set; }
-        public virtual TipoEquipo TipoEquipo { get; set; } = new(); // Inicializar
+        public virtual TipoEquipo TipoEquipo { get; set; } = new();
 
         public int EstadoId { get; set; }
-        public virtual Estado Estado { get; set; } = new(); // Inicializar
+        public virtual Estado Estado { get; set; } = new();
 
-        public int? UsuarioAsignadoId { get; set; }
-        public virtual Usuario? UsuarioAsignado { get; set; }
+        // Renombrado a UsuarioId para mantener coherencia con los servicios existentes
+        public int? UsuarioId { get; set; }
+        public virtual Usuario? Usuario { get; set; }
 
         public int? SedeId { get; set; }
         public virtual Sede? Sede { get; set; }

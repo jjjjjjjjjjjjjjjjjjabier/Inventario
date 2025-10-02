@@ -8,6 +8,20 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 	</PropertyGroup>
 
+	<!-- Limpia una carpeta temporal "NewFolder" si existía (opcional) -->
+	<ItemGroup>
+		<Compile Remove="NewFolder\**" />
+		<EmbeddedResource Remove="NewFolder\**" />
+		<None Remove="NewFolder\**" />
+		<Page Remove="NewFolder\**" />
+	</ItemGroup>
+
+	<!-- Eliminación de archivos sueltos generados (si ya no existen, no pasa nada) -->
+	<ItemGroup>
+		<Compile Remove="Class1.cs" />
+	</ItemGroup>
+
+	<!-- Paquetes -->
 	<ItemGroup>
 		<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
@@ -23,11 +37,13 @@
 		<PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
 	</ItemGroup>
 
+	<!-- Referencias a proyectos -->
 	<ItemGroup>
 		<ProjectReference Include="..\InventarioComputo.Application\InventarioComputo.Application.csproj" />
 		<ProjectReference Include="..\InventarioComputo.Infrastructure\InventarioComputo.Infrastructure.csproj" />
 	</ItemGroup>
 
+	<!-- Copia de appsettings.json -->
 	<ItemGroup>
 		<None Update="appsettings.json">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
