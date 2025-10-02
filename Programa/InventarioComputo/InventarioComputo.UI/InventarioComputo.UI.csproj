@@ -10,15 +10,20 @@
 
 	<!-- Limpia una carpeta temporal "NewFolder" si existía (opcional) -->
 	<ItemGroup>
+		<Compile Remove="Commands\**" />
 		<Compile Remove="NewFolder\**" />
+		<EmbeddedResource Remove="Commands\**" />
 		<EmbeddedResource Remove="NewFolder\**" />
+		<None Remove="Commands\**" />
 		<None Remove="NewFolder\**" />
+		<Page Remove="Commands\**" />
 		<Page Remove="NewFolder\**" />
 	</ItemGroup>
 
 	<!-- Eliminación de archivos sueltos generados (si ya no existen, no pasa nada) -->
 	<ItemGroup>
 		<Compile Remove="Class1.cs" />
+		<Compile Remove="StaticConverters.cs" />
 	</ItemGroup>
 
 	<!-- Paquetes -->

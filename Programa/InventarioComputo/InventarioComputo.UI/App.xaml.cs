@@ -14,6 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using System;
+using System.Text;
 using System.Windows;
 using System.Windows.Threading;
 
@@ -47,7 +48,11 @@ namespace InventarioComputo.UI
                 {
                     var connectionString = hostContext.Configuration.GetConnectionString("DefaultConnection");
                     services.AddDbContext<InventarioDbContext>(options =>
-                        options.UseSqlServer(connectionString));
+                        options
+                            .UseSqlServer(connectionString)
+                            .EnableDetailedErrors()           // + detalle de errores
+                            .EnableSensitiveDataLogging()     // + parámetros de comandos en logs (solo en dev)
+                    );
 
                     // Seguridad
                     services.AddSingleton<IPasswordHasher, PasswordHasher>();
@@ -164,11 +169,73 @@ namespace InventarioComputo.UI
                     await db.Database.MigrateAsync();
                     var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
                     await authService.CrearUsuarioAdministradorSiNoExisteAsync();
+
+                    var usuarioSrv = scope.ServiceProvider.GetRequiredService<IUsuarioService>();
+                    var rolSrv = scope.ServiceProvider.GetRequiredService<IRolService>();
+
+                    // Reemplazamos hostContext por config
+                    var adminUser = config.GetSection("SeedUsers:Admin");
+                    var consultaUser = config.GetSection("SeedUsers:Consulta");
+
+                    async Task EnsureUserAsync(IConfigurationSection section, string rolNombre)
+                    {
+                        var userName = section.GetValue<string>("UserName");
+                        var fullName = section.GetValue<string>("FullName");
+                        var password = section.GetValue<string>("Password");
+
+                        if (string.IsNullOrWhiteSpace(userName) || string.IsNullOrWhiteSpace(password))
+                            return;
+
+                        var user = await usuarioSrv.ObtenerPorNombreUsuarioAsync(userName);
+                        if (user == null)
+                        {
+                            user = new InventarioComputo.Domain.Entities.Usuario
+                            {
+                                NombreUsuario = userName,
+                                NombreCompleto = fullName ?? userName,
+                                Activo = true
+                            };
+                            user = await usuarioSrv.GuardarAsync(user, password);
+                        }
+
+                        var rol = await rolSrv.ObtenerPorNombreAsync(rolNombre);
+                        if (rol != null)
+                        {
+                            var rolesUsuario = await usuarioSrv.ObtenerRolesDeUsuarioAsync(user.Id);
+                            var yaTiene = rolesUsuario.Any(r => r.Nombre == rolNombre);
+                            if (!yaTiene)
+                                await usuarioSrv.AsignarRolUsuarioAsync(user.Id, rol.Id);
+                        }
+                    }
+
+                    // Usuarios seed (idempotente)
+                    await EnsureUserAsync(adminUser, "Administrador");
+                    await EnsureUserAsync(consultaUser, "Consulta");
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error al preparar la base de datos: {ex.Message}",
-                        "Error de Inicialización", MessageBoxButton.OK, MessageBoxImage.Error);
+                    string BuildExceptionText(Exception e)
+                    {
+                        var sb = new StringBuilder();
+                        int level = 0;
+                        while (e != null)
+                        {
+                            sb.AppendLine($"[{level}] {e.GetType().Name}: {e.Message}");
+                            if (e is Microsoft.EntityFrameworkCore.DbUpdateException dbex && dbex.Entries?.Count > 0)
+                            {
+                                sb.AppendLine($"   Entidades afectadas: {string.Join(", ", dbex.Entries.Select(en => en.Metadata.Name))}");
+                            }
+                            e = e.InnerException;
+                            level++;
+                        }
+                        return sb.ToString();
+                    }
+
+                    MessageBox.Show(
+                        $"Error al preparar la base de datos:\n\n{BuildExceptionText(ex)}",
+                        "Error de Inicialización",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
                     Shutdown();
                     return;
                 }

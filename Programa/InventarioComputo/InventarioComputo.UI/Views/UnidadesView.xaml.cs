@@ -12,6 +12,11 @@ namespace InventarioComputo.UI.Views
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
+            // Desencadenar comando de carga al iniciar la vista
+            if (DataContext is ViewModels.UnidadesViewModel vm)
+            {
+                vm.LoadedCommand.Execute(null);
+            }
         }
     }
 }

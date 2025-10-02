@@ -3,8 +3,10 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:converters="clr-namespace:InventarioComputo.UI.Converters"
+        xmlns:local="clr-namespace:InventarioComputo.UI"
         mc:Ignorable="d"
-        Title="Sistema de Inventario de Equipo de Computo" 
+        Title="Sistema de Inventario de Equipo de Cómputo" 
         Height="720" Width="1280" 
         WindowStartupLocation="CenterScreen"
         Background="#F5F5F5"
@@ -13,181 +15,273 @@
         TextOptions.TextFormattingMode="Display"
         TextOptions.TextRenderingMode="ClearType">
 
+    <Window.Resources>
+        <!-- Efectos visuales -->
+        <DropShadowEffect x:Key="MenuShadowEffect" 
+                          BlurRadius="10" 
+                          ShadowDepth="2" 
+                          Direction="0" 
+                          Opacity="0.25"
+                          Color="#000000"/>
+
+        <!-- Convertidor para iniciales del usuario -->
+        <converters:InitialsConverter x:Key="InitialsConverter"/>
+    </Window.Resources>
+
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <!-- Menu lateral colapsable -->
-        <Grid x:Name="MenuPanel" Width="200" Background="#2C3E50">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
+        <!-- Menu lateral colapsable mejorado -->
+        <Border x:Name="MenuPanel" 
+                Width="200" 
+                Background="#2C3E50"
+                BorderBrush="#1C2E40"
+                BorderThickness="0,0,1,0"
+                Effect="{StaticResource MenuShadowEffect}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-            <!-- Boton de toggle para el menu -->
-            <Grid Grid.Row="0" Height="60" Background="#263545">
-                <ToggleButton x:Name="MenuToggleButton"
-                              Checked="MenuToggleButton_Checked"
-                              Unchecked="MenuToggleButton_Unchecked"
-                              HorizontalAlignment="Right"
-                              VerticalAlignment="Center"
-                              Margin="0,0,10,0"
-                              Width="32" Height="32"
-                              Background="Transparent"
-                              BorderThickness="0">
-                    <ToggleButton.Template>
-                        <ControlTemplate TargetType="ToggleButton">
-                            <Border Background="Transparent" Width="32" Height="32">
-                                <Path Data="M4,10 L28,10 M4,16 L28,16 M4,22 L28,22"
-                                      Stroke="White" StrokeThickness="2"
-                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                            </Border>
-                        </ControlTemplate>
-                    </ToggleButton.Template>
-                </ToggleButton>
-                <TextBlock Text="INVENTARIO"
-                           Foreground="White"
-                           FontSize="16"
-                           FontWeight="Bold"
-                           VerticalAlignment="Center"
-                           Margin="20,0,0,0" />
+                <!-- Encabezado + Toggle -->
+                <Grid Grid.Row="0" Height="64" Background="#263545">
+                    <ToggleButton x:Name="MenuToggleButton"
+                                  Click="ToggleMenu_Click"
+                                  Checked="MenuToggleButton_Checked"
+                                  Unchecked="MenuToggleButton_Unchecked"
+                                  HorizontalAlignment="Right"
+                                  VerticalAlignment="Center"
+                                  Margin="0,0,10,0"
+                                  Width="36" Height="36"
+                                  Background="Transparent"
+                                  BorderThickness="0">
+                        <ToggleButton.Template>
+                            <ControlTemplate TargetType="ToggleButton">
+                                <Border Background="Transparent" Width="36" Height="36" CornerRadius="4">
+                                    <Grid>
+                                        <Path x:Name="HamburgerIcon" 
+                                              Data="M4,10 L28,10 M4,16 L28,16 M4,22 L28,22"
+                                              Stroke="White" StrokeThickness="2"
+                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
+                                    </Grid>
+                                    <Border.Effect>
+                                        <DropShadowEffect ShadowDepth="0" BlurRadius="10" Color="#22000000" Opacity="0.3"/>
+                                    </Border.Effect>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="HamburgerIcon" Property="Stroke" Value="#3498DB"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </ToggleButton.Template>
+                    </ToggleButton>
+
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="15,0,0,0">
+                        <TextBlock Text="INVENTARIO"
+                                   Foreground="White"
+                                   FontSize="18" FontWeight="SemiBold"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Seccion de Inventario -->
+                <StackPanel Grid.Row="1" Margin="0,10,0,0">
+                    <Button Style="{StaticResource MenuButtonStyle}"
+                            Command="{Binding NavigateToEquiposComputoCommand}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="40"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" 
+                                       Text="&#xE770;" 
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="18"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" 
+                                       Text="Equipos"
+                                       FontSize="14"
+                                       FontWeight="Medium"/>
+                        </Grid>
+                    </Button>
+                </StackPanel>
+
+                <!-- Seccion de Administracion -->
+                <StackPanel Grid.Row="2" Margin="0,15,0,0">
+                    <Border Background="#22FFFFFF" Margin="15,0,15,8" Height="1"/>
+                    <TextBlock Text="ADMINISTRACIÓN" 
+                               Foreground="#7F8C8D" 
+                               FontSize="11" 
+                               FontWeight="SemiBold"
+                               Margin="15,5,0,8"/>
+
+                    <Button Style="{StaticResource MenuButtonStyle}"
+                            Command="{Binding NavigateToEstadosCommand}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="40"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" 
+                                       Text="&#xE945;" 
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="18"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" 
+                                       Text="Estados"
+                                       FontSize="14"/>
+                        </Grid>
+                    </Button>
+
+                    <Button Style="{StaticResource MenuButtonStyle}"
+                            Command="{Binding NavigateToTiposEquipoCommand}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="40"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" 
+                                       Text="&#xE71D;" 
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="18"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" 
+                                       Text="Tipos"
+                                       FontSize="14"/>
+                        </Grid>
+                    </Button>
+
+                    <Button Style="{StaticResource MenuButtonStyle}"
+                            Command="{Binding NavigateToUnidadesCommand}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="40"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" 
+                                       Text="&#xE707;" 
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="18"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" 
+                                       Text="Unidades"
+                                       FontSize="14"/>
+                        </Grid>
+                    </Button>
+
+                    <Button Style="{StaticResource MenuButtonStyle}"
+                            Command="{Binding NavigateToUbicacionesCommand}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="40"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" 
+                                       Text="&#xE719;" 
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="18"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" 
+                                       Text="Ubicaciones"
+                                       FontSize="14"/>
+                        </Grid>
+                    </Button>
+
+                    <Button Style="{StaticResource MenuButtonStyle}"
+                            Command="{Binding NavigateToReportesCommand}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="40"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" 
+                                       Text="&#xE9D9;" 
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="18"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" 
+                                       Text="Reportes"
+                                       FontSize="14"/>
+                        </Grid>
+                    </Button>
+
+                    <Button Style="{StaticResource MenuButtonStyle}"
+                            Command="{Binding NavigateToUsuariosCommand}"
+                            Visibility="{Binding EsAdministrador, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="40"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" 
+                                       Text="&#xE77B;" 
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="18"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" 
+                                       Text="Usuarios"
+                                       FontSize="14"/>
+                        </Grid>
+                    </Button>
+                </StackPanel>
+
+                <!-- Usuario y Boton Cerrar Sesion -->
+                <Border Grid.Row="4" Background="#263545" Padding="10,15">
+                    <StackPanel>
+                        <Border Width="48" Height="48" Background="#3498DB" CornerRadius="24" 
+                                HorizontalAlignment="Center" Margin="0,0,0,10">
+                            <TextBlock Text="{Binding NombreUsuario, Converter={StaticResource InitialsConverter}}"
+                                       Foreground="White"
+                                       FontSize="20" FontWeight="SemiBold"
+                                       HorizontalAlignment="Center" 
+                                       VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="{Binding NombreUsuario}"
+                                   Foreground="White"
+                                   FontSize="14" FontWeight="Medium"
+                                   HorizontalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis"
+                                   Margin="0,0,0,3"/>
+                        <TextBlock Foreground="#7F8C8D"
+                                   FontSize="12"
+                                   HorizontalAlignment="Center"
+                                   Margin="0,0,0,10">
+                            <Run Text="Rol: "/>
+                            <Run Text="{Binding EsAdministrador, Converter={StaticResource BoolToTextConverter}, ConverterParameter=Administrador|Consulta}" 
+                                 FontWeight="Medium"/>
+                        </TextBlock>
+                        <Button Command="{Binding CerrarSesionCommand}"
+                                HorizontalAlignment="Center"
+                                Height="32"
+                                Background="#34495E"
+                                BorderThickness="0"
+                                Foreground="White"
+                                Padding="15,5">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE7E8;" 
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="16"
+                                           Margin="0,0,5,0"/>
+                                <TextBlock Text="Cerrar Sesión" FontSize="13"/>
+                            </StackPanel>
+                            <Button.Resources>
+                                <Style TargetType="Border">
+                                    <Setter Property="CornerRadius" Value="4"/>
+                                </Style>
+                            </Button.Resources>
+                        </Button>
+                    </StackPanel>
+                </Border>
             </Grid>
-
-            <!-- Seccion de Inventario -->
-            <StackPanel Grid.Row="1" Margin="0,10,0,0">
-                <Button Style="{StaticResource MenuButtonStyle}"
-                        Command="{Binding NavigateToEquiposComputoCommand}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xE770;" 
-                                   FontFamily="Segoe MDL2 Assets" 
-                                   Margin="5,0,10,0"
-                                   VerticalAlignment="Center"/>
-                        <TextBlock Text="Equipos" 
-                                   VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-            </StackPanel>
-
-            <!-- Seccion de Administracion -->
-            <StackPanel Grid.Row="2" Margin="0,20,0,0">
-                <TextBlock Text="ADMINISTRACION" 
-                           Foreground="#7F8C8D" 
-                           FontSize="12" 
-                           Margin="15,5,0,5"/>
-
-                <Button Style="{StaticResource MenuButtonStyle}"
-                        Command="{Binding NavigateToEstadosCommand}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xE945;" 
-                                   FontFamily="Segoe MDL2 Assets" 
-                                   Margin="5,0,10,0"
-                                   VerticalAlignment="Center"/>
-                        <TextBlock Text="Estados" 
-                                   VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-
-                <Button Style="{StaticResource MenuButtonStyle}"
-                        Command="{Binding NavigateToTiposEquipoCommand}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xE71D;" 
-                                   FontFamily="Segoe MDL2 Assets" 
-                                   Margin="5,0,10,0"
-                                   VerticalAlignment="Center"/>
-                        <TextBlock Text="Tipos" 
-                                   VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-
-                <Button Style="{StaticResource MenuButtonStyle}"
-                        Command="{Binding NavigateToUnidadesCommand}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xE707;" 
-                                   FontFamily="Segoe MDL2 Assets" 
-                                   Margin="5,0,10,0"
-                                   VerticalAlignment="Center"/>
-                        <TextBlock Text="Unidades" 
-                                   VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-
-                <Button Style="{StaticResource MenuButtonStyle}"
-                        Command="{Binding NavigateToUbicacionesCommand}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xE707;" 
-                                   FontFamily="Segoe MDL2 Assets" 
-                                   Margin="5,0,10,0"
-                                   VerticalAlignment="Center"/>
-                        <TextBlock Text="Ubicaciones" 
-                                   VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-
-                <Button Style="{StaticResource MenuButtonStyle}"
-                        Command="{Binding NavigateToReportesCommand}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xE9D9;" 
-                                   FontFamily="Segoe MDL2 Assets" 
-                                   Margin="5,0,10,0"
-                                   VerticalAlignment="Center"/>
-                        <TextBlock Text="Reportes" 
-                                   VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-
-                <Button Style="{StaticResource MenuButtonStyle}"
-                        Command="{Binding NavigateToUsuariosCommand}"
-                        Visibility="{Binding EsAdministrador, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xE77B;" 
-                                   FontFamily="Segoe MDL2 Assets" 
-                                   Margin="5,0,10,0"
-                                   VerticalAlignment="Center"/>
-                        <TextBlock Text="Usuarios" 
-                                   VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
-            </StackPanel>
-
-            <!-- Usuario y Boton Cerrar Sesion -->
-            <StackPanel Grid.Row="4" Margin="0,20,0,20">
-                <TextBlock Text="{Binding NombreUsuario}"
-                           Foreground="White"
-                           HorizontalAlignment="Center"
-                           Margin="0,0,0,5"/>
-                <!-- Mostrar el rol, no repetir el nombre -->
-                <TextBlock Text="Rol: Administrador"
-                           Foreground="#7F8C8D"
-                           FontSize="12"
-                           HorizontalAlignment="Center"
-                           Visibility="{Binding EsAdministrador, Converter={StaticResource BooleanToVisibilityConverter}}"
-                           Margin="0,0,0,10"/>
-                <TextBlock Text="Rol: Consulta"
-                           Foreground="#7F8C8D"
-                           FontSize="12"
-                           HorizontalAlignment="Center"
-                           Visibility="{Binding EsAdministrador, Converter={StaticResource InvertedBooleanToVisibilityConverter}}"
-                           Margin="0,0,0,10"/>
-                <Button Command="{Binding CerrarSesionCommand}"
-                        HorizontalAlignment="Center"
-                        Height="32"
-                        Background="Transparent"
-                        BorderThickness="0"
-                        Foreground="White">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="&#xE7E8;" 
-                                   FontFamily="Segoe MDL2 Assets" 
-                                   Margin="0,0,5,0"/>
-                        <TextBlock Text="Cerrar Sesion"/>
-                    </StackPanel>
-                </Button>
-            </StackPanel>
-        </Grid>
+        </Border>
 
         <!-- Contenido principal -->
         <ContentControl Grid.Column="1" 
