@@ -9,29 +9,14 @@ namespace InventarioComputo.UI.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is string fullName && !string.IsNullOrWhiteSpace(fullName))
-            {
-                // Dividir el nombre en palabras
-                var words = fullName.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-                
-                // Tomar la primera letra de hasta dos palabras
-                if (words.Length >= 2)
-                {
-                    return $"{words[0][0]}{words[1][0]}".ToUpper();
-                }
-                else if (words.Length == 1 && words[0].Length > 0)
-                {
-                    return words[0][0].ToString().ToUpper();
-                }
-            }
-            
-            // Valor por defecto si no se puede obtener iniciales
-            return "?";
+            var name = value as string ?? string.Empty;
+            var parts = name.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 0) return string.Empty;
+            if (parts.Length == 1) return parts[0].Substring(0, Math.Min(2, parts[0].Length)).ToUpper(culture);
+            return string.Concat(parts[0].FirstOrDefault(), parts[1].FirstOrDefault()).ToUpper(culture);
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            throw new NotSupportedException("La conversión inversa no está soportada para InitialsConverter");
-        }
+            => throw new NotImplementedException();
     }
 }

@@ -10,14 +10,11 @@ namespace InventarioComputo.UI.Converters
     {
         public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
         {
-            // Si todos los valores son true, retorna Visible
             bool allTrue = values != null && values.All(v => v is bool b && b);
             return allTrue ? Visibility.Visible : Visibility.Collapsed;
         }
 
         public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)
-        {
-            throw new NotImplementedException();
-        }
+            => throw new NotImplementedException();
     }
 }

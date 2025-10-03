@@ -1,7 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.IO;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
-using System.IO;
 
 namespace InventarioComputo.Infrastructure.Persistencia.Factories
 {
@@ -9,20 +9,33 @@ namespace InventarioComputo.Infrastructure.Persistencia.Factories
     {
         public InventarioDbContext CreateDbContext(string[] args)
         {
-            // Esta lógica busca la carpeta del proyecto UI para encontrar el appsettings.json
-            var basePath = Path.GetFullPath(Path.Combine(Directory.GetCurrentDirectory(), @"..\InventarioComputo.UI"));
+            // Detecta appsettings.json de la UI para usar la misma cadena de conexión
+            var cwd = Directory.GetCurrentDirectory();
+            var uiDir = cwd;
+            if (!File.Exists(Path.Combine(uiDir, "appsettings.json")))
+            {
+                var root = Directory.GetParent(cwd)?.FullName ?? cwd;
+                var candidate = Path.Combine(root, "InventarioComputo.UI");
+                if (File.Exists(Path.Combine(candidate, "appsettings.json")))
+                    uiDir = candidate;
+            }
 
-            var configuration = new ConfigurationBuilder()
-                .SetBasePath(basePath)
-                .AddJsonFile("appsettings.json")
+            var config = new ConfigurationBuilder()
+                .SetBasePath(uiDir)
+                .AddJsonFile("appsettings.json", optional: true)
+                .AddJsonFile("appsettings.Development.json", optional: true)
                 .Build();
 
-            var optionsBuilder = new DbContextOptionsBuilder<InventarioDbContext>();
-            var connectionString = configuration.GetConnectionString("DefaultConnection");
+            var cs = config.GetConnectionString("DefaultConnection")
+                     ?? "Server=.;Database=InventarioComputo;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True";
 
-            optionsBuilder.UseSqlServer(connectionString);
+            var builder = new DbContextOptionsBuilder<InventarioDbContext>();
+            builder.UseSqlServer(cs, sql =>
+            {
+                sql.MigrationsAssembly(typeof(InventarioDbContext).Assembly.FullName);
+            });
 
-            return new InventarioDbContext(optionsBuilder.Options);
+            return new InventarioDbContext(builder.Options);
         }
     }
 }

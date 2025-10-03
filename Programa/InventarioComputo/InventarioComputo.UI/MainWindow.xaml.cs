@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media.Animation;
 using InventarioComputo.UI.ViewModels;
+using Microsoft.Extensions.DependencyInjection; // necesario para GetRequiredService
 
 namespace InventarioComputo.UI
 {
@@ -13,6 +14,11 @@ namespace InventarioComputo.UI
         private const double ANIMATION_DURATION = 0.25; // segundos
 
         private bool _menuExpanded = true;
+
+        // Constructor sin parámetros para el diseñador/XAML
+        public MainWindow() : this(App.Services.GetRequiredService<MainWindowViewModel>())
+        {
+        }
 
         public MainWindow(MainWindowViewModel viewModel)
         {

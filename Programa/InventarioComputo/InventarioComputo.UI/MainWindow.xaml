@@ -231,6 +231,25 @@
                                        FontSize="14"/>
                         </Grid>
                     </Button>
+
+                    <!-- Empleados (corregido: usa el estilo correcto y comando existente) -->
+                    <Button Style="{StaticResource MenuButtonStyle}"
+                            Command="{Binding NavigateToEmpleadosCommand}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="40"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" 
+                                       Text="&#xE77B;" 
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="18"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" 
+                                       Text="Empleados"
+                                       FontSize="14"/>
+                        </Grid>
+                    </Button>
                 </StackPanel>
 
                 <!-- Usuario y Boton Cerrar Sesion -->

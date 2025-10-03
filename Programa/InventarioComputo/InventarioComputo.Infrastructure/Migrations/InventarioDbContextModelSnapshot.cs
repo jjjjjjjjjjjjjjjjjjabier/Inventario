@@ -17,6 +17,7 @@ namespace InventarioComputo.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
+                .HasDefaultSchema("dbo")
                 .HasAnnotation("ProductVersion", "8.0.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
@@ -46,7 +47,7 @@ namespace InventarioComputo.Infrastructure.Migrations
                     b.HasIndex("SedeId", "Nombre")
                         .IsUnique();
 
-                    b.ToTable("Areas", (string)null);
+                    b.ToTable("Areas", "dbo");
                 });
 
             modelBuilder.Entity("InventarioComputo.Domain.Entities.BitacoraEvento", b =>
@@ -82,7 +83,32 @@ namespace InventarioComputo.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("BitacoraEventos", (string)null);
+                    b.ToTable("BitacoraEventos", "dbo");
+                });
+
+            modelBuilder.Entity("InventarioComputo.Domain.Entities.Empleado", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("NombreCompleto")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Puesto")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Empleados", "dbo");
                 });
 
             modelBuilder.Entity("InventarioComputo.Domain.Entities.EquipoComputo", b =>
@@ -107,6 +133,9 @@ namespace InventarioComputo.Infrastructure.Migrations
                     b.Property<decimal>("Costo")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<int?>("EmpleadoId")
+                        .HasColumnType("int");
 
                     b.Property<int>("EstadoId")
                         .HasColumnType("int");
@@ -154,6 +183,8 @@ namespace InventarioComputo.Infrastructure.Migrations
 
                     b.HasIndex("AreaId");
 
+                    b.HasIndex("EmpleadoId");
+
                     b.HasIndex("EstadoId");
 
                     b.HasIndex("EtiquetaInventario")
@@ -170,7 +201,7 @@ namespace InventarioComputo.Infrastructure.Migrations
 
                     b.HasIndex("ZonaId");
 
-                    b.ToTable("EquiposComputo", (string)null);
+                    b.ToTable("EquiposComputo", "dbo");
                 });
 
             modelBuilder.Entity("InventarioComputo.Domain.Entities.Estado", b =>
@@ -202,7 +233,7 @@ namespace InventarioComputo.Infrastructure.Migrations
                     b.HasIndex("Nombre")
                         .IsUnique();
 
-                    b.ToTable("Estados");
+                    b.ToTable("Estados", "dbo");
                 });
 
             modelBuilder.Entity("InventarioComputo.Domain.Entities.HistorialMovimiento", b =>
@@ -273,7 +304,7 @@ namespace InventarioComputo.Infrastructure.Migrations
 
                     b.HasIndex("ZonaNuevaId");
 
-                    b.ToTable("HistorialMovimientos", (string)null);
+                    b.ToTable("HistorialMovimientos", "dbo");
                 });
 
             modelBuilder.Entity("InventarioComputo.Domain.Entities.Rol", b =>
@@ -294,7 +325,7 @@ namespace InventarioComputo.Infrastructure.Migrations
                     b.HasIndex("Nombre")
                         .IsUnique();
 
-                    b.ToTable("Roles", (string)null);
+                    b.ToTable("Roles", "dbo");
 
                     b.HasData(
                         new
@@ -330,7 +361,7 @@ namespace InventarioComputo.Infrastructure.Migrations
                     b.HasIndex("Nombre")
                         .IsUnique();
 
-                    b.ToTable("Sedes", (string)null);
+                    b.ToTable("Sedes", "dbo");
                 });
 
             modelBuilder.Entity("InventarioComputo.Domain.Entities.TipoEquipo", b =>
@@ -354,7 +385,7 @@ namespace InventarioComputo.Infrastructure.Migrations
                     b.HasIndex("Nombre")
                         .IsUnique();
 
-                    b.ToTable("TiposEquipo", (string)null);
+                    b.ToTable("TiposEquipo", "dbo");
                 });
 
             modelBuilder.Entity("InventarioComputo.Domain.Entities.Unidad", b =>
@@ -386,7 +417,7 @@ namespace InventarioComputo.Infrastructure.Migrations
                     b.HasIndex("Nombre")
                         .IsUnique();
 
-                    b.ToTable("Unidades");
+                    b.ToTable("Unidades", "dbo");
                 });
 
             modelBuilder.Entity("InventarioComputo.Domain.Entities.Usuario", b =>
@@ -419,7 +450,7 @@ namespace InventarioComputo.Infrastructure.Migrations
                     b.HasIndex("NombreUsuario")
                         .IsUnique();
 
-                    b.ToTable("Usuarios", (string)null);
+                    b.ToTable("Usuarios", "dbo");
                 });
 
             modelBuilder.Entity("InventarioComputo.Domain.Entities.UsuarioRol", b =>
@@ -437,7 +468,7 @@ namespace InventarioComputo.Infrastructure.Migrations
 
                     b.HasIndex("RolId");
 
-                    b.ToTable("UsuarioRoles", (string)null);
+                    b.ToTable("UsuarioRoles", "dbo");
                 });
 
             modelBuilder.Entity("InventarioComputo.Domain.Entities.Zona", b =>
@@ -464,7 +495,7 @@ namespace InventarioComputo.Infrastructure.Migrations
                     b.HasIndex("AreaId", "Nombre")
                         .IsUnique();
 
-                    b.ToTable("Zonas", (string)null);
+                    b.ToTable("Zonas", "dbo");
                 });
 
             modelBuilder.Entity("InventarioComputo.Domain.Entities.Area", b =>
@@ -483,6 +514,11 @@ namespace InventarioComputo.Infrastructure.Migrations
                     b.HasOne("InventarioComputo.Domain.Entities.Area", "Area")
                         .WithMany()
                         .HasForeignKey("AreaId");
+
+                    b.HasOne("InventarioComputo.Domain.Entities.Empleado", "Empleado")
+                        .WithMany()
+                        .HasForeignKey("EmpleadoId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("InventarioComputo.Domain.Entities.Estado", "Estado")
                         .WithMany()
@@ -511,6 +547,8 @@ namespace InventarioComputo.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Area");
+
+                    b.Navigation("Empleado");
 
                     b.Navigation("Estado");
 

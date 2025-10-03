@@ -1,7 +1,6 @@
 ﻿using InventarioComputo.Application.Contracts;
 using InventarioComputo.Application.Contracts.Repositories;
 using InventarioComputo.Application.Services;
-using InventarioComputo.Domain.Entities;
 using InventarioComputo.Infrastructure.Persistencia;
 using InventarioComputo.Infrastructure.Repositories;
 using InventarioComputo.Infrastructure.Security;
@@ -14,9 +13,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using System;
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Threading;
 
 namespace InventarioComputo.UI
 {
@@ -24,9 +24,11 @@ namespace InventarioComputo.UI
     {
         private readonly IHost _host;
 
+        public static IServiceProvider Services => ((App)Current)._host.Services;
+
         public App()
         {
-            InitializeComponent(); // activar carga de App.xaml
+            InitializeComponent();
 
             _host = Host.CreateDefaultBuilder()
                 .UseSerilog((host, loggerConfig) =>
@@ -49,9 +51,10 @@ namespace InventarioComputo.UI
                     var connectionString = hostContext.Configuration.GetConnectionString("DefaultConnection");
                     services.AddDbContext<InventarioDbContext>(options =>
                         options
-                            .UseSqlServer(connectionString)
-                            .EnableDetailedErrors()           // + detalle de errores
-                            .EnableSensitiveDataLogging()     // + parámetros de comandos en logs (solo en dev)
+                            .UseSqlServer(connectionString, sql =>
+                                sql.MigrationsAssembly(typeof(InventarioDbContext).Assembly.FullName))
+                            .EnableDetailedErrors()
+                            .EnableSensitiveDataLogging()
                     );
 
                     // Seguridad
@@ -67,9 +70,8 @@ namespace InventarioComputo.UI
                     services.AddScoped<IEquipoComputoRepository, EquipoComputoRepository>();
                     services.AddScoped<IUsuarioRepository, UsuarioRepository>();
                     services.AddScoped<IRolRepository, RolRepository>();
-
-                    // Repositorio para Historial
                     services.AddScoped<IHistorialMovimientoRepository, HistorialMovimientoRepository>();
+                    services.AddScoped<IEmpleadoRepository, EmpleadoRepository>();
 
                     // Servicios de aplicación
                     services.AddScoped<ISedeService, SedeService>();
@@ -86,6 +88,7 @@ namespace InventarioComputo.UI
                     services.AddScoped<IMovimientoService, MovimientoService>();
                     services.AddScoped<IRolService, RolService>();
                     services.AddScoped<IBitacoraService, InventarioComputo.Infrastructure.Services.BitacoraService>();
+                    services.AddScoped<IEmpleadoService, EmpleadoService>();
 
                     // Servicios de la UI
                     services.AddSingleton<DialogService>();
@@ -112,6 +115,8 @@ namespace InventarioComputo.UI
                     services.AddTransient<UsuariosViewModel>();
                     services.AddTransient<UsuarioEditorViewModel>();
                     services.AddTransient<UsuarioRolesViewModel>();
+                    services.AddTransient<EmpleadosViewModel>();
+                    services.AddTransient<EmpleadoEditorViewModel>();
 
                     // Views
                     services.AddTransient<EstadoEditorView>();
@@ -129,6 +134,8 @@ namespace InventarioComputo.UI
                     services.AddTransient<UsuariosView>();
                     services.AddTransient<UsuarioEditorView>();
                     services.AddTransient<UsuarioRolesView>();
+                    services.AddTransient<EmpleadosView>();
+                    services.AddTransient<EmpleadoEditorView>();
 
                     // UoW
                     services.AddScoped<IUnitOfWork, EfUnitOfWork>();
@@ -153,30 +160,25 @@ namespace InventarioComputo.UI
             dialogService.Register<UsuarioEditorViewModel, Views.UsuarioEditorView>();
             dialogService.Register<UsuarioRolesViewModel, Views.UsuarioRolesView>();
             dialogService.Register<AsignarEquipoViewModel, Views.AsignarEquipoView>();
+            dialogService.Register<EmpleadoEditorViewModel, Views.EmpleadoEditorView>();
 
             using (var scope = _host.Services.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<InventarioDbContext>();
                 var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
-                var env = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
 
                 try
                 {
-                    var resetOnStartup = config.GetValue<bool>("Database:ResetOnStartup");
-                    if (resetOnStartup)
-                    {
-                        await db.Database.EnsureDeletedAsync();
-                    }
-                    await db.Database.MigrateAsync();
+                    await EnsureDatabaseReadyAsync(db, config);
+
                     var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
                     await authService.CrearUsuarioAdministradorSiNoExisteAsync();
 
                     var usuarioSrv = scope.ServiceProvider.GetRequiredService<IUsuarioService>();
                     var rolSrv = scope.ServiceProvider.GetRequiredService<IRolService>();
 
-                    // Reemplazamos hostContext por config
                     var adminUser = config.GetSection("SeedUsers:Admin");
-                    var consultaUser = config.GetSection("SeedUsers:Consulta");
+                    var consultaUser = config.GetSection("SeedUsers:Consulta"); // sin espacio
 
                     async Task EnsureUserAsync(IConfigurationSection section, string rolNombre)
                     {
@@ -209,7 +211,6 @@ namespace InventarioComputo.UI
                         }
                     }
 
-                    // Usuarios seed (idempotente)
                     await EnsureUserAsync(adminUser, "Administrador");
                     await EnsureUserAsync(consultaUser, "Consulta");
                 }
@@ -305,6 +306,58 @@ namespace InventarioComputo.UI
             }
 
             base.OnStartup(e);
+        }
+
+        private static async Task EnsureDatabaseReadyAsync(InventarioDbContext db, IConfiguration config)
+        {
+            var cn = db.Database.GetConnectionString();
+            Log.Information("Conectando a: {ConnectionString}", cn);
+
+            var resetOnStartup = config.GetValue<bool>("Database:ResetOnStartup");
+            if (resetOnStartup)
+            {
+                Log.Warning("Database:ResetOnStartup=true -> Eliminando base de datos antes de migrar.");
+                await db.Database.EnsureDeletedAsync();
+            }
+
+            // Intentar migrar. Si no hay migraciones o falla, usar EnsureCreated como fallback de desarrollo.
+            try
+            {
+                await db.Database.MigrateAsync();
+            }
+            catch (Exception exMigrate)
+            {
+                Log.Warning(exMigrate, "Database.MigrateAsync falló, intentando Database.EnsureCreatedAsync como fallback.");
+                await db.Database.EnsureCreatedAsync();
+            }
+
+            // Validar existencia de tabla [dbo].[Usuarios]
+            if (!await UsuariosTableExistsAsync(db))
+            {
+                Log.Warning("Tabla [dbo].[Usuarios] no encontrada tras migrar/crear. Reintentando EnsureCreated...");
+                await db.Database.EnsureCreatedAsync();
+
+                if (!await UsuariosTableExistsAsync(db))
+                {
+                    throw new InvalidOperationException("La tabla [dbo].[Usuarios] no existe. Revisa/regenera las migraciones para alinear el modelo con la base de datos.");
+                }
+            }
+
+            Log.Information("Validación de tabla [dbo].[Usuarios]: OK");
+        }
+
+        private static async Task<bool> UsuariosTableExistsAsync(InventarioDbContext db)
+        {
+            try
+            {
+                // Si la tabla existe, el SELECT TOP 0 no lanza excepción. Si no existe, lanzará SqlException.
+                await db.Database.ExecuteSqlRawAsync("SELECT TOP 0 [Id] FROM [dbo].[Usuarios];");
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         protected override async void OnExit(ExitEventArgs e)

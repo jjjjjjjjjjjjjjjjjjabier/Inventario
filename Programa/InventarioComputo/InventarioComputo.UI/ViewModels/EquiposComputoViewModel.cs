@@ -4,20 +4,18 @@ using InventarioComputo.Application.Contracts;
 using InventarioComputo.Domain.Entities;
 using InventarioComputo.UI.Services;
 using InventarioComputo.UI.ViewModels.Base;
-using InventarioComputo.UI.Views;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.ObjectModel;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
 
 namespace InventarioComputo.UI.ViewModels
 {
     public partial class EquiposComputoViewModel : BaseViewModel, IDisposable
     {
         private readonly IEquipoComputoService _srv;
-        private readonly IMovimientoService _movimientoSvc; // Añadir esta dependencia
+        private readonly IMovimientoService _movimientoSvc;
         private readonly IDialogService _dialogService;
         private readonly ISessionService _sessionService;
 
@@ -27,7 +25,7 @@ namespace InventarioComputo.UI.ViewModels
         [NotifyCanExecuteChangedFor(nameof(EditarCommand))]
         [NotifyCanExecuteChangedFor(nameof(EliminarCommand))]
         [NotifyCanExecuteChangedFor(nameof(VerHistorialCommand))]
-        [NotifyCanExecuteChangedFor(nameof(AsignarEquipoCommand))] // Añadir esta notificación
+        [NotifyCanExecuteChangedFor(nameof(AsignarEquipoCommand))]
         private EquipoComputo? _equipoSeleccionado;
 
         [ObservableProperty]
@@ -37,7 +35,7 @@ namespace InventarioComputo.UI.ViewModels
         [NotifyCanExecuteChangedFor(nameof(CrearCommand))]
         [NotifyCanExecuteChangedFor(nameof(EditarCommand))]
         [NotifyCanExecuteChangedFor(nameof(EliminarCommand))]
-        [NotifyCanExecuteChangedFor(nameof(AsignarEquipoCommand))] // Añadir esta notificación
+        [NotifyCanExecuteChangedFor(nameof(AsignarEquipoCommand))]
         private bool _esAdministrador;
 
         private string _filtroTexto = string.Empty;
@@ -57,13 +55,13 @@ namespace InventarioComputo.UI.ViewModels
 
         public EquiposComputoViewModel(
             IEquipoComputoService srv,
-            IMovimientoService movimientoSvc, // Añadir este parámetro
+            IMovimientoService movimientoSvc,
             IDialogService dialogService,
             ISessionService sessionService,
             ILogger<EquiposComputoViewModel> log)
         {
             _srv = srv;
-            _movimientoSvc = movimientoSvc; // Inicializar la dependencia
+            _movimientoSvc = movimientoSvc;
             _dialogService = dialogService;
             _sessionService = sessionService;
             Logger = log;
@@ -79,7 +77,7 @@ namespace InventarioComputo.UI.ViewModels
             EditarCommand?.NotifyCanExecuteChanged();
             EliminarCommand?.NotifyCanExecuteChanged();
             VerHistorialCommand?.NotifyCanExecuteChanged();
-            AsignarEquipoCommand?.NotifyCanExecuteChanged(); // Añadir esta notificación
+            AsignarEquipoCommand?.NotifyCanExecuteChanged();
         }
 
         partial void OnMostrarInactivosChanged(bool value) => _ = BuscarAsync();
@@ -98,7 +96,6 @@ namespace InventarioComputo.UI.ViewModels
         }
 
         private bool PuedeCrearEditar() => EsAdministrador && !IsBusy;
-
         private bool CanEditarEliminar() => EsAdministrador && _equipoSeleccionado != null && !IsBusy;
 
         [RelayCommand(CanExecute = nameof(CanEditarEliminar))]
@@ -133,7 +130,7 @@ namespace InventarioComputo.UI.ViewModels
                 EditarCommand?.NotifyCanExecuteChanged();
                 EliminarCommand?.NotifyCanExecuteChanged();
                 VerHistorialCommand?.NotifyCanExecuteChanged();
-                AsignarEquipoCommand?.NotifyCanExecuteChanged(); // Añadir esta notificación
+                AsignarEquipoCommand?.NotifyCanExecuteChanged();
             }
         }
 
@@ -151,7 +148,7 @@ namespace InventarioComputo.UI.ViewModels
 
                 await BuscarAsync();
             }
-            catch (TaskCanceledException) { /* esperado */ }
+            catch (TaskCanceledException) { }
         }
 
         [RelayCommand(CanExecute = nameof(CanEditarEliminar))]
@@ -177,36 +174,44 @@ namespace InventarioComputo.UI.ViewModels
             }
         }
 
+        private bool CanVerHistorial() => _equipoSeleccionado != null && !IsBusy;
+
         [RelayCommand(CanExecute = nameof(CanVerHistorial))]
-        public void VerHistorial()
+        public async Task VerHistorial()
         {
             if (_equipoSeleccionado == null) return;
 
-            // Usar el diálogo correctamente
+            await Task.Yield();
             _dialogService.ShowDialog<HistorialEquipoViewModel>(vm =>
             {
                 if (vm is HistorialEquipoViewModel historialVM)
                 {
-                    historialVM.CargarHistorialAsync(_equipoSeleccionado.Id);
+                    _ = historialVM.CargarHistorialAsync(_equipoSeleccionado.Id);
                 }
             });
         }
 
-        private bool CanVerHistorial() => _equipoSeleccionado != null && !IsBusy;
-
-        // Agregar este comando para asignar equipos
         [RelayCommand(CanExecute = nameof(CanEditarEliminar))]
-        public void AsignarEquipo()
+        public async Task AsignarEquipo()
         {
             if (_equipoSeleccionado == null) return;
 
-            // Obtener el equipo completo con sus relaciones
-            var equipo = _srv.ObtenerPorIdAsync(_equipoSeleccionado.Id).GetAwaiter().GetResult();
-            if (equipo != null)
+            try
             {
-                _dialogService.ShowDialog<AsignarEquipoViewModel>(vm => vm.InitializeAsync(equipo).GetAwaiter().GetResult());
-                // Actualizar la lista después de asignar
-                _ = BuscarAsync();
+                var equipo = await _srv.ObtenerPorIdAsync(_equipoSeleccionado.Id);
+                if (equipo != null)
+                {
+                    _dialogService.ShowDialog<AsignarEquipoViewModel>(vm =>
+                    {
+                        _ = vm.InitializeAsync(equipo);
+                    });
+                    await BuscarAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogError(ex, "Error al asignar equipo");
+                _dialogService.ShowError("Ocurrió un error al asignar el equipo.");
             }
         }
 

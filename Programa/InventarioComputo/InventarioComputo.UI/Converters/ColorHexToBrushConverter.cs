@@ -9,24 +9,20 @@ namespace InventarioComputo.UI.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is string hexColor && !string.IsNullOrWhiteSpace(hexColor))
+            var hex = value as string;
+            if (string.IsNullOrWhiteSpace(hex)) return Brushes.Black;
+            try
             {
-                try
-                {
-                    var color = (Color)ColorConverter.ConvertFromString(hexColor);
-                    return new SolidColorBrush(color);
-                }
-                catch
-                {
-                    return Brushes.Transparent;
-                }
+                var color = (Color)ColorConverter.ConvertFromString(hex)!;
+                return new SolidColorBrush(color);
             }
-            return Brushes.Transparent;
+            catch
+            {
+                return Brushes.Black;
+            }
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            throw new NotImplementedException();
-        }
+            => throw new NotImplementedException();
     }
 }

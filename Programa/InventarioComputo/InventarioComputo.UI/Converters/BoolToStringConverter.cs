@@ -6,18 +6,18 @@ namespace InventarioComputo.UI.Converters
 {
     public class BoolToStringConverter : IValueConverter
     {
+        public string TrueText { get; set; } = "Sí";
+        public string FalseText { get; set; } = "No";
+
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (value is bool boolValue)
-            {
-                return boolValue ? "Sí" : "No";
-            }
-            return "N/A";
-        }
+            => value is bool b ? (b ? TrueText : FalseText) : FalseText;
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            throw new NotImplementedException();
+            var s = value as string;
+            if (string.Equals(s, TrueText, StringComparison.OrdinalIgnoreCase)) return true;
+            if (string.Equals(s, FalseText, StringComparison.OrdinalIgnoreCase)) return false;
+            return false;
         }
     }
 }

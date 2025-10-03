@@ -3,11 +3,15 @@ using CommunityToolkit.Mvvm.Input;
 using InventarioComputo.Application.Contracts;
 using InventarioComputo.UI.Services;
 using InventarioComputo.UI.ViewModels.Base;
+using Microsoft.Extensions.DependencyInjection;
+using System.Threading.Tasks;
 
 namespace InventarioComputo.UI.ViewModels
 {
     public partial class MainWindowViewModel : BaseViewModel
     {
+        private readonly IServiceProvider _serviceProvider;
+
         private readonly EquiposComputoViewModel _equiposComputoViewModel;
         private readonly EstadosViewModel _estadosViewModel;
         private readonly UnidadesViewModel _unidadesViewModel;
@@ -22,12 +26,16 @@ namespace InventarioComputo.UI.ViewModels
         private BaseViewModel? _currentViewModel;
 
         [ObservableProperty]
-        private string _nombreUsuario;
+        private string _nombreUsuario = string.Empty;
 
         [ObservableProperty]
         private bool _esAdministrador;
 
+        [ObservableProperty]
+        private string _pageTitle = "Inventario de Equipos";
+
         public MainWindowViewModel(
+            IServiceProvider serviceProvider,
             EquiposComputoViewModel equiposComputoViewModel,
             EstadosViewModel estadosViewModel,
             UnidadesViewModel unidadesViewModel,
@@ -38,6 +46,8 @@ namespace InventarioComputo.UI.ViewModels
             IDialogService dialogService,
             UsuariosViewModel usuariosViewModel)
         {
+            _serviceProvider = serviceProvider;
+
             _equiposComputoViewModel = equiposComputoViewModel;
             _estadosViewModel = estadosViewModel;
             _unidadesViewModel = unidadesViewModel;
@@ -48,11 +58,10 @@ namespace InventarioComputo.UI.ViewModels
             _dialogService = dialogService;
             _usuariosViewModel = usuariosViewModel;
 
-            // Configurar información del usuario
             ConfigurarInfoUsuario();
 
-            // Vista inicial (la propia vista ejecutará LoadedCommand)
             CurrentViewModel = _equiposComputoViewModel;
+            PageTitle = "Inventario de Equipos";
         }
 
         private void ConfigurarInfoUsuario()
@@ -68,6 +77,7 @@ namespace InventarioComputo.UI.ViewModels
         private Task NavigateToEquiposComputo()
         {
             CurrentViewModel = _equiposComputoViewModel;
+            PageTitle = "Inventario de Equipos";
             return Task.CompletedTask;
         }
 
@@ -75,6 +85,7 @@ namespace InventarioComputo.UI.ViewModels
         private Task NavigateToEstados()
         {
             CurrentViewModel = _estadosViewModel;
+            PageTitle = "Gestión de Estados";
             return Task.CompletedTask;
         }
 
@@ -82,6 +93,7 @@ namespace InventarioComputo.UI.ViewModels
         private Task NavigateToUnidades()
         {
             CurrentViewModel = _unidadesViewModel;
+            PageTitle = "Gestión de Unidades";
             return Task.CompletedTask;
         }
 
@@ -89,6 +101,7 @@ namespace InventarioComputo.UI.ViewModels
         private Task NavigateToUbicaciones()
         {
             CurrentViewModel = _ubicacionesViewModel;
+            PageTitle = "Gestión de Ubicaciones";
             return Task.CompletedTask;
         }
 
@@ -96,6 +109,7 @@ namespace InventarioComputo.UI.ViewModels
         private Task NavigateToTiposEquipo()
         {
             CurrentViewModel = _tiposEquipoViewModel;
+            PageTitle = "Tipos de Equipo";
             return Task.CompletedTask;
         }
 
@@ -103,6 +117,7 @@ namespace InventarioComputo.UI.ViewModels
         private Task NavigateToReportes()
         {
             CurrentViewModel = _reportesViewModel;
+            PageTitle = "Reportes";
             return Task.CompletedTask;
         }
 
@@ -110,6 +125,15 @@ namespace InventarioComputo.UI.ViewModels
         private Task NavigateToUsuarios()
         {
             CurrentViewModel = _usuariosViewModel;
+            PageTitle = "Administración de Usuarios";
+            return Task.CompletedTask;
+        }
+
+        [RelayCommand]
+        private Task NavigateToEmpleados()
+        {
+            CurrentViewModel = _serviceProvider.GetRequiredService<EmpleadosViewModel>();
+            PageTitle = "Gestión de Empleados";
             return Task.CompletedTask;
         }
 

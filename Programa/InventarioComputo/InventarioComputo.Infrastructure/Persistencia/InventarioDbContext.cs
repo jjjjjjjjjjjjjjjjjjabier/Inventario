@@ -14,17 +14,19 @@ namespace InventarioComputo.Infrastructure.Persistencia
         public DbSet<Zona> Zonas { get; set; }
         public DbSet<TipoEquipo> TiposEquipo { get; set; }
         public DbSet<EquipoComputo> EquiposComputo { get; set; }
-        
-        // Propiedades faltantes para la gestión de usuarios y seguridad
         public DbSet<Usuario> Usuarios { get; set; }
         public DbSet<Rol> Roles { get; set; }
         public DbSet<UsuarioRol> UsuarioRoles { get; set; }
         public DbSet<HistorialMovimiento> HistorialMovimientos { get; set; }
         public DbSet<BitacoraEvento> BitacoraEventos { get; set; }
+        public DbSet<Empleado> Empleados { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // Asegura dbo (opcional, SQL Server ya usa dbo por defecto)
+            modelBuilder.HasDefaultSchema("dbo");
 
             modelBuilder.Entity<BitacoraEvento>(entity =>
             {
@@ -36,9 +38,6 @@ namespace InventarioComputo.Infrastructure.Persistencia
                 entity.Property(e => e.Detalles).HasMaxLength(1000);
             });
 
-            // --- Configuraciones explícitas y completas para cada tabla ---
-
-            // Unidad
             modelBuilder.Entity<Unidad>(entity =>
             {
                 entity.HasIndex(e => e.Nombre).IsUnique();
@@ -47,7 +46,6 @@ namespace InventarioComputo.Infrastructure.Persistencia
                 entity.Property(e => e.Abreviatura).IsRequired().HasMaxLength(10);
             });
 
-            // EquipoComputo
             modelBuilder.Entity<EquipoComputo>(entity =>
             {
                 entity.ToTable("EquiposComputo");
@@ -61,34 +59,34 @@ namespace InventarioComputo.Infrastructure.Persistencia
                 entity.Property(e => e.Caracteristicas).IsRequired().HasMaxLength(500);
                 entity.Property(e => e.Observaciones).HasMaxLength(1000);
                 entity.Property(e => e.Activo).IsRequired();
-                
-                // Agregar precisión a la propiedad decimal
-                entity.Property(e => e.Costo)
-                      .HasPrecision(18, 2);
-                
-                // Relaciones
+                entity.Property(e => e.Costo).HasPrecision(18, 2);
+
                 entity.HasOne(e => e.TipoEquipo)
                       .WithMany()
                       .HasForeignKey(e => e.TipoEquipoId)
                       .OnDelete(DeleteBehavior.Restrict);
-                      
+
                 entity.HasOne(e => e.Estado)
                       .WithMany()
                       .HasForeignKey(e => e.EstadoId)
                       .OnDelete(DeleteBehavior.Restrict);
-                      
+
                 entity.HasOne(e => e.Zona)
                       .WithMany()
                       .HasForeignKey(e => e.ZonaId)
                       .OnDelete(DeleteBehavior.SetNull);
-                      
+
                 entity.HasOne(e => e.Usuario)
                       .WithMany(u => u.EquiposAsignados)
                       .HasForeignKey(e => e.UsuarioId)
                       .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(e => e.Empleado)
+                      .WithMany()
+                      .HasForeignKey(e => e.EmpleadoId)
+                      .OnDelete(DeleteBehavior.SetNull);
             });
 
-            // Estado
             modelBuilder.Entity<Estado>(entity =>
             {
                 entity.HasIndex(e => e.Nombre).IsUnique();
@@ -97,7 +95,6 @@ namespace InventarioComputo.Infrastructure.Persistencia
                 entity.Property(e => e.ColorHex).HasMaxLength(9);
             });
 
-            // Configuración para la gestión de usuarios
             modelBuilder.Entity<Usuario>(entity =>
             {
                 entity.ToTable("Usuarios");
@@ -107,14 +104,13 @@ namespace InventarioComputo.Infrastructure.Persistencia
                 entity.Property(u => u.NombreCompleto).IsRequired().HasMaxLength(200);
                 entity.Property(u => u.PasswordHash).IsRequired();
                 entity.Property(u => u.Activo).IsRequired();
-                
+
                 entity.HasMany(u => u.EquiposAsignados)
                       .WithOne(e => e.Usuario)
                       .HasForeignKey(e => e.UsuarioId)
                       .OnDelete(DeleteBehavior.SetNull);
             });
 
-            // Configuración para Rol
             modelBuilder.Entity<Rol>(entity =>
             {
                 entity.ToTable("Roles");
@@ -122,19 +118,16 @@ namespace InventarioComputo.Infrastructure.Persistencia
                 entity.Property(r => r.Nombre).IsRequired().HasMaxLength(50);
                 entity.HasIndex(r => r.Nombre).IsUnique();
             });
-    
-            // Configuración para UsuarioRol (tabla de relación muchos a muchos)
+
             modelBuilder.Entity<UsuarioRol>(entity =>
             {
                 entity.ToTable("UsuarioRoles");
-                entity.HasKey(e => new { e.UsuarioId, e.RolId }); // Esto ya es correcto
-    
-                // No necesita una propiedad Id separada porque ya tiene una clave compuesta
-    
+                entity.HasKey(e => new { e.UsuarioId, e.RolId });
+
                 entity.HasOne(ur => ur.Usuario)
                     .WithMany(u => u.UsuarioRoles)
                     .HasForeignKey(ur => ur.UsuarioId);
-                    
+
                 entity.HasOne(ur => ur.Rol)
                     .WithMany(r => r.UsuarioRoles)
                     .HasForeignKey(ur => ur.RolId);
@@ -146,13 +139,11 @@ namespace InventarioComputo.Infrastructure.Persistencia
                 entity.HasKey(h => h.Id);
                 entity.Property(h => h.Motivo).IsRequired().HasMaxLength(500);
 
-                // Define claramente una sola relación con EquipoComputo
                 entity.HasOne(h => h.EquipoComputo)
-                    .WithMany(e => e.HistorialMovimientos) // Esta es la relación correcta
+                    .WithMany(e => e.HistorialMovimientos)
                     .HasForeignKey(h => h.EquipoComputoId)
                     .OnDelete(DeleteBehavior.Cascade);
 
-                // El resto de las relaciones son correctas
                 entity.HasOne(h => h.UsuarioAnterior)
                     .WithMany()
                     .HasForeignKey(h => h.UsuarioAnteriorId)
@@ -163,7 +154,6 @@ namespace InventarioComputo.Infrastructure.Persistencia
                     .HasForeignKey(h => h.UsuarioNuevoId)
                     .OnDelete(DeleteBehavior.Restrict);
 
-                // Nuevas relaciones de auditoría de ubicación
                 entity.HasOne(h => h.ZonaAnterior)
                     .WithMany()
                     .HasForeignKey(h => h.ZonaAnteriorId)
@@ -180,7 +170,6 @@ namespace InventarioComputo.Infrastructure.Persistencia
                     .OnDelete(DeleteBehavior.Restrict);
             });
 
-            // TipoEquipo: Nombre único y longitud
             modelBuilder.Entity<TipoEquipo>(entity =>
             {
                 entity.ToTable("TiposEquipo");
@@ -190,7 +179,6 @@ namespace InventarioComputo.Infrastructure.Persistencia
                 entity.Property(e => e.Activo).IsRequired();
             });
 
-            // Sede: Nombre único y longitud
             modelBuilder.Entity<Sede>(entity =>
             {
                 entity.ToTable("Sedes");
@@ -201,7 +189,6 @@ namespace InventarioComputo.Infrastructure.Persistencia
                 entity.HasMany(s => s.Areas).WithOne(a => a.Sede).HasForeignKey(a => a.SedeId);
             });
 
-            // Area: (SedeId, Nombre) único
             modelBuilder.Entity<Area>(entity =>
             {
                 entity.ToTable("Areas");
@@ -213,7 +200,6 @@ namespace InventarioComputo.Infrastructure.Persistencia
                 entity.HasMany(a => a.Zonas).WithOne(z => z.Area).HasForeignKey(z => z.AreaId);
             });
 
-            // Zona: (AreaId, Nombre) único
             modelBuilder.Entity<Zona>(entity =>
             {
                 entity.ToTable("Zonas");
@@ -221,10 +207,18 @@ namespace InventarioComputo.Infrastructure.Persistencia
                 entity.Property(e => e.Nombre).IsRequired().HasMaxLength(100);
                 entity.Property(e => e.Activo).IsRequired();
                 entity.HasIndex(e => new { e.AreaId, e.Nombre }).IsUnique();
-                entity.HasOne(z => z.Area).WithMany(a => a.Zonas).HasForeignKey(z => z.AreaId);
+                entity.HasOne(e => e.Area).WithMany(a => a.Zonas).HasForeignKey(e => e.AreaId);
             });
 
-            // Datos iniciales para roles
+            modelBuilder.Entity<Empleado>(entity =>
+            {
+                entity.ToTable("Empleados");
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.NombreCompleto).IsRequired().HasMaxLength(200);
+                entity.Property(e => e.Puesto).HasMaxLength(100);
+                entity.Property(e => e.Activo).IsRequired();
+            });
+
             modelBuilder.Entity<Rol>().HasData(
                 new Rol { Id = 1, Nombre = "Administrador" },
                 new Rol { Id = 2, Nombre = "Consulta" }

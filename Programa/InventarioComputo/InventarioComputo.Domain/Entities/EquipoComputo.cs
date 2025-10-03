@@ -11,8 +11,8 @@ namespace InventarioComputo.Domain.Entities
         public string Marca { get; set; } = string.Empty;
         public string Modelo { get; set; } = string.Empty;
         public string Caracteristicas { get; set; } = string.Empty;
-        public string? Observaciones { get; set; } // Propiedad faltante
-        public DateTime? FechaAdquisicion { get; set; } // Cambiado a nullable
+        public string? Observaciones { get; set; }
+        public DateTime? FechaAdquisicion { get; set; }
         public decimal Costo { get; set; }
         public bool Activo { get; set; }
 
@@ -22,7 +22,7 @@ namespace InventarioComputo.Domain.Entities
         public int EstadoId { get; set; }
         public virtual Estado Estado { get; set; } = new();
 
-        // Renombrado a UsuarioId para mantener coherencia con los servicios existentes
+        // Actual (login) - se mantiene por compatibilidad
         public int? UsuarioId { get; set; }
         public virtual Usuario? Usuario { get; set; }
 
@@ -34,6 +34,9 @@ namespace InventarioComputo.Domain.Entities
 
         public int? ZonaId { get; set; }
         public virtual Zona? Zona { get; set; }
+
+        public int? EmpleadoId { get; set; }
+        public virtual Empleado? Empleado { get; set; }
 
         public virtual ICollection<HistorialMovimiento> HistorialMovimientos { get; set; } = new List<HistorialMovimiento>();
     }
