@@ -1,90 +1,78 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using InventarioComputo.Application.Contracts;
+using InventarioComputo.UI.Extensions;
 using InventarioComputo.UI.Services;
 using InventarioComputo.UI.ViewModels.Base;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Linq;
 using System.Threading.Tasks;
-using System.Windows;
 
 namespace InventarioComputo.UI.ViewModels
 {
     public partial class LoginViewModel : BaseViewModel
     {
-        private readonly ISessionService _sessionService;
-        private readonly IDialogService _dialogService;
-        private readonly IAuthService _authService;
+        private readonly ISessionService _session;
+        private readonly IDialogService _dialog;
 
-        [ObservableProperty] private string _usuario = string.Empty;
-        [ObservableProperty] private string _password = string.Empty;
-        [ObservableProperty] private bool _loginInProgress;
+        [ObservableProperty]
+        private string _titulo = "Iniciar Sesion";
 
-        public bool LoginExitoso { get; private set; }
+        [ObservableProperty]
+        private string _usuario = string.Empty;
 
-        public LoginViewModel(
-            IAuthService authService,
-            ISessionService sessionService,
-            IDialogService dialogService,
-            ILogger<LoginViewModel> logger)
+        // Este valor se enlaza via PasswordBoxBehavior
+        [ObservableProperty]
+        private string _password = string.Empty;
+
+        [ObservableProperty]
+        private bool _loginExitoso;
+
+        public LoginViewModel(ISessionService session, IDialogService dialog, ILogger<LoginViewModel> logger)
         {
-            _authService = authService;
-            _sessionService = sessionService;
-            _dialogService = dialogService;
+            _session = session;
+            _dialog = dialog;
             Logger = logger;
         }
 
         [RelayCommand]
-        public async Task LoginAsync()
+        private async Task IngresarAsync()
         {
-            var usuario = (Usuario ?? string.Empty).Trim();
-            var password = Password ?? string.Empty;
-
-            if (string.IsNullOrWhiteSpace(usuario) || string.IsNullOrWhiteSpace(password))
+            if (string.IsNullOrWhiteSpace(Usuario) || string.IsNullOrWhiteSpace(Password))
             {
-                _dialogService.ShowError("Por favor, ingrese usuario y contraseña.");
+                _dialog.ShowError("Por favor, ingrese usuario y contrasena.");
                 return;
             }
 
-            LoginInProgress = true;
-
+            IsBusy = true;
             try
             {
-                var ok = await _sessionService.IniciarSesionAsync(usuario, password);
-                if (ok)
+                var ok = await _session.IniciarSesionAsync(Usuario.Trim(), Password);
+                if (!ok)
                 {
-                    LoginExitoso = true;
-
-                    var window = System.Windows.Application.Current.Windows.OfType<Window>()
-                        .SingleOrDefault(w => w.DataContext == this);
-
-                    window?.Close();
+                    _dialog.ShowError("Usuario o contrasena incorrectos, o usuario inactivo.");
+                    return;
                 }
-                else
-                {
-                    _dialogService.ShowError("Usuario o contraseña incorrectos.");
-                }
+
+                LoginExitoso = true;
+                this.CloseWindowOfViewModel();
             }
             catch (Exception ex)
             {
-                Logger?.LogError(ex, "Error al iniciar sesión");
-                _dialogService.ShowError("Ocurrió un error al intentar iniciar sesión. Inténtelo de nuevo.");
+                Logger?.LogError(ex, "Error en inicio de sesion");
+                _dialog.ShowError("Ocurrio un error al iniciar sesion.");
             }
             finally
             {
-                LoginInProgress = false;
+                IsBusy = false;
             }
         }
 
         [RelayCommand]
-        public void Cancelar()
+        private void Cancelar()
         {
             LoginExitoso = false;
-            var window = System.Windows.Application.Current.Windows.OfType<Window>()
-                .SingleOrDefault(w => w.DataContext == this);
-
-            window?.Close();
+            this.CloseWindowOfViewModel();
         }
     }
 }

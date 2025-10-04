@@ -10,14 +10,12 @@ namespace InventarioComputo.UI.Views
             InitializeComponent();
         }
 
-        // Este método nos permite inicializar el ViewModel con los datos del equipo
+        // Inicializa el ViewModel sin suscribirse a eventos inexistentes
         public void SetViewModel(AsignarEquipoViewModel viewModel)
         {
             DataContext = viewModel;
-            if (viewModel != null)
-            {
-                viewModel.RequestClose += (s, e) => Close();
-            }
+            // El cierre de la ventana debe ser iniciado por el ViewModel
+            // usando this.CloseWindowOfViewModel() (extensión ya presente en el proyecto).
         }
     }
 }

@@ -197,5 +197,24 @@ namespace InventarioComputo.UI.ViewModels
         {
             this.CloseWindowOfViewModel();
         }
+
+        [ObservableProperty]
+        private bool _esEmpleadoSolamente;
+
+        public void SetUsuario(Usuario usuario)
+        {
+            _entidad = usuario;
+            if (usuario.Id > 0)
+            {
+                Titulo = "Editar Usuario";
+            }
+
+            NombreUsuario = usuario.NombreUsuario;
+            NombreCompleto = usuario.NombreCompleto;
+            EsEmpleadoSolamente = usuario.EsEmpleadoSolamente;
+            Activo = usuario.Activo;
+
+            // Cargar roles si es necesario...
+        }
     }
 }

@@ -11,27 +11,28 @@ namespace InventarioComputo.UI.Converters
         {
             if (value is string fullName && !string.IsNullOrWhiteSpace(fullName))
             {
-                // Dividir el nombre en palabras
-                var words = fullName.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                var names = fullName.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                 
-                // Tomar la primera letra de hasta dos palabras
-                if (words.Length >= 2)
+                if (names.Length >= 2)
                 {
-                    return $"{words[0][0]}{words[1][0]}".ToUpper();
+                    // Tomar la inicial del primer y último nombre
+                    return $"{names[0][0]}{names[names.Length - 1][0]}".ToUpper();
                 }
-                else if (words.Length == 1 && words[0].Length > 0)
+                else if (names.Length == 1)
                 {
-                    return words[0][0].ToString().ToUpper();
+                    // Si solo hay un nombre, tomar las dos primeras letras o repetir la primera
+                    return names[0].Length > 1 
+                        ? $"{names[0][0]}{names[0][1]}".ToUpper() 
+                        : $"{names[0][0]}{names[0][0]}".ToUpper();
                 }
             }
             
-            // Valor por defecto si no se puede obtener iniciales
-            return "?";
+            return "??";
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            throw new NotSupportedException("La conversión inversa no está soportada para InitialsConverter");
+            throw new NotImplementedException();
         }
     }
 }

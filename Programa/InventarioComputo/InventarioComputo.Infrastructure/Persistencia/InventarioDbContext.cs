@@ -7,20 +7,19 @@ namespace InventarioComputo.Infrastructure.Persistencia
     {
         public InventarioDbContext(DbContextOptions<InventarioDbContext> options) : base(options) { }
 
-        public DbSet<Estado> Estados { get; set; }
-        public DbSet<Unidad> Unidades { get; set; }
-        public DbSet<Sede> Sedes { get; set; }
-        public DbSet<Area> Areas { get; set; }
-        public DbSet<Zona> Zonas { get; set; }
-        public DbSet<TipoEquipo> TiposEquipo { get; set; }
-        public DbSet<EquipoComputo> EquiposComputo { get; set; }
-        
-        // Propiedades faltantes para la gestión de usuarios y seguridad
-        public DbSet<Usuario> Usuarios { get; set; }
-        public DbSet<Rol> Roles { get; set; }
-        public DbSet<UsuarioRol> UsuarioRoles { get; set; }
-        public DbSet<HistorialMovimiento> HistorialMovimientos { get; set; }
-        public DbSet<BitacoraEvento> BitacoraEventos { get; set; }
+        public DbSet<Estado> Estados { get; set; } = null!;
+        public DbSet<Unidad> Unidades { get; set; } = null!;
+        public DbSet<Sede> Sedes { get; set; } = null!;
+        public DbSet<Area> Areas { get; set; } = null!;
+        public DbSet<Zona> Zonas { get; set; } = null!;
+        public DbSet<TipoEquipo> TiposEquipo { get; set; } = null!;
+        public DbSet<EquipoComputo> EquiposComputo { get; set; } = null!;
+        public DbSet<Usuario> Usuarios { get; set; } = null!;
+        public DbSet<Rol> Roles { get; set; } = null!;
+        public DbSet<UsuarioRol> UsuarioRoles { get; set; } = null!;
+        public DbSet<HistorialMovimiento> HistorialMovimientos { get; set; } = null!;
+        public DbSet<BitacoraEvento> BitacoraEventos { get; set; } = null!;
+        public DbSet<Empleado> Empleados { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -82,9 +81,9 @@ namespace InventarioComputo.Infrastructure.Persistencia
                       .HasForeignKey(e => e.ZonaId)
                       .OnDelete(DeleteBehavior.SetNull);
                       
-                entity.HasOne(e => e.Usuario)
-                      .WithMany(u => u.EquiposAsignados)
-                      .HasForeignKey(e => e.UsuarioId)
+                entity.HasOne(e => e.Empleado)
+                      .WithMany(emp => emp.EquiposAsignados)
+                      .HasForeignKey(e => e.EmpleadoId)
                       .OnDelete(DeleteBehavior.SetNull);
             });
 
@@ -107,11 +106,9 @@ namespace InventarioComputo.Infrastructure.Persistencia
                 entity.Property(u => u.NombreCompleto).IsRequired().HasMaxLength(200);
                 entity.Property(u => u.PasswordHash).IsRequired();
                 entity.Property(u => u.Activo).IsRequired();
-                
-                entity.HasMany(u => u.EquiposAsignados)
-                      .WithOne(e => e.Usuario)
-                      .HasForeignKey(e => e.UsuarioId)
-                      .OnDelete(DeleteBehavior.SetNull);
+
+                // Ignorar la propiedad EquiposAsignados
+                entity.Ignore(u => u.EquiposAsignados);
             });
 
             // Configuración para Rol
@@ -153,16 +150,6 @@ namespace InventarioComputo.Infrastructure.Persistencia
                     .OnDelete(DeleteBehavior.Cascade);
 
                 // El resto de las relaciones son correctas
-                entity.HasOne(h => h.UsuarioAnterior)
-                    .WithMany()
-                    .HasForeignKey(h => h.UsuarioAnteriorId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
-                entity.HasOne(h => h.UsuarioNuevo)
-                    .WithMany()
-                    .HasForeignKey(h => h.UsuarioNuevoId)
-                    .OnDelete(DeleteBehavior.Restrict);
-
                 // Nuevas relaciones de auditoría de ubicación
                 entity.HasOne(h => h.ZonaAnterior)
                     .WithMany()
@@ -178,6 +165,17 @@ namespace InventarioComputo.Infrastructure.Persistencia
                     .WithMany()
                     .HasForeignKey(h => h.UsuarioResponsableId)
                     .OnDelete(DeleteBehavior.Restrict);
+
+                // Relaciones con Empleado
+                entity.HasOne(h => h.EmpleadoAnterior)
+                    .WithMany()
+                    .HasForeignKey(h => h.EmpleadoAnteriorId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                entity.HasOne(h => h.EmpleadoNuevo)
+                    .WithMany()
+                    .HasForeignKey(h => h.EmpleadoNuevoId)
+                    .OnDelete(DeleteBehavior.NoAction);
             });
 
             // TipoEquipo: Nombre único y longitud
@@ -226,8 +224,9 @@ namespace InventarioComputo.Infrastructure.Persistencia
 
             // Datos iniciales para roles
             modelBuilder.Entity<Rol>().HasData(
-                new Rol { Id = 1, Nombre = "Administrador" },
-                new Rol { Id = 2, Nombre = "Consulta" }
+                new Rol { Id = 1, Nombre = "Administradores" },
+                new Rol { Id = 2, Nombre = "Soporte" },
+                new Rol { Id = 3, Nombre = "Consulta" }
             );
         }
     }

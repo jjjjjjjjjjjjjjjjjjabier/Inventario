@@ -3,73 +3,122 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:InventarioComputo.UI.Views"
-        xmlns:vm="clr-namespace:InventarioComputo.UI.ViewModels"
         mc:Ignorable="d"
-        Title="{Binding Titulo}" 
-        Height="350" Width="400" 
-        WindowStartupLocation="CenterOwner">
+        Title="{Binding Titulo}"
+        Height="450"
+        Width="500"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="#F8F9FA">
 
-    <Grid Margin="10">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </Window.Resources>
+
+    <Grid Margin="0">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="{Binding NombreUsuario}" 
-                   FontSize="16" FontWeight="SemiBold" 
-                   Margin="0,0,0,10"/>
-
-        <Border Grid.Row="1" 
-                BorderBrush="LightGray" 
-                BorderThickness="1" 
-                Margin="0,5">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <ItemsControl ItemsSource="{Binding Roles}" Margin="5">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <CheckBox Content="{Binding Nombre}" 
-                                      IsChecked="{Binding IsSelected}" 
-                                      Margin="0,5"/>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </ScrollViewer>
+        <!-- Encabezado -->
+        <Border Grid.Row="0" 
+                Background="#F5F7FA" 
+                BorderBrush="#E1E5EB" 
+                BorderThickness="0,0,0,1" 
+                Padding="24,16">
+            <TextBlock Text="{Binding Titulo}" 
+                       FontSize="22" 
+                       FontWeight="Medium" 
+                       Foreground="#2C3E50"/>
         </Border>
 
-        <Grid Grid.Row="2" Margin="0,10,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
+        <!-- Contenido - Lista de roles -->
+        <Grid Grid.Row="1" Margin="24,16">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-            <Button Grid.Column="1" 
-                    Content="Guardar" 
-                    Command="{Binding GuardarCommand}" 
-                    Width="80" Margin="0,0,10,0"/>
+            <!-- Información del usuario -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,16">
+                <TextBlock Text="Usuario:" 
+                           FontWeight="Medium" 
+                           Margin="0,0,0,4"/>
+                <TextBlock Text="{Binding NombreUsuario}" 
+                           FontSize="16" 
+                           Margin="0,0,0,8"/>
+            </StackPanel>
 
-            <Button Grid.Column="2" 
-                    Content="Cancelar" 
-                    Command="{Binding CancelarCommand}" 
-                    Width="80"/>
+            <!-- Lista de roles con checkboxes -->
+            <Border Grid.Row="1" 
+                    BorderBrush="#E1E5EB" 
+                    BorderThickness="1" 
+                    CornerRadius="4" 
+                    Background="White">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" 
+                              HorizontalScrollBarVisibility="Disabled">
+                    <ItemsControl ItemsSource="{Binding Roles}" 
+                                  Margin="1">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="#E1E5EB" 
+                                        BorderThickness="0,0,0,1" 
+                                        Padding="12,8">
+                                    <CheckBox Content="{Binding Nombre}" 
+                                              IsChecked="{Binding Asignado}" 
+                                              Command="{Binding DataContext.CambiarRolCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                              CommandParameter="{Binding}"/>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Border>
         </Grid>
 
-        <!-- Overlay de carga -->
-        <Border Grid.RowSpan="3" 
-                Background="#80000000" 
-                Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <StackPanel HorizontalAlignment="Center" 
-                        VerticalAlignment="Center">
-                <TextBlock Text="Cargando..." 
-                           Foreground="White" 
-                           FontWeight="Bold" 
-                           Margin="0,0,0,10"/>
-                <ProgressBar IsIndeterminate="True" 
-                             Width="200" 
-                             Height="20"/>
+        <!-- Botones de acción -->
+        <Border Grid.Row="2" 
+                Background="#F5F7FA" 
+                BorderBrush="#E1E5EB" 
+                BorderThickness="0,1,0,0" 
+                Padding="24,16">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Cerrar" 
+                        Command="{Binding CloseCommand}" 
+                        Padding="16,8"
+                        Background="#3498DB" 
+                        Foreground="White" 
+                        BorderThickness="0">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="4"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
             </StackPanel>
         </Border>
+
+        <!-- Overlay de carga -->
+        <Grid Grid.Row="0" Grid.RowSpan="3" 
+              Background="#80000000" 
+              Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Border Padding="20" 
+       BorderBrush="#E1E5EB" 
+       BorderThickness="1" 
+       CornerRadius="6">
+                <StackPanel HorizontalAlignment="Center" 
+            VerticalAlignment="Center"
+            Background="White">
+                    <TextBlock Text="Actualizando roles..." 
+               FontSize="16" 
+               Margin="0,0,0,12"/>
+                    <ProgressBar IsIndeterminate="True" 
+                 Height="4" 
+                 Width="200"/>
+                </StackPanel>
+            </Border>
+        </Grid>
     </Grid>
 </Window>

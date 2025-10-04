@@ -5,192 +5,179 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="{Binding Titulo}"
-        Height="520" Width="600"
+        SizeToContent="Height"
+        Width="500"
         WindowStartupLocation="CenterOwner"
-        Background="White">
+        ResizeMode="NoResize"
+        Background="#F8F9FA">
 
-    <Border Padding="25">
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </Window.Resources>
 
-            <!-- Header -->
-            <TextBlock Grid.Row="0"
-                       Text="{Binding Titulo}"
-                       FontSize="20"
-                       FontWeight="Bold"
-                       Margin="0,0,0,20"
+    <Grid Margin="0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Encabezado -->
+        <Border Grid.Row="0" 
+                Background="#F5F7FA" 
+                BorderBrush="#E1E5EB" 
+                BorderThickness="0,0,0,1" 
+                Padding="24,16">
+            <TextBlock Text="{Binding Titulo}" 
+                       FontSize="22" 
+                       FontWeight="Medium" 
                        Foreground="#2C3E50"/>
+        </Border>
 
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                <StackPanel>
-
-                    <!-- Datos del usuario -->
-                    <Border Background="#F9F9F9"
-                            BorderBrush="#DDDDDD"
-                            BorderThickness="1"
-                            Padding="15"
-                            Margin="0,0,0,15"
-                            CornerRadius="4">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-
-                            <TextBlock Text="Información del Usuario"
-                                       FontSize="16"
-                                       FontWeight="SemiBold"
-                                       Margin="0,0,0,10"
-                                       Foreground="#2C3E50"/>
-
-                            <Grid Grid.Row="1">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-
-                                <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,10,15">
-                                    <TextBlock Text="Nombre de usuario:" Style="{StaticResource LabelStyle}"/>
-                                    <TextBox Text="{Binding NombreUsuario, UpdateSourceTrigger=PropertyChanged}"
-                                             Height="35" Padding="10,5"
-                                             VerticalContentAlignment="Center"
-                                             BorderThickness="1" BorderBrush="#CCCCCC"/>
-                                </StackPanel>
-
-                                <StackPanel Grid.Row="0" Grid.Column="1" Margin="10,0,0,15">
-                                    <TextBlock Text="Email:" Style="{StaticResource LabelStyle}"/>
-                                    <TextBox Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}"
-                                             Height="35" Padding="10,5"
-                                             VerticalContentAlignment="Center"
-                                             BorderThickness="1" BorderBrush="#CCCCCC"/>
-                                </StackPanel>
-
-                                <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,0,0,15">
-                                    <TextBlock Text="Nombre completo:" Style="{StaticResource LabelStyle}"/>
-                                    <TextBox Text="{Binding NombreCompleto, UpdateSourceTrigger=PropertyChanged}"
-                                             Height="35" Padding="10,5"
-                                             VerticalContentAlignment="Center"
-                                             BorderThickness="1" BorderBrush="#CCCCCC"/>
-                                </StackPanel>
-                            </Grid>
-                        </Grid>
-                    </Border>
-
-                    <!-- Password (opcional según tu VM; no se enlaza el PasswordBox por seguridad) -->
-                    <Border Background="#F9F9F9"
-                            BorderBrush="#DDDDDD"
-                            BorderThickness="1"
-                            Padding="15"
-                            Margin="0,0,0,15"
-                            CornerRadius="4">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-
-                            <TextBlock Text="Contraseña"
-                                       FontSize="16"
-                                       FontWeight="SemiBold"
-                                       Margin="0,0,0,10"
-                                       Foreground="#2C3E50"/>
-
-                            <Grid Grid.Row="1">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-
-                                <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                                    <TextBlock Text="Contraseña:" Style="{StaticResource LabelStyle}"/>
-                                    <PasswordBox x:Name="PasswordBox"
-                                                 Height="35" Padding="10,5"
-                                                 VerticalContentAlignment="Center"
-                                                 BorderThickness="1" BorderBrush="#CCCCCC"/>
-                                </StackPanel>
-
-                                <StackPanel Grid.Column="1" Margin="10,0,0,0">
-                                    <TextBlock Text="Confirmar contraseña:" Style="{StaticResource LabelStyle}"/>
-                                    <PasswordBox x:Name="ConfirmPasswordBox"
-                                                 Height="35" Padding="10,5"
-                                                 VerticalContentAlignment="Center"
-                                                 BorderThickness="1" BorderBrush="#CCCCCC"/>
-                                </StackPanel>
-                            </Grid>
-                        </Grid>
-                    </Border>
-
-                    <!-- Roles -->
-                    <Border Background="#F9F9F9"
-                            BorderBrush="#DDDDDD"
-                            BorderThickness="1"
-                            Padding="15"
-                            Margin="0,0,0,15"
-                            CornerRadius="4">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-
-                            <TextBlock Text="Roles"
-                                       FontSize="16"
-                                       FontWeight="SemiBold"
-                                       Margin="0,0,0,10"
-                                       Foreground="#2C3E50"/>
-
-                            <ItemsControl Grid.Row="1"
-                                          ItemsSource="{Binding Roles}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <CheckBox Content="{Binding Nombre}"
-                                                  IsChecked="{Binding IsSelected}"
-                                                  Margin="0,0,0,5"/>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </Grid>
-                    </Border>
-
-                    <!-- Estado -->
-                    <Border Background="#F9F9F9"
-                            BorderBrush="#DDDDDD"
-                            BorderThickness="1"
-                            Padding="15"
-                            Margin="0,0,0,15"
-                            CornerRadius="4">
-                        <StackPanel>
-                            <TextBlock Text="Estado"
-                                       FontSize="16"
-                                       FontWeight="SemiBold"
-                                       Margin="0,0,0,10"
-                                       Foreground="#2C3E50"/>
-                            <CheckBox Content="Usuario activo" IsChecked="{Binding Activo}"/>
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-            </ScrollViewer>
-
-            <!-- Botones -->
-            <StackPanel Grid.Row="2" Orientation="Horizontal"
-                        HorizontalAlignment="Right" Margin="0,20,0,0">
-                <Button Content="Guardar"
-                        Command="{Binding GuardarCommand}"
-                        CommandParameter="{Binding ElementName=PasswordBox}"
-                        Style="{StaticResource ActionButtonStyle}"
-                        Margin="0,0,10,0"/>
-                <Button Content="Cancelar"
-                        Command="{Binding CloseCommand}"
-                        Style="{StaticResource SecondaryButtonStyle}"/>
+        <!-- Formulario -->
+        <StackPanel Grid.Row="1" Margin="24,16">
+            <StackPanel Margin="0,0,0,12">
+                <TextBlock Text="Nombre de Usuario *" 
+                           FontWeight="Medium" 
+                           Margin="0,0,0,4"/>
+                <TextBox Text="{Binding NombreUsuario}" 
+                         Padding="10,8" 
+                         BorderBrush="#D1D5DB" 
+                         BorderThickness="1"/>
             </StackPanel>
+
+            <StackPanel Margin="0,0,0,12">
+                <TextBlock Text="Nombre Completo *" 
+                           FontWeight="Medium" 
+                           Margin="0,0,0,4"/>
+                <TextBox Text="{Binding NombreCompleto}" 
+                         Padding="10,8" 
+                         BorderBrush="#D1D5DB" 
+                         BorderThickness="1"/>
+            </StackPanel>
+
+            <Grid Margin="0,0,0,12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                    <TextBlock Text="Contraseña" 
+                               FontWeight="Medium" 
+                               Margin="0,0,0,4"/>
+                    <PasswordBox x:Name="PasswordBox"
+                                 Padding="10,8" 
+                                 BorderBrush="#D1D5DB" 
+                                 BorderThickness="1"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                    <TextBlock Text="Confirmar Contraseña" 
+                               FontWeight="Medium" 
+                               Margin="0,0,0,4"/>
+                    <PasswordBox x:Name="ConfirmPasswordBox"
+                                 Padding="10,8" 
+                                 BorderBrush="#D1D5DB" 
+                                 BorderThickness="1"/>
+                </StackPanel>
+            </Grid>
+
+            <TextBlock Text="Deje la contraseña en blanco para mantener la actual"
+                       Foreground="#666666"
+                       FontSize="12"
+                       Margin="0,0,0,12"
+                       Visibility="{Binding EsEdicion, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+            <CheckBox Content="Activo" 
+                      IsChecked="{Binding Activo}" 
+                      Margin="0,8,0,4"/>
+
+            <CheckBox Content="Es Empleado Solamente (No tiene acceso al sistema)" 
+                      IsChecked="{Binding EsEmpleadoSolamente}" 
+                      Margin="0,4,0,12"/>
+
+            <TextBlock Text="* Campos obligatorios" 
+                       Foreground="#9E9E9E" 
+                       FontStyle="Italic"
+                       Margin="0,8,0,0"/>
+        </StackPanel>
+
+        <!-- Botones de acción -->
+        <Border Grid.Row="2" 
+                Background="#F5F7FA" 
+                BorderBrush="#E1E5EB" 
+                BorderThickness="0,1,0,0" 
+                Padding="24,16">
+            <Grid>
+                <Button Content="Administrar Roles" 
+                        Command="{Binding AdministrarRolesCommand}" 
+                        Padding="16,8" 
+                        Margin="0,0,12,0"
+                        Background="#34495E" 
+                        Foreground="White" 
+                        BorderThickness="0"
+                        Visibility="{Binding EsEdicion, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        HorizontalAlignment="Left">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="4"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Cancelar" 
+                            Command="{Binding CloseCommand}" 
+                            Padding="16,8" 
+                            Margin="0,0,12,0"
+                            Background="#F0F2F5" 
+                            Foreground="#2C3E50" 
+                            BorderBrush="#D1D5DB"
+                            BorderThickness="1">
+                        <Button.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="4"/>
+                            </Style>
+                        </Button.Resources>
+                    </Button>
+                    <Button Content="Guardar" 
+                            Command="{Binding GuardarCommand}" 
+                            Padding="16,8"
+                            Background="#3498DB" 
+                            Foreground="White" 
+                            BorderThickness="0">
+                        <Button.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="4"/>
+                            </Style>
+                        </Button.Resources>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Overlay de carga -->
+        <Grid Grid.Row="0" Grid.RowSpan="3" 
+              Background="#80000000" 
+              Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Border Padding="20" 
+       BorderBrush="#E1E5EB" 
+       BorderThickness="1" 
+       CornerRadius="6">
+                <StackPanel HorizontalAlignment="Center" 
+                            VerticalAlignment="Center"
+                            Background="White">
+    
+                    <TextBlock Text="Guardando..." 
+                               FontSize="16" 
+                               Margin="0,0,0,12"/>
+                    <ProgressBar IsIndeterminate="True" 
+                                 Height="4" 
+                                 Width="200"/>
+                </StackPanel>
+            </Border>
+           
         </Grid>
-    </Border>
+    </Grid>
 </Window>

@@ -11,75 +11,61 @@ namespace InventarioComputo.Application.Services
     public class MovimientoService : IMovimientoService
     {
         private readonly IEquipoComputoRepository _equipoRepo;
-        private readonly IBitacoraService _bitacora;
+        private readonly IHistorialMovimientoRepository _histRepo;
         private readonly ISessionService _session;
-        private readonly IHistorialMovimientoRepository _historialRepo;
 
-        public MovimientoService(
-            IEquipoComputoRepository equipoRepo,
-            IBitacoraService bitacora,
-            ISessionService session,
-            IHistorialMovimientoRepository historialRepo)
+        public MovimientoService(IEquipoComputoRepository equipoRepo,
+                                 IHistorialMovimientoRepository histRepo,
+                                 ISessionService session)
         {
             _equipoRepo = equipoRepo;
-            _bitacora = bitacora;
+            _histRepo = histRepo;
             _session = session;
-            _historialRepo = historialRepo;
         }
 
-        public async Task<IReadOnlyList<HistorialMovimiento>> ObtenerHistorialPorEquipoAsync(int equipoId, CancellationToken ct = default)
+        public Task<IReadOnlyList<HistorialMovimiento>> ObtenerHistorialPorEquipoAsync(int equipoId, CancellationToken ct = default)
+            => _histRepo.ObtenerHistorialEquipoAsync(equipoId, ct);
+
+        public async Task AsignarEquipoAsync(int equipoId, int? empleadoId, int? zonaId, string motivo, CancellationToken ct = default)
         {
-            return await _historialRepo.ObtenerHistorialEquipoAsync(equipoId, ct);
-        }
+            if (string.IsNullOrWhiteSpace(motivo))
+                throw new ArgumentException("El motivo es obligatorio.", nameof(motivo));
 
-        public async Task AsignarEquipoAsync(int equipoId, int? usuarioId, int? zonaId, string motivo, CancellationToken ct = default)
-        {
-            var equipo = await _equipoRepo.ObtenerPorIdAsync(equipoId, ct)
-                ?? throw new InvalidOperationException($"No se encontró el equipo con ID {equipoId}");
+            var equipo = await _equipoRepo.ObtenerPorIdAsync(equipoId, ct) ?? throw new InvalidOperationException("Equipo no encontrado.");
 
-            // Guardamos los valores anteriores
-            var usuarioAnteriorId = equipo.UsuarioId;
-            var zonaAnteriorId = equipo.ZonaId;
+            var anteriorEmpleadoId = equipo.EmpleadoId;
+            var anteriorZonaId = equipo.ZonaId;
+            var anteriorAreaId = equipo.AreaId;
+            var anteriorSedeId = equipo.SedeId;
 
-            // Actualizamos con los nuevos valores
-            equipo.UsuarioId = usuarioId;
+            // Actualizar asignación actual
+            equipo.EmpleadoId = empleadoId;
             equipo.ZonaId = zonaId;
 
+            // Si zona cambia, derivar area/sede (el repo del equipo debe manejarlos en capa infra si corresponde)
             await _equipoRepo.ActualizarAsync(equipo, ct);
 
-            // Registramos el movimiento en la bitácora
-            await _bitacora.RegistrarAsync(
-                entidad: "Movimiento",
-                accion: "AsignacionEquipo",
-                entidadId: equipoId,
-                usuarioResponsableId: _session.UsuarioActual?.Id,
-                detalles: $"De: Usuario={usuarioAnteriorId}, Zona={zonaAnteriorId} A: Usuario={usuarioId}, Zona={zonaId}. Motivo: {motivo}",
-                ct: ct);
-        }
-
-        public async Task RegistrarMovimientoAsync(int equipoId, int? usuarioNuevoId, int? zonaNuevaId, string motivo, int usuarioResponsableId, CancellationToken ct = default)
-        {
-            var equipo = await _equipoRepo.ObtenerPorIdAsync(equipoId, ct)
-                ?? throw new InvalidOperationException($"No se encontró el equipo con ID {equipoId}");
-
-            var movimiento = new HistorialMovimiento
+            // Registrar historial
+            var hist = new HistorialMovimiento
             {
-                EquipoComputoId = equipoId,
-                FechaMovimiento = DateTime.Now,
-                UsuarioAnteriorId = equipo.UsuarioId,
-                ZonaAnteriorId = equipo.ZonaId,
-                UsuarioNuevoId = usuarioNuevoId,
-                ZonaNuevaId = zonaNuevaId,
-                Motivo = motivo,
-                UsuarioResponsableId = usuarioResponsableId
+                EquipoComputoId = equipo.Id,
+                FechaMovimiento = DateTime.UtcNow,
+                EmpleadoAnteriorId = anteriorEmpleadoId,
+                ZonaAnteriorId = anteriorZonaId,
+                AreaAnteriorId = anteriorAreaId,
+                SedeAnteriorId = anteriorSedeId,
+                EmpleadoNuevoId = empleadoId,
+                ZonaNuevaId = zonaId,
+                AreaNuevaId = equipo.AreaId,
+                SedeNuevaId = equipo.SedeId,
+                Motivo = motivo.Trim(),
+                UsuarioResponsableId = _session.UsuarioActual?.Id ?? 0
             };
 
-            // Actualizamos el equipo
-            equipo.UsuarioId = usuarioNuevoId;
-            equipo.ZonaId = zonaNuevaId;
-
-            await _equipoRepo.ActualizarAsync(equipo, ct);
-            await _historialRepo.AgregarAsync(movimiento, ct);
+            await _histRepo.AgregarAsync(hist, ct);
         }
+
+        public Task RegistrarMovimientoAsync(int equipoId, int? empleadoNuevoId, int? zonaNuevaId, string motivo, int usuarioResponsableId, CancellationToken ct = default)
+            => AsignarEquipoAsync(equipoId, empleadoNuevoId, zonaNuevaId, motivo, ct);
     }
 }

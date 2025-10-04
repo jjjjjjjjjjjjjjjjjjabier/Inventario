@@ -25,6 +25,12 @@
 		<Compile Remove="Class1.cs" />
 		<Compile Remove="StaticConverters.cs" />
 	</ItemGroup>
+	<ItemGroup>
+	  <Page Remove="Styles\Styles.xaml" />
+	</ItemGroup>
+	<ItemGroup>
+	  <None Include="Styles\Styles.xaml" />
+	</ItemGroup>
 
 	<!-- Paquetes -->
 	<ItemGroup>

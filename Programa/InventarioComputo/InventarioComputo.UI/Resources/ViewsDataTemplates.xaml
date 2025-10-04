@@ -1,34 +1,38 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:vm="clr-namespace:InventarioComputo.UI.ViewModels"
-                    xmlns:v="clr-namespace:InventarioComputo.UI.Views">
+                    xmlns:views="clr-namespace:InventarioComputo.UI.Views"
+                    xmlns:vms="clr-namespace:InventarioComputo.UI.ViewModels">
 
-    <DataTemplate DataType="{x:Type vm:EquiposComputoViewModel}">
-        <v:EquiposComputoView/>
-    </DataTemplate>
+  <DataTemplate DataType="{x:Type vms:EquiposComputoViewModel}">
+    <views:EquiposComputoView />
+  </DataTemplate>
 
-    <DataTemplate DataType="{x:Type vm:EstadosViewModel}">
-        <v:EstadosView/>
-    </DataTemplate>
+  <DataTemplate DataType="{x:Type vms:EstadosViewModel}">
+    <views:EstadosView />
+  </DataTemplate>
 
-    <DataTemplate DataType="{x:Type vm:TiposEquipoViewModel}">
-        <v:TiposEquipoView/>
-    </DataTemplate>
+  <DataTemplate DataType="{x:Type vms:TiposEquipoViewModel}">
+    <views:TiposEquipoView />
+  </DataTemplate>
 
-    <DataTemplate DataType="{x:Type vm:UnidadesViewModel}">
-        <v:UnidadesView/>
-    </DataTemplate>
+  <DataTemplate DataType="{x:Type vms:UnidadesViewModel}">
+    <views:UnidadesView />
+  </DataTemplate>
 
-    <DataTemplate DataType="{x:Type vm:UbicacionesViewModel}">
-        <v:UbicacionesView/>
-    </DataTemplate>
+  <DataTemplate DataType="{x:Type vms:UbicacionesViewModel}">
+    <views:UbicacionesView />
+  </DataTemplate>
 
-    <DataTemplate DataType="{x:Type vm:ReportesViewModel}">
-        <v:ReportesView/>
-    </DataTemplate>
+  <DataTemplate DataType="{x:Type vms:ReportesViewModel}">
+    <views:ReportesView />
+  </DataTemplate>
 
-    <DataTemplate DataType="{x:Type vm:UsuariosViewModel}">
-        <v:UsuariosView/>
-    </DataTemplate>
+  <DataTemplate DataType="{x:Type vms:UsuariosViewModel}">
+    <views:UsuariosView />
+  </DataTemplate>
+
+  <DataTemplate DataType="{x:Type vms:EmpleadosViewModel}">
+    <views:EmpleadosView />
+  </DataTemplate>
 
 </ResourceDictionary>

@@ -3,97 +3,160 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:conv="clr-namespace:InventarioComputo.UI.Converters"
         mc:Ignorable="d"
         Title="{Binding Titulo}"
-        Height="421" Width="450"
+        SizeToContent="Height"
+        Width="450"
         WindowStartupLocation="CenterOwner"
-        Background="White">
+        ResizeMode="NoResize"
+        Background="#F8F9FA">
 
-    <Border Padding="25" Margin="0,0,0,34">
-        <Grid Margin="0,0,0,-27">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <conv:ColorHexToBrushConverter x:Key="ColorHexToBrushConverter"/>
+    </Window.Resources>
 
-            <!-- Título -->
-            <TextBlock Grid.Row="0" 
-                       Text="{Binding Titulo}" 
-                       FontSize="20" 
-                       FontWeight="Bold"
-                       Margin="0,0,0,20"
+    <Grid Margin="0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Encabezado -->
+        <Border Grid.Row="0" 
+                Background="#F5F7FA" 
+                BorderBrush="#E1E5EB" 
+                BorderThickness="0,0,0,1" 
+                Padding="24,16">
+            <TextBlock Text="{Binding Titulo}" 
+                       FontSize="22" 
+                       FontWeight="Medium" 
                        Foreground="#2C3E50"/>
+        </Border>
 
-            <!-- Campos -->
-            <StackPanel Grid.Row="1">
-                <TextBlock Text="Nombre:" Style="{StaticResource LabelStyle}"/>
-                <TextBox Text="{Binding Nombre, UpdateSourceTrigger=PropertyChanged}"
-                         Height="35"
-                         Padding="10,5"
-                         VerticalContentAlignment="Center"
-                         BorderThickness="1"
-                         BorderBrush="#CCCCCC"
-                         Margin="0,0,0,15"/>
+        <!-- Formulario -->
+        <StackPanel Grid.Row="1" Margin="24,16">
+            <StackPanel Margin="0,0,0,12">
+                <TextBlock Text="Nombre *" 
+                           FontWeight="Medium" 
+                           Margin="0,0,0,4"/>
+                <TextBox Text="{Binding Nombre}" 
+                         Padding="10,8" 
+                         BorderBrush="#D1D5DB" 
+                         BorderThickness="1"/>
+            </StackPanel>
 
-                <TextBlock Text="Descripcion:" Style="{StaticResource LabelStyle}"/>
-                <TextBox Text="{Binding Descripcion, UpdateSourceTrigger=PropertyChanged}"
-                         Height="60"
-                         TextWrapping="Wrap"
-                         AcceptsReturn="True"
-                         Padding="10,5"
-                         VerticalContentAlignment="Top"
-                         VerticalScrollBarVisibility="Auto"
-                         BorderThickness="1"
-                         BorderBrush="#CCCCCC"
-                         Margin="0,0,0,15"/>
+            <StackPanel Margin="0,0,0,12">
+                <TextBlock Text="Descripción" 
+                           FontWeight="Medium" 
+                           Margin="0,0,0,4"/>
+                <TextBox Text="{Binding Descripcion}" 
+                         TextWrapping="Wrap" 
+                         AcceptsReturn="True" 
+                         Height="60" 
+                         Padding="10,8" 
+                         BorderBrush="#D1D5DB" 
+                         BorderThickness="1"/>
+            </StackPanel>
 
-                <TextBlock Text="Color (Hex):" Style="{StaticResource LabelStyle}"/>
-                <Grid Margin="0,0,0,15">
+            <StackPanel Margin="0,0,0,12">
+                <TextBlock Text="Color *" 
+                           FontWeight="Medium" 
+                           Margin="0,0,0,4"/>
+                <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-
-                    <TextBox Grid.Column="0"
-                             Text="{Binding ColorHex, UpdateSourceTrigger=PropertyChanged}"
-                             Height="35"
-                             Padding="10,5"
-                             VerticalContentAlignment="Center"
-                             BorderThickness="1"
-                             BorderBrush="#CCCCCC"/>
-
-                    <Border Grid.Column="1"
-                            Width="35" 
-                            Height="35"
-                            Margin="10,0,0,0"
-                            Background="{Binding ColorHex, Converter={StaticResource StringToColorConverter}}"
-                            BorderBrush="#CCCCCC"
-                            BorderThickness="1"/>
+                    <TextBox Grid.Column="0" 
+                             Text="{Binding ColorHex}" 
+                             Padding="10,8" 
+                             BorderBrush="#D1D5DB" 
+                             BorderThickness="1"/>
+                    <Border Grid.Column="1" 
+                            Width="36" 
+                            Height="36" 
+                            Margin="12,0,0,0" 
+                            BorderBrush="#D1D5DB" 
+                            BorderThickness="1" 
+                            CornerRadius="4" 
+                            Background="{Binding ColorHex, Converter={StaticResource ColorHexToBrushConverter}}"/>
                 </Grid>
+                <TextBlock Text="Formato: #RRGGBB o #AARRGGBB" 
+                           Foreground="#666666" 
+                           FontSize="12" 
+                           Margin="0,4,0,0"/>
             </StackPanel>
 
-            <!-- Activo -->
-            <CheckBox Grid.Row="2" 
-                      Content="Activo" 
-                      IsChecked="{Binding Activo}"
-                      Margin="0,0,0,20"/>
+            <CheckBox Content="Activo" 
+                      IsChecked="{Binding Activo}" 
+                      Margin="0,4,0,12"/>
 
-            <!-- Botones -->
-            <StackPanel Grid.Row="4" 
-                        Orientation="Horizontal" 
-                        HorizontalAlignment="Right">
-                <Button Content="Guardar" 
-                        Command="{Binding GuardarCommand}"
-                        Style="{StaticResource ActionButtonStyle}"
-                        Margin="0,0,10,0"/>
+            <TextBlock Text="* Campos obligatorios" 
+                       Foreground="#9E9E9E" 
+                       FontStyle="Italic"
+                       Margin="0,8,0,0"/>
+        </StackPanel>
 
+        <!-- Botones de acción -->
+        <Border Grid.Row="2" 
+                Background="#F5F7FA" 
+                BorderBrush="#E1E5EB" 
+                BorderThickness="0,1,0,0" 
+                Padding="24,16">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button Content="Cancelar" 
-                        Command="{Binding CloseCommand}"
-                        Style="{StaticResource SecondaryButtonStyle}"/>
+                        Command="{Binding CloseCommand}" 
+                        Padding="16,8" 
+                        Margin="0,0,12,0"
+                        Background="#F0F2F5" 
+                        Foreground="#2C3E50" 
+                        BorderBrush="#D1D5DB"
+                        BorderThickness="1">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="4"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
+                <Button Content="Guardar" 
+                        Command="{Binding GuardarCommand}" 
+                        Padding="16,8"
+                        Background="#3498DB" 
+                        Foreground="White" 
+                        BorderThickness="0">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="4"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
             </StackPanel>
+        </Border>
+
+        <!-- Overlay de carga -->
+        <Grid Grid.Row="0" Grid.RowSpan="3" 
+              Background="#80000000" 
+              Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Border Padding="20" 
+                   BorderBrush="#E1E5EB" 
+                   BorderThickness="1" 
+                   CornerRadius="6">
+                <StackPanel HorizontalAlignment="Center" 
+                            VerticalAlignment="Center"
+                            Background="White">
+                    
+                    <TextBlock Text="Guardando..." 
+                               FontSize="16" 
+                               Margin="0,0,0,12"/>
+                    <ProgressBar IsIndeterminate="True" 
+                                 Height="4" 
+                                 Width="200"/>
+                </StackPanel>
+            </Border>
+         
         </Grid>
-    </Border>
+    </Grid>
 </Window>

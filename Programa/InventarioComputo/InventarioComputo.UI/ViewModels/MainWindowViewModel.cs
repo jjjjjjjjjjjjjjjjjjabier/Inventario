@@ -1,15 +1,17 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using InventarioComputo.Application.Contracts;
+using InventarioComputo.Application.Contracts; // ISessionService
 using InventarioComputo.UI.Services;
 using InventarioComputo.UI.ViewModels.Base;
+using System.Threading.Tasks;
 
 namespace InventarioComputo.UI.ViewModels
 {
     public partial class MainWindowViewModel : BaseViewModel
     {
-        private readonly EquiposComputoViewModel _equiposComputoViewModel;
-        private readonly EstadosViewModel _estadosViewModel;
+        private readonly EmpleadosViewModel _empleadosVm;
+        private readonly EquiposComputoViewModel _equiposVm;
+        private readonly EstadosViewModel _estadosVm;
         private readonly UnidadesViewModel _unidadesViewModel;
         private readonly UbicacionesViewModel _ubicacionesViewModel;
         private readonly TiposEquipoViewModel _tiposEquipoViewModel;
@@ -19,17 +21,18 @@ namespace InventarioComputo.UI.ViewModels
         private readonly UsuariosViewModel _usuariosViewModel;
 
         [ObservableProperty]
-        private BaseViewModel? _currentViewModel;
+        private object? _currentView;
 
         [ObservableProperty]
-        private string _nombreUsuario;
+        private string _nombreUsuario = string.Empty;
 
         [ObservableProperty]
         private bool _esAdministrador;
 
         public MainWindowViewModel(
-            EquiposComputoViewModel equiposComputoViewModel,
-            EstadosViewModel estadosViewModel,
+            EmpleadosViewModel empleadosVm,
+            EquiposComputoViewModel equiposVm,
+            EstadosViewModel estadosVm,
             UnidadesViewModel unidadesViewModel,
             UbicacionesViewModel ubicacionesViewModel,
             TiposEquipoViewModel tiposEquipoViewModel,
@@ -38,8 +41,9 @@ namespace InventarioComputo.UI.ViewModels
             IDialogService dialogService,
             UsuariosViewModel usuariosViewModel)
         {
-            _equiposComputoViewModel = equiposComputoViewModel;
-            _estadosViewModel = estadosViewModel;
+            _empleadosVm = empleadosVm;
+            _equiposVm = equiposVm;
+            _estadosVm = estadosVm;
             _unidadesViewModel = unidadesViewModel;
             _ubicacionesViewModel = ubicacionesViewModel;
             _tiposEquipoViewModel = tiposEquipoViewModel;
@@ -48,11 +52,8 @@ namespace InventarioComputo.UI.ViewModels
             _dialogService = dialogService;
             _usuariosViewModel = usuariosViewModel;
 
-            // Configurar información del usuario
             ConfigurarInfoUsuario();
-
-            // Vista inicial (la propia vista ejecutará LoadedCommand)
-            CurrentViewModel = _equiposComputoViewModel;
+            CurrentView = _equiposVm; // El DataTemplate resuelve la vista
         }
 
         private void ConfigurarInfoUsuario()
@@ -64,59 +65,16 @@ namespace InventarioComputo.UI.ViewModels
             }
         }
 
-        [RelayCommand]
-        private Task NavigateToEquiposComputo()
-        {
-            CurrentViewModel = _equiposComputoViewModel;
-            return Task.CompletedTask;
-        }
-
-        [RelayCommand]
-        private Task NavigateToEstados()
-        {
-            CurrentViewModel = _estadosViewModel;
-            return Task.CompletedTask;
-        }
-
-        [RelayCommand]
-        private Task NavigateToUnidades()
-        {
-            CurrentViewModel = _unidadesViewModel;
-            return Task.CompletedTask;
-        }
-
-        [RelayCommand]
-        private Task NavigateToUbicaciones()
-        {
-            CurrentViewModel = _ubicacionesViewModel;
-            return Task.CompletedTask;
-        }
-
-        [RelayCommand]
-        private Task NavigateToTiposEquipo()
-        {
-            CurrentViewModel = _tiposEquipoViewModel;
-            return Task.CompletedTask;
-        }
-
-        [RelayCommand]
-        private Task NavigateToReportes()
-        {
-            CurrentViewModel = _reportesViewModel;
-            return Task.CompletedTask;
-        }
-
-        [RelayCommand]
-        private Task NavigateToUsuarios()
-        {
-            CurrentViewModel = _usuariosViewModel;
-            return Task.CompletedTask;
-        }
-
-        [RelayCommand]
-        private void CerrarSesion()
-        {
-            _sessionService.CerrarSesion();
-        }
+        [RelayCommand] private Task NavigateToEquiposComputo() { CurrentView = _equiposVm; return Task.CompletedTask; }
+        [RelayCommand] private Task NavigateToEstados() { CurrentView = _estadosVm; return Task.CompletedTask; }
+        [RelayCommand] private Task NavigateToUnidades() { CurrentView = _unidadesViewModel; return Task.CompletedTask; }
+        [RelayCommand] private Task NavigateToUbicaciones() { CurrentView = _ubicacionesViewModel; return Task.CompletedTask; }
+        [RelayCommand] private Task NavigateToTiposEquipo() { CurrentView = _tiposEquipoViewModel; return Task.CompletedTask; }
+        [RelayCommand] private Task NavigateToReportes() { CurrentView = _reportesViewModel; return Task.CompletedTask; }
+        [RelayCommand] private Task NavigateToUsuarios() { CurrentView = _usuariosViewModel; return Task.CompletedTask; }
+        [RelayCommand] private void CerrarSesion() => _sessionService.CerrarSesion();
+        [RelayCommand] public void MostrarEmpleados() { CurrentView = _empleadosVm; }
+        [RelayCommand] public void MostrarEquipos() { CurrentView = _equiposVm; }
+        [RelayCommand] public void MostrarEstados() { CurrentView = _estadosVm; }
     }
 }

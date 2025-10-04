@@ -1,80 +1,17 @@
 <UserControl x:Class="InventarioComputo.UI.Views.ReportesView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:InventarioComputo.UI.Views"
-             mc:Ignorable="d" 
-             d:DesignHeight="600" d:DesignWidth="800"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:behaviors="clr-namespace:InventarioComputo.UI.Behaviors"
+             xmlns:conv="clr-namespace:InventarioComputo.UI.Converters"
+             mc:Ignorable="d"
+             d:DesignHeight="650" d:DesignWidth="950"
              Loaded="UserControl_Loaded">
 
     <UserControl.Resources>
-        <Style x:Key="ActionButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#0078D7"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Padding" Value="15,5"/>
-            <Setter Property="MinWidth" Value="100"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                Padding="{TemplateBinding Padding}"
-                                CornerRadius="20">
-                            <ContentPresenter HorizontalAlignment="Center" 
-                                              VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#0063B1"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Background" Value="#CCCCCC"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="SecondaryButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#EFEFEF"/>
-            <Setter Property="Foreground" Value="#333333"/>
-            <Setter Property="Padding" Value="15,5"/>
-            <Setter Property="MinWidth" Value="100"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                Padding="{TemplateBinding Padding}"
-                                CornerRadius="20">
-                            <ContentPresenter HorizontalAlignment="Center" 
-                                              VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#DDDDDD"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style TargetType="GroupBox">
-            <Setter Property="Margin" Value="0,0,0,15"/>
-            <Setter Property="Padding" Value="15"/>
-            <Setter Property="BorderBrush" Value="#CCCCCC"/>
-            <Setter Property="Background" Value="White"/>
-        </Style>
-
-        <Style TargetType="TextBlock" x:Key="LabelStyle">
-            <Setter Property="Margin" Value="0,0,0,5"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-        </Style>
+        <conv:ActiveStatusConverter x:Key="ActiveStatusConverter"/>
+        <conv:BoolToStringConverter x:Key="BoolToStringConverter"/>
     </UserControl.Resources>
 
     <Grid>
@@ -85,19 +22,24 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Header -->
-        <TextBlock Grid.Row="0" 
-                   Text="Reportes de Equipos"
-                   FontSize="24" 
-                   FontWeight="Bold"
-                   Margin="0,0,0,20"
-                   Foreground="#2C3E50"/>
+        <!-- Encabezado -->
+        <Border Grid.Row="0" 
+                Background="#F5F7FA" 
+                BorderBrush="#E1E5EB" 
+                BorderThickness="0,0,0,1" 
+                Padding="24,16">
+            <TextBlock Text="Reportes y Consultas" 
+                       FontSize="22" 
+                       FontWeight="Medium" 
+                       Foreground="#2C3E50"/>
+        </Border>
 
-        <!-- Filtros -->
-        <GroupBox Grid.Row="1" 
-                  Header="Filtros" 
-                  Margin="0,0,0,15"
-                  BorderThickness="1">
+        <!-- Panel de filtros -->
+        <Border Grid.Row="1" 
+                Background="White" 
+                BorderBrush="#E1E5EB" 
+                BorderThickness="0,0,0,1" 
+                Padding="24,16">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -110,101 +52,258 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <!-- Primera fila -->
-                <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,10,10">
-                    <TextBlock Text="Tipo de Equipo:" Style="{StaticResource LabelStyle}"/>
-                    <ComboBox ItemsSource="{Binding TiposEquipo}"
+                <!-- Primera fila de filtros -->
+                <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,8,10">
+                    <TextBlock Text="Tipo de Equipo" 
+                               FontWeight="SemiBold" 
+                               Margin="0,0,0,5"/>
+                    <ComboBox ItemsSource="{Binding TiposEquipo}" 
                               SelectedItem="{Binding TipoEquipoSeleccionado}"
-                              DisplayMemberPath="Nombre"/>
+                              DisplayMemberPath="Nombre"
+                              Padding="8,6"
+                              IsEditable="False"/>
                 </StackPanel>
 
-                <StackPanel Grid.Row="0" Grid.Column="1" Margin="10,0,10,10">
-                    <TextBlock Text="Estado:" Style="{StaticResource LabelStyle}"/>
-                    <ComboBox ItemsSource="{Binding Estados}"
+                <StackPanel Grid.Row="0" Grid.Column="1" Margin="8,0,8,10">
+                    <TextBlock Text="Estado" 
+                               FontWeight="SemiBold" 
+                               Margin="0,0,0,5"/>
+                    <ComboBox ItemsSource="{Binding Estados}" 
                               SelectedItem="{Binding EstadoSeleccionado}"
-                              DisplayMemberPath="Nombre"/>
+                              DisplayMemberPath="Nombre"
+                              Padding="8,6"
+                              IsEditable="False"/>
                 </StackPanel>
 
-                <StackPanel Grid.Row="0" Grid.Column="2" Margin="10,0,0,10">
-                    <TextBlock Text="Usuario:" Style="{StaticResource LabelStyle}"/>
-                    <ComboBox ItemsSource="{Binding Usuarios}"
-                              SelectedItem="{Binding UsuarioSeleccionado}"
-                              DisplayMemberPath="NombreCompleto"/>
+                <StackPanel Grid.Row="0" Grid.Column="2" Margin="8,0,0,10">
+                    <TextBlock Text="Ubicación - Sede" 
+                               FontWeight="SemiBold" 
+                               Margin="0,0,0,5"/>
+                    <ComboBox ItemsSource="{Binding Sedes}" 
+                              SelectedItem="{Binding SedeSeleccionada}"
+                              DisplayMemberPath="Nombre"
+                              Padding="8,6"
+                              IsEditable="False"/>
                 </StackPanel>
 
-                <!-- Segunda fila -->
-                <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,10,10">
-                    <TextBlock Text="Área:" Style="{StaticResource LabelStyle}"/>
-                    <ComboBox ItemsSource="{Binding Areas}"
+                <!-- Segunda fila de filtros -->
+                <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,8,10">
+                    <TextBlock Text="Área" 
+                               FontWeight="SemiBold" 
+                               Margin="0,0,0,5"/>
+                    <ComboBox ItemsSource="{Binding Areas}" 
                               SelectedItem="{Binding AreaSeleccionada}"
-                              DisplayMemberPath="Nombre"/>
+                              DisplayMemberPath="Nombre"
+                              Padding="8,6"
+                              IsEditable="False"
+                              IsEnabled="{Binding SedeSeleccionada, Converter={StaticResource ObjectToVisibilityConverter}}"/>
                 </StackPanel>
 
-                <StackPanel Grid.Row="1" Grid.Column="1" Margin="10,0,10,10">
-                    <TextBlock Text="Zona:" Style="{StaticResource LabelStyle}"/>
-                    <ComboBox ItemsSource="{Binding Zonas}"
+                <StackPanel Grid.Row="1" Grid.Column="1" Margin="8,0,8,10">
+                    <TextBlock Text="Zona" 
+                               FontWeight="SemiBold" 
+                               Margin="0,0,0,5"/>
+                    <ComboBox ItemsSource="{Binding Zonas}" 
                               SelectedItem="{Binding ZonaSeleccionada}"
-                              DisplayMemberPath="Nombre"/>
+                              DisplayMemberPath="Nombre"
+                              Padding="8,6"
+                              IsEditable="False"
+                              IsEnabled="{Binding AreaSeleccionada, Converter={StaticResource ObjectToVisibilityConverter}}"/>
                 </StackPanel>
 
-                <!-- Tercera fila -->
-                <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal">
-                    <Button Content="Generar Reporte" 
-                            Style="{StaticResource ActionButtonStyle}"
-                            Command="{Binding GenerarReporteCommand}"
-                            Margin="0,0,10,0"/>
+                <StackPanel Grid.Row="1" Grid.Column="2" Margin="8,0,0,10">
+                    <TextBlock Text="Empleado" 
+                               FontWeight="SemiBold" 
+                               Margin="0,0,0,5"/>
+                    <ComboBox ItemsSource="{Binding Empleados}" 
+                              SelectedItem="{Binding EmpleadoSeleccionado}"
+                              DisplayMemberPath="NombreCompleto"
+                              Padding="8,6"
+                              IsEditable="False"/>
+                </StackPanel>
 
-                    <Button Content="Limpiar Filtros" 
-                            Style="{StaticResource SecondaryButtonStyle}"
-                            Command="{Binding LimpiarFiltrosCommand}"/>
+                <!-- Tercera fila de filtros -->
+                <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,8,0">
+                    <TextBlock Text="Fecha Desde" 
+                               FontWeight="SemiBold" 
+                               Margin="0,0,0,5"/>
+                    <DatePicker SelectedDate="{Binding FechaDesde}" 
+                                Padding="8,6"/>
+                </StackPanel>
+
+                <StackPanel Grid.Row="2" Grid.Column="1" Margin="8,0,8,0">
+                    <TextBlock Text="Fecha Hasta" 
+                               FontWeight="SemiBold" 
+                               Margin="0,0,0,5"/>
+                    <DatePicker SelectedDate="{Binding FechaHasta}" 
+                                Padding="8,6"/>
+                </StackPanel>
+
+                <StackPanel Grid.Row="2" Grid.Column="2" Margin="8,0,0,0" 
+                            Orientation="Horizontal" 
+                            VerticalAlignment="Bottom">
+                    <CheckBox Content="Incluir inactivos" 
+                              IsChecked="{Binding IncluirInactivos}" 
+                              VerticalAlignment="Center" 
+                              Margin="0,0,16,0"/>
                 </StackPanel>
             </Grid>
-        </GroupBox>
+        </Border>
 
-        <!-- Resultados -->
-        <DataGrid Grid.Row="2" 
-                  ItemsSource="{Binding Equipos}"
-                  AutoGenerateColumns="False"
-                  Margin="0,10,0,0">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Etiqueta" Binding="{Binding EtiquetaInventario}" Width="120"/>
-                <DataGridTextColumn Header="Número Serie" Binding="{Binding NumeroSerie}" Width="120"/>
-                <DataGridTextColumn Header="Marca" Binding="{Binding Marca}" Width="100"/>
-                <DataGridTextColumn Header="Modelo" Binding="{Binding Modelo}" Width="100"/>
-                <DataGridTextColumn Header="Tipo" Binding="{Binding TipoEquipo.Nombre}" Width="100"/>
-                <DataGridTextColumn Header="Estado" Binding="{Binding Estado.Nombre}" Width="100"/>
-                <DataGridTextColumn Header="Ubicación" Binding="{Binding Zona.Nombre}" Width="120"/>
-                <DataGridTextColumn Header="Usuario" Binding="{Binding Usuario.NombreCompleto}" Width="*"/>
-            </DataGrid.Columns>
-        </DataGrid>
+        <!-- DataGrid con resultados -->
+        <Border Grid.Row="2" 
+                Margin="24,16,24,16" 
+                BorderThickness="1" 
+                BorderBrush="#E1E5EB"
+                CornerRadius="6"
+                Background="White"
+                Padding="1">
+            <DataGrid ItemsSource="{Binding Resultados}" 
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      HeadersVisibility="Column"
+                      GridLinesVisibility="Horizontal"
+                      RowBackground="White"
+                      AlternatingRowBackground="#F9FAFC"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      CanUserReorderColumns="True"
+                      CanUserResizeRows="False"
+                      CanUserSortColumns="True"
+                      BorderThickness="0"
+                      SelectionMode="Single"
+                      SelectionUnit="FullRow">
+                <DataGrid.Resources>
+                    <Style TargetType="DataGridColumnHeader">
+                        <Setter Property="Background" Value="#F5F7FA"/>
+                        <Setter Property="Foreground" Value="#2C3E50"/>
+                        <Setter Property="FontWeight" Value="SemiBold"/>
+                        <Setter Property="Padding" Value="10,12"/>
+                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                        <Setter Property="BorderBrush" Value="#E1E5EB"/>
+                    </Style>
+                    <Style TargetType="DataGridRow">
+                        <Setter Property="Height" Value="40"/>
+                    </Style>
+                    <Style TargetType="DataGridCell">
+                        <Setter Property="Padding" Value="10,8"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Setter Property="VerticalAlignment" Value="Center"/>
+                    </Style>
+                </DataGrid.Resources>
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Num. Serie" 
+                                        Binding="{Binding NumeroSerie}" 
+                                        Width="120"/>
+                    <DataGridTextColumn Header="Etiqueta" 
+                                        Binding="{Binding EtiquetaInventario}" 
+                                        Width="120"/>
+                    <DataGridTextColumn Header="Marca" 
+                                        Binding="{Binding Marca}" 
+                                        Width="100"/>
+                    <DataGridTextColumn Header="Modelo" 
+                                        Binding="{Binding Modelo}" 
+                                        Width="100"/>
+                    <DataGridTextColumn Header="Tipo" 
+                                        Binding="{Binding TipoEquipo}" 
+                                        Width="120"/>
+                    <DataGridTextColumn Header="Estado" 
+                                        Binding="{Binding Estado}" 
+                                        Width="100"/>
+                    <DataGridTextColumn Header="Asignado a" 
+                                        Binding="{Binding UsuarioAsignado}" 
+                                        Width="150"/>
+                    <DataGridTextColumn Header="Ubicación" 
+                                        Binding="{Binding Ubicacion}" 
+                                        Width="150"/>
+                    <DataGridTextColumn Header="Adquisición" 
+                                        Binding="{Binding FechaAdquisicion, StringFormat='{}{0:dd/MM/yyyy}'}" 
+                                        Width="100"/>
+                    <DataGridTextColumn Header="Costo" 
+                                        Binding="{Binding Costo, StringFormat='{}{0:C2}'}" 
+                                        Width="100"/>
+                    <DataGridTemplateColumn Header="Activo" Width="80">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Activo, Converter={StaticResource BoolToStringConverter}}" 
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
 
-        <!-- Botones exportar -->
+        <!-- Panel de acciones -->
         <StackPanel Grid.Row="3" 
                     Orientation="Horizontal" 
-                    HorizontalAlignment="Right"
-                    Margin="0,15,0,0">
-            <Button Content="Exportar a Excel" 
-                    Style="{StaticResource ActionButtonStyle}"
-                    Command="{Binding ExportarExcelCommand}"
-                    Margin="0,0,10,0"/>
+                    HorizontalAlignment="Right" 
+                    Margin="0,0,24,24">
+            <Button Content="Limpiar Filtros" 
+                    Command="{Binding LimpiarFiltrosCommand}" 
+                    Padding="16,8" 
+                    Margin="0,0,8,0"
+                    Background="#F0F2F5" 
+                    Foreground="#2C3E50" 
+                    BorderThickness="1"
+                    BorderBrush="#D1D5DB">
+                <Button.Resources>
+                    <Style TargetType="Border">
+                        <Setter Property="CornerRadius" Value="4"/>
+                    </Style>
+                </Button.Resources>
+            </Button>
 
-            <Button Content="Exportar a PDF" 
-                    Style="{StaticResource ActionButtonStyle}"
-                    Command="{Binding ExportarPdfCommand}"/>
+            <Button Content="Generar Reporte" 
+                    Command="{Binding GenerarReporteCommand}" 
+                    Padding="16,8" 
+                    Margin="0,0,8,0"
+                    Background="#3498DB" 
+                    Foreground="White" 
+                    BorderThickness="0">
+                <Button.Resources>
+                    <Style TargetType="Border">
+                        <Setter Property="CornerRadius" Value="4"/>
+                    </Style>
+                </Button.Resources>
+            </Button>
+
+            <Button Content="Exportar a Excel" 
+                    Command="{Binding ExportarExcelCommand}" 
+                    Padding="16,8"
+                    Background="#27AE60" 
+                    Foreground="White" 
+                    BorderThickness="0">
+                <Button.Resources>
+                    <Style TargetType="Border">
+                        <Setter Property="CornerRadius" Value="4"/>
+                    </Style>
+                </Button.Resources>
+            </Button>
         </StackPanel>
 
-        <!-- Loading indicator -->
-        <Grid Grid.Row="0" Grid.RowSpan="4" Background="#80FFFFFF"
+        <!-- Indicador de carga -->
+        <Grid Grid.Row="0" Grid.RowSpan="4" 
+              Background="#80000000" 
               Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                <TextBlock Text="Cargando..." 
-                           FontSize="16"
-                           HorizontalAlignment="Center"
-                           Margin="0,0,0,10"/>
-                <ProgressBar IsIndeterminate="True" 
-                             Width="200" 
-                             Height="10"/>
-            </StackPanel>
+            <Border Padding="20" 
+       BorderThickness="1" 
+       BorderBrush="#E1E5EB" 
+       CornerRadius="6">
+                <StackPanel HorizontalAlignment="Center" 
+            VerticalAlignment="Center"
+            Background="White">
+    
+    <TextBlock Text="Generando reporte..." 
+               FontSize="16" 
+               Margin="0,0,0,12"/>
+    <ProgressBar IsIndeterminate="True" 
+                 Height="4" 
+                 Width="200"/>
+</StackPanel>
+            </Border>
+            
         </Grid>
     </Grid>
 </UserControl>

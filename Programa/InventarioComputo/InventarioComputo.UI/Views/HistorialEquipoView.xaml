@@ -4,111 +4,254 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="Historial del Equipo"
-        Height="500" Width="700"
+        Title="{Binding Titulo}"
+        Height="550"
+        Width="800"
         WindowStartupLocation="CenterOwner"
-        Background="White">
+        ResizeMode="NoResize"
+        Background="#F8F9FA">
 
-    <Border Padding="20">
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </Window.Resources>
 
-            <!-- Header -->
-            <TextBlock Grid.Row="0" 
-                       Text="Historial de Movimientos"
-                       FontSize="20" 
-                       FontWeight="Bold"
-                       Margin="0,0,0,10"
+    <Grid Margin="0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Encabezado -->
+        <Border Grid.Row="0" 
+                Background="#F5F7FA" 
+                BorderBrush="#E1E5EB" 
+                BorderThickness="0,0,0,1" 
+                Padding="24,16">
+            <TextBlock Text="{Binding Titulo}" 
+                       FontSize="22" 
+                       FontWeight="Medium" 
                        Foreground="#2C3E50"/>
+        </Border>
 
-            <!-- Informacion del Equipo -->
-            <Border Grid.Row="1" 
-                    Background="#F5F5F5" 
-                    BorderBrush="#DDDDDD" 
-                    BorderThickness="1"
-                    Padding="15" 
-                    Margin="0,0,0,15"
-                    CornerRadius="4">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
+        <!-- Información del equipo -->
+        <Border Grid.Row="1" 
+                Background="White" 
+                BorderBrush="#E1E5EB" 
+                BorderThickness="0,0,0,1" 
+                Padding="24,16">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
 
-                    <StackPanel Grid.Row="0" Grid.Column="0">
-                        <TextBlock Text="Etiqueta:" FontWeight="SemiBold"/>
-                        <TextBlock Text="{Binding Equipo.EtiquetaInventario}" Margin="0,0,0,5"/>
-                    </StackPanel>
+                <!-- Primera fila de información -->
+                <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,8,8">
+                    <TextBlock Text="Número de Serie" 
+                               FontWeight="Medium" 
+                               FontSize="12" 
+                               Foreground="#666666"/>
+                    <TextBlock Text="{Binding Equipo.NumeroSerie}" 
+                               FontSize="14"/>
+                </StackPanel>
 
-                    <StackPanel Grid.Row="0" Grid.Column="1">
-                        <TextBlock Text="Numero de Serie:" FontWeight="SemiBold"/>
-                        <TextBlock Text="{Binding Equipo.NumeroSerie}" Margin="0,0,0,5"/>
-                    </StackPanel>
+                <StackPanel Grid.Row="0" Grid.Column="1" Margin="8,0,8,8">
+                    <TextBlock Text="Etiqueta" 
+                               FontWeight="Medium" 
+                               FontSize="12" 
+                               Foreground="#666666"/>
+                    <TextBlock Text="{Binding Equipo.EtiquetaInventario}" 
+                               FontSize="14"/>
+                </StackPanel>
 
-                    <StackPanel Grid.Row="1" Grid.Column="0">
-                        <TextBlock Text="Tipo:" FontWeight="SemiBold"/>
-                        <TextBlock Text="{Binding Equipo.TipoEquipo.Nombre}" Margin="0,0,0,5"/>
-                    </StackPanel>
+                <StackPanel Grid.Row="0" Grid.Column="2" Margin="8,0,0,8">
+                    <TextBlock Text="Estado" 
+                               FontWeight="Medium" 
+                               FontSize="12" 
+                               Foreground="#666666"/>
+                    <TextBlock Text="{Binding Equipo.Estado.Nombre}" 
+                               FontSize="14"/>
+                </StackPanel>
 
-                    <StackPanel Grid.Row="1" Grid.Column="1">
-                        <TextBlock Text="Estado Actual:" FontWeight="SemiBold"/>
-                        <TextBlock Text="{Binding Equipo.Estado.Nombre}" Margin="0,0,0,5"/>
-                    </StackPanel>
-                </Grid>
-            </Border>
+                <!-- Segunda fila de información -->
+                <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,8,0">
+                    <TextBlock Text="Marca" 
+                               FontWeight="Medium" 
+                               FontSize="12" 
+                               Foreground="#666666"/>
+                    <TextBlock Text="{Binding Equipo.Marca}" 
+                               FontSize="14"/>
+                </StackPanel>
 
-            <!-- Historial -->
-            <DataGrid Grid.Row="2" 
-                      ItemsSource="{Binding Movimientos}"
-                      AutoGenerateColumns="False"
-                      IsReadOnly="True">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Fecha" 
-                                        Binding="{Binding FechaMovimiento, StringFormat=dd/MM/yyyy HH:mm}" 
-                                        Width="150"/>
-                    <DataGridTextColumn Header="Tipo de Movimiento" 
-                                        Binding="{Binding TipoMovimiento}" 
-                                        Width="150"/>
-                    <DataGridTextColumn Header="Usuario" 
-                                        Binding="{Binding UsuarioResponsable.NombreCompleto}" 
-                                        Width="150"/>
-                    <DataGridTextColumn Header="Descripcion" 
-                                        Binding="{Binding Descripcion}" 
-                                        Width="*"/>
-                </DataGrid.Columns>
-            </DataGrid>
+                <StackPanel Grid.Row="1" Grid.Column="1" Margin="8,0,8,0">
+                    <TextBlock Text="Modelo" 
+                               FontWeight="Medium" 
+                               FontSize="12" 
+                               Foreground="#666666"/>
+                    <TextBlock Text="{Binding Equipo.Modelo}" 
+                               FontSize="14"/>
+                </StackPanel>
 
-            <!-- Boton Cerrar -->
-            <Button Grid.Row="3" 
-                    Content="Cerrar" 
-                    Command="{Binding CloseCommand}"
-                    Style="{StaticResource ActionButtonStyle}"
-                    HorizontalAlignment="Right"
-                    Margin="0,15,0,0"/>
-
-            <!-- Loading indicator -->
-            <Grid Grid.Row="0" Grid.RowSpan="4" 
-                  Background="#80FFFFFF"
-                  Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <TextBlock Text="Cargando..." 
-                               FontSize="16"
-                               HorizontalAlignment="Center"
-                               Margin="0,0,0,10"/>
-                    <ProgressBar IsIndeterminate="True" 
-                                 Width="200" 
-                                 Height="10"/>
+                <StackPanel Grid.Row="1" Grid.Column="2" Margin="8,0,0,0">
+                    <TextBlock Text="Tipo" 
+                               FontWeight="Medium" 
+                               FontSize="12" 
+                               Foreground="#666666"/>
+                    <TextBlock Text="{Binding Equipo.TipoEquipo.Nombre}" 
+                               FontSize="14"/>
                 </StackPanel>
             </Grid>
+        </Border>
+
+        <!-- Lista de movimientos -->
+        <Border Grid.Row="2" 
+                Margin="24,16,24,16" 
+                BorderThickness="1" 
+                BorderBrush="#E1E5EB"
+                CornerRadius="6"
+                Background="White"
+                Padding="1">
+            <ListView ItemsSource="{Binding Movimientos}" 
+                      BorderThickness="0"
+                      ScrollViewer.VerticalScrollBarVisibility="Auto"
+                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                      HorizontalContentAlignment="Stretch">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                        <Setter Property="BorderBrush" Value="#E1E5EB"/>
+                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                        <Setter Property="Padding" Value="16,12"/>
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#F0F8FF"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Fecha y responsable -->
+                            <StackPanel Grid.Column="0" Width="180" Margin="0,0,16,0">
+                                <TextBlock Text="{Binding FechaMovimiento, StringFormat='{}{0:dd/MM/yyyy HH:mm}'}" 
+                                           FontWeight="Medium" 
+                                           FontSize="14"/>
+                                <TextBlock Text="{Binding UsuarioResponsable.NombreCompleto}" 
+                                           FontSize="12" 
+                                           Foreground="#666666"/>
+                            </StackPanel>
+
+                            <!-- Detalles del movimiento -->
+                            <StackPanel Grid.Column="1">
+                                <!-- Cambio de asignación -->
+                                <TextBlock Margin="0,0,0,4">
+                                    <Run Text="De: " FontWeight="Medium"/>
+                                    <Run Text="{Binding EmpleadoAnterior.NombreCompleto, TargetNullValue='Sin asignación'}" />
+                                </TextBlock>
+
+                                <TextBlock Margin="0,0,0,8">
+                                    <Run Text="A: " FontWeight="Medium"/>
+                                    <Run Text="{Binding EmpleadoNuevo.NombreCompleto, TargetNullValue='Sin asignación'}" />
+                                </TextBlock>
+
+                                <!-- Cambio de ubicación -->
+                                <TextBlock Margin="0,0,0,4">
+                                    <Run Text="Ubicación anterior: " FontWeight="Medium"/>
+                                    <Run Text="{Binding UbicacionAnteriorTexto}" />
+                                </TextBlock>
+
+                                <TextBlock Margin="0,0,0,8">
+                                    <Run Text="Ubicación nueva: " FontWeight="Medium"/>
+                                    <Run Text="{Binding UbicacionNuevaTexto}" />
+                                </TextBlock>
+
+                                <!-- Motivo -->
+                                <TextBlock Text="Motivo:" 
+                                           FontWeight="Medium" 
+                                           Margin="0,4,0,2"/>
+                                <TextBlock Text="{Binding Motivo}" 
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </Border>
+
+        <!-- Botones de acción -->
+        <Border Grid.Row="3" 
+                Background="#F5F7FA" 
+                BorderBrush="#E1E5EB" 
+                BorderThickness="0,1,0,0" 
+                Padding="24,16">
+            <Button Content="Cerrar" 
+                    Command="{Binding CloseCommand}" 
+                    HorizontalAlignment="Right"
+                    Padding="24,8"
+                    Background="#3498DB" 
+                    Foreground="White" 
+                    BorderThickness="0">
+                <Button.Resources>
+                    <Style TargetType="Border">
+                        <Setter Property="CornerRadius" Value="4"/>
+                    </Style>
+                </Button.Resources>
+            </Button>
+        </Border>
+
+        <!-- Overlay de carga -->
+        <Grid Grid.Row="0" Grid.RowSpan="4" 
+              Background="#80000000" 
+              Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Border Padding="20" 
+       BorderBrush="#E1E5EB" 
+       BorderThickness="1" 
+       CornerRadius="6">
+                <StackPanel HorizontalAlignment="Center" 
+                            VerticalAlignment="Center"
+                            Background="White">
+                    
+                    <TextBlock Text="Cargando historial..." 
+                               FontSize="16" 
+                               Margin="0,0,0,12"/>
+                    <ProgressBar IsIndeterminate="True" 
+                                 Height="4" 
+                                 Width="200"/>
+                </StackPanel>
+            </Border>
+            
         </Grid>
-    </Border>
+
+        <!-- Mensaje sin movimientos -->
+        <Grid Grid.Row="2" 
+              Background="White" 
+              Visibility="{Binding HasNoMovimientos, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <StackPanel VerticalAlignment="Center" 
+                        HorizontalAlignment="Center">
+                <TextBlock Text="No hay historial de movimientos para este equipo" 
+                           FontSize="16" 
+                           Foreground="#666666"
+                           TextAlignment="Center"/>
+                <TextBlock Text="Los movimientos se registrarán cuando se asigne o cambie la ubicación del equipo" 
+                           FontSize="14" 
+                           Foreground="#999999"
+                           TextAlignment="Center"
+                           Margin="0,8,0,0"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
 </Window>

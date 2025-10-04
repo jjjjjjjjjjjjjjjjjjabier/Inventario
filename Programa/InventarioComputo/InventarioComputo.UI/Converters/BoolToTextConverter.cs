@@ -5,8 +5,7 @@ using System.Windows.Data;
 
 namespace InventarioComputo.UI.Converters
 {
-    // Convierte bool a texto. Soporta parámetro "TrueText|FalseText" (opcional).
-    // Ej: ConverterParameter="Administrador|Consulta"
+    // Convierte bool a texto. Soporta ConverterParameter con formato "TrueText|FalseText"
     public class BoolToTextConverter : IValueConverter
     {
         public string TrueText { get; set; } = "Sí";
@@ -14,26 +13,25 @@ namespace InventarioComputo.UI.Converters
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            // Permite sobreescribir por parámetro: "TextoParaTrue|TextoParaFalse"
-            if (parameter is string p && !string.IsNullOrWhiteSpace(p))
-            {
-                var parts = p.Split('|');
-                if (parts.Length > 0 && !string.IsNullOrWhiteSpace(parts[0])) TrueText = parts[0];
-                if (parts.Length > 1 && !string.IsNullOrWhiteSpace(parts[1])) FalseText = parts[1];
-            }
+            var (trueText, falseText) = ParseParam(parameter);
+            if (value is bool b)
+                return b ? trueText : falseText;
 
-            return value is bool b ? (b ? TrueText : FalseText) : FalseText;
+            return falseText; // fallback para valores no booleanos
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+            => throw new NotImplementedException();
+
+        private (string trueText, string falseText) ParseParam(object parameter)
         {
-            // Opcional: interpreta de vuelta comparando con los textos configurados
-            if (value is string s)
+            if (parameter is string s)
             {
-                if (string.Equals(s, TrueText, StringComparison.CurrentCultureIgnoreCase)) return true;
-                if (string.Equals(s, FalseText, StringComparison.CurrentCultureIgnoreCase)) return false;
+                var parts = s.Split('|');
+                if (parts.Length >= 2)
+                    return (parts[0], parts[1]);
             }
-            return false;
+            return (TrueText, FalseText);
         }
     }
 }

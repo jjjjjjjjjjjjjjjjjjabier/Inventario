@@ -9,23 +9,21 @@ namespace InventarioComputo.UI.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is string hexColor && !string.IsNullOrWhiteSpace(hexColor))
+            if (value is string hex && !string.IsNullOrWhiteSpace(hex))
             {
                 try
                 {
-                    return (Color)ColorConverter.ConvertFromString(hexColor);
+                    return (Color)ColorConverter.ConvertFromString(hex);
                 }
                 catch
                 {
-                    return Colors.Transparent;
+                    return Colors.Gray;
                 }
             }
-            return Colors.Transparent;
+            return Colors.Gray;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            throw new NotImplementedException();
-        }
+            => throw new NotImplementedException();
     }
 }

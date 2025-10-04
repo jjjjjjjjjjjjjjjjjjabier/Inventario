@@ -4,9 +4,8 @@
   <Application.Resources>
     <ResourceDictionary>
       <ResourceDictionary.MergedDictionaries>
-        <ResourceDictionary Source="/InventarioComputo.UI;component/Resources/Converters.xaml" />
-        <ResourceDictionary Source="/InventarioComputo.UI;component/Styles/Styles.xaml" />
         <ResourceDictionary Source="/InventarioComputo.UI;component/Styles/ButtonStyles.xaml" />
+        <ResourceDictionary Source="/InventarioComputo.UI;component/Resources/Converters.xaml" />
         <ResourceDictionary Source="/InventarioComputo.UI;component/Resources/ViewsDataTemplates.xaml" />
       </ResourceDictionary.MergedDictionaries>
     </ResourceDictionary>

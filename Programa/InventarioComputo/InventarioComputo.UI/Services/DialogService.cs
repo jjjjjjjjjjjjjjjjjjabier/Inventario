@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Windows;
 using InventarioComputo.UI.ViewModels.Base;
-using Microsoft.Extensions.DependencyInjection; // IMPORTANTE
+using Microsoft.Extensions.DependencyInjection;
 
 namespace InventarioComputo.UI.Services
 {
@@ -11,7 +11,6 @@ namespace InventarioComputo.UI.Services
         private readonly Dictionary<Type, Type> _viewModelToViewMap = new();
         private readonly IServiceProvider _serviceProvider;
 
-        // Inyectar IServiceProvider
         public DialogService(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
@@ -48,7 +47,6 @@ namespace InventarioComputo.UI.Services
                     viewType = resolved;
                 }
 
-                // Resolver Window y ViewModel desde DI (no Activator)
                 var window = _serviceProvider.GetService(viewType) as Window
                              ?? ActivatorUtilities.CreateInstance(_serviceProvider, viewType) as Window
                              ?? throw new InvalidOperationException($"La vista {viewType.Name} no es una Window.");
@@ -72,10 +70,7 @@ namespace InventarioComputo.UI.Services
                     window.WindowStartupLocation = WindowStartupLocation.CenterScreen;
                 }
 
-                window.SizeToContent = SizeToContent.WidthAndHeight;
-                window.MinWidth = 480;
-                window.MinHeight = 320;
-
+                // Respetar tamaños definidos en XAML de la ventana (no forzar SizeToContent aquí)
                 var result = window.ShowDialog();
 
                 if (vm is IEditorViewModel evm && result == null)

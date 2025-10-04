@@ -307,7 +307,7 @@ namespace InventarioComputo.UI.ViewModels
                     TipoEquipo = e.TipoEquipo?.Nombre,
                     Estado = e.Estado?.Nombre,
                     Ubicacion = ubicacion,
-                    UsuarioAsignado = e.Usuario?.NombreCompleto,
+                    UsuarioAsignado = e.Empleado?.NombreCompleto,
                     FechaAdquisicion = e.FechaAdquisicion.HasValue ? e.FechaAdquisicion.Value : DateTime.Now,
                     Activo = e.Activo
                 });

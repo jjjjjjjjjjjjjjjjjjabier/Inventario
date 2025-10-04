@@ -23,7 +23,7 @@ namespace InventarioComputo.Infrastructure.Repositories
             _ctx.EquiposComputo
                 .Include(e => e.TipoEquipo)
                 .Include(e => e.Estado)
-                .Include(e => e.Usuario)
+                .Include(e => e.Empleado)
                 .Include(e => e.Zona)
                     .ThenInclude(z => z.Area)
                         .ThenInclude(a => a.Sede);
@@ -52,7 +52,7 @@ namespace InventarioComputo.Infrastructure.Repositories
                     e.Modelo.Contains(f) ||
                     e.TipoEquipo.Nombre.Contains(f) ||
                     e.Estado.Nombre.Contains(f) ||
-                    (e.Usuario != null && e.Usuario.NombreCompleto.Contains(f))
+                    (e.Empleado != null && e.Empleado.NombreCompleto.Contains(f))
                 );
             }
 
@@ -87,6 +87,7 @@ namespace InventarioComputo.Infrastructure.Repositories
             entry.Property(e => e.TipoEquipoId).IsModified = true;
             entry.Property(e => e.EstadoId).IsModified = true;
             entry.Property(e => e.ZonaId).IsModified = true;
+            entry.Property(e => e.EmpleadoId).IsModified = true;
 
             await _ctx.SaveChangesAsync(ct);
             return equipo;
@@ -124,7 +125,7 @@ namespace InventarioComputo.Infrastructure.Repositories
             equipo.TipoEquipo = null;
             equipo.Estado = null;
             equipo.Zona = null;
-            equipo.Usuario = null;
+            equipo.Empleado = null;
         }
 
         public async Task<IReadOnlyList<EquipoComputo>> ObtenerParaReporteAsync(FiltroReporteDTO filtro, CancellationToken ct = default)
@@ -149,10 +150,10 @@ namespace InventarioComputo.Infrastructure.Repositories
             if (filtro.TipoEquipoId.HasValue)
                 query = query.Where(e => e.TipoEquipoId == filtro.TipoEquipoId);
 
+            // Compatibilidad: UsuarioId del DTO se interpreta como EmpleadoId
             if (filtro.UsuarioId.HasValue)
-                query = query.Where(e => e.UsuarioId == filtro.UsuarioId);
+                query = query.Where(e => e.EmpleadoId == filtro.UsuarioId);
 
-            // Fechas inclusivas por día: [desde, hasta+1d)
             if (filtro.FechaDesde.HasValue)
             {
                 var desde = filtro.FechaDesde.Value.Date;

@@ -3,239 +3,300 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:conv="clr-namespace:InventarioComputo.UI.Converters"
         mc:Ignorable="d"
         Title="{Binding Titulo}"
-        Height="600" Width="800"
+        Height="650"
+        Width="600"
         WindowStartupLocation="CenterOwner"
-        Background="White">
+        ResizeMode="NoResize"
+        Background="#F8F9FA">
 
-    <Border Padding="25">
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
+    <Window.Resources>
+        <!-- Convertidor estándar de WPF -->
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <!-- Recurso local necesario para IsEnabled -->
+        <conv:NotNullToBoolConverter x:Key="NotNullToBoolConverter"/>
+    </Window.Resources>
 
-            <TextBlock Grid.Row="0"
-                       Text="{Binding Titulo}"
-                       FontSize="20"
-                       FontWeight="Bold"
-                       Margin="0,0,0,20"
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Encabezado -->
+        <Border Grid.Row="0" 
+                Background="#F5F7FA" 
+                BorderBrush="#E1E5EB" 
+                BorderThickness="0,0,0,1" 
+                Padding="24,16">
+            <TextBlock Text="{Binding Titulo}" 
+                       FontSize="22" 
+                       FontWeight="Medium" 
                        Foreground="#2C3E50"/>
+        </Border>
 
-            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                <StackPanel>
+        <!-- Contenido del formulario -->
+        <ScrollViewer Grid.Row="1" 
+                      VerticalScrollBarVisibility="Auto" 
+                      HorizontalScrollBarVisibility="Disabled" 
+                      Padding="24,16">
+            <StackPanel>
+                <!-- Información básica -->
+                <TextBlock Text="Información Básica" 
+                           FontWeight="SemiBold" 
+                           FontSize="16" 
+                           Margin="0,0,0,12"/>
 
-                    <!-- Información básica -->
-                    <Border Background="#F9F9F9" BorderBrush="#DDDDDD" BorderThickness="1"
-                            Padding="15" Margin="0,0,0,15" CornerRadius="4">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
 
-                            <TextBlock Text="Información básica"
-                                       FontSize="16" FontWeight="SemiBold"
-                                       Margin="0,0,0,10" Foreground="#2C3E50"/>
+                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                        <TextBlock Text="Número de Serie *" 
+                                   FontWeight="Medium" 
+                                   Margin="0,0,0,4"/>
+                        <TextBox Text="{Binding NumeroSerie}" 
+                                 Padding="10,8" 
+                                 BorderBrush="#D1D5DB" 
+                                 BorderThickness="1"/>
+                    </StackPanel>
 
-                            <Grid Grid.Row="1">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                        <TextBlock Text="Etiqueta de Inventario *" 
+                                   FontWeight="Medium" 
+                                   Margin="0,0,0,4"/>
+                        <TextBox Text="{Binding EtiquetaInventario}" 
+                                 Padding="10,8" 
+                                 BorderBrush="#D1D5DB" 
+                                 BorderThickness="1"/>
+                    </StackPanel>
+                </Grid>
 
-                                <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                                    <TextBlock Text="Numero de serie:" Style="{StaticResource LabelStyle}"/>
-                                    <TextBox Text="{Binding NumeroSerie, UpdateSourceTrigger=PropertyChanged}"
-                                             Height="35" Padding="10,5"
-                                             VerticalContentAlignment="Center"
-                                             BorderThickness="1" BorderBrush="#CCCCCC"
-                                             Margin="0,0,0,15"/>
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
 
-                                    <TextBlock Text="Marca:" Style="{StaticResource LabelStyle}"/>
-                                    <TextBox Text="{Binding Marca, UpdateSourceTrigger=PropertyChanged}"
-                                             Height="35" Padding="10,5"
-                                             VerticalContentAlignment="Center"
-                                             BorderThickness="1" BorderBrush="#CCCCCC"
-                                             Margin="0,0,0,15"/>
-                                </StackPanel>
+                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                        <TextBlock Text="Marca *" 
+                                   FontWeight="Medium" 
+                                   Margin="0,0,0,4"/>
+                        <TextBox Text="{Binding Marca}" 
+                                 Padding="10,8" 
+                                 BorderBrush="#D1D5DB" 
+                                 BorderThickness="1"/>
+                    </StackPanel>
 
-                                <StackPanel Grid.Column="1" Margin="10,0,0,0">
-                                    <TextBlock Text="Etiqueta de inventario:" Style="{StaticResource LabelStyle}"/>
-                                    <TextBox Text="{Binding EtiquetaInventario, UpdateSourceTrigger=PropertyChanged}"
-                                             Height="35" Padding="10,5"
-                                             VerticalContentAlignment="Center"
-                                             BorderThickness="1" BorderBrush="#CCCCCC"
-                                             Margin="0,0,0,15"/>
+                    <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                        <TextBlock Text="Modelo *" 
+                                   FontWeight="Medium" 
+                                   Margin="0,0,0,4"/>
+                        <TextBox Text="{Binding Modelo}" 
+                                 Padding="10,8" 
+                                 BorderBrush="#D1D5DB" 
+                                 BorderThickness="1"/>
+                    </StackPanel>
+                </Grid>
 
-                                    <TextBlock Text="Modelo:" Style="{StaticResource LabelStyle}"/>
-                                    <TextBox Text="{Binding Modelo, UpdateSourceTrigger=PropertyChanged}"
-                                             Height="35" Padding="10,5"
-                                             VerticalContentAlignment="Center"
-                                             BorderThickness="1" BorderBrush="#CCCCCC"
-                                             Margin="0,0,0,15"/>
-                                </StackPanel>
-                            </Grid>
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
 
-                            <StackPanel Grid.Row="2">
-                                <TextBlock Text="Fecha de adquisicion:" Style="{StaticResource LabelStyle}"/>
-                                <DatePicker SelectedDate="{Binding FechaAdquisicion}"
-                                            Width="200" Height="35"
-                                            HorizontalAlignment="Left"
-                                            VerticalContentAlignment="Center"/>
-                            </StackPanel>
-                        </Grid>
-                    </Border>
+                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                        <TextBlock Text="Tipo de Equipo *" 
+                                   FontWeight="Medium" 
+                                   Margin="0,0,0,4"/>
+                        <ComboBox ItemsSource="{Binding TiposEquipo}" 
+                                  SelectedItem="{Binding TipoEquipoSeleccionado}"
+                                  DisplayMemberPath="Nombre" 
+                                  Padding="10,8" 
+                                  BorderBrush="#D1D5DB" 
+                                  BorderThickness="1"/>
+                    </StackPanel>
 
-                    <!-- Características -->
-                    <Border Background="#F9F9F9" BorderBrush="#DDDDDD" BorderThickness="1"
-                            Padding="15" Margin="0,0,0,15" CornerRadius="4">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
+                    <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                        <TextBlock Text="Estado *" 
+                                   FontWeight="Medium" 
+                                   Margin="0,0,0,4"/>
+                        <ComboBox ItemsSource="{Binding Estados}" 
+                                  SelectedItem="{Binding EstadoSeleccionado}"
+                                  DisplayMemberPath="Nombre" 
+                                  Padding="10,8" 
+                                  BorderBrush="#D1D5DB" 
+                                  BorderThickness="1"/>
+                    </StackPanel>
+                </Grid>
 
-                            <TextBlock Text="Caracteristicas y observaciones"
-                                       FontSize="16" FontWeight="SemiBold"
-                                       Margin="0,0,0,10" Foreground="#2C3E50"/>
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
 
-                            <Grid Grid.Row="1">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
+                    <StackPanel Grid.Column="0" Margin="0,0,8,0">
+                        <TextBlock Text="Fecha de Adquisición" 
+                                   FontWeight="Medium" 
+                                   Margin="0,0,0,4"/>
+                        <DatePicker SelectedDate="{Binding FechaAdquisicion}" 
+                                   Padding="10,8" 
+                                   BorderBrush="#D1D5DB" 
+                                   BorderThickness="1"/>
+                    </StackPanel>
 
-                                <StackPanel Grid.Row="0" Margin="0,0,0,15">
-                                    <TextBlock Text="Caracteristicas:" Style="{StaticResource LabelStyle}"/>
-                                    <TextBox Text="{Binding Caracteristicas, UpdateSourceTrigger=PropertyChanged}"
-                                             TextWrapping="Wrap" AcceptsReturn="True"
-                                             Height="80" Padding="10,5"
-                                             VerticalContentAlignment="Top"
-                                             VerticalScrollBarVisibility="Auto"
-                                             BorderThickness="1" BorderBrush="#CCCCCC"/>
-                                </StackPanel>
+                    <CheckBox Grid.Column="1" 
+                              Content="Activo" 
+                              IsChecked="{Binding Activo}"
+                              VerticalAlignment="Bottom"
+                              Margin="8,0,0,12"/>
+                </Grid>
 
-                                <StackPanel Grid.Row="1">
-                                    <TextBlock Text="Observaciones:" Style="{StaticResource LabelStyle}"/>
-                                    <TextBox Text="{Binding Observaciones, UpdateSourceTrigger=PropertyChanged}"
-                                             TextWrapping="Wrap" AcceptsReturn="True"
-                                             Height="80" Padding="10,5"
-                                             VerticalContentAlignment="Top"
-                                             VerticalScrollBarVisibility="Auto"
-                                             BorderThickness="1" BorderBrush="#CCCCCC"/>
-                                </StackPanel>
-                            </Grid>
-                        </Grid>
-                    </Border>
+                <!-- Características -->
+                <TextBlock Text="Características y Observaciones" 
+                           FontWeight="SemiBold" 
+                           FontSize="16" 
+                           Margin="0,12,0,12"/>
 
-                    <!-- Clasificación y ubicación -->
-                    <Border Background="#F9F9F9" BorderBrush="#DDDDDD" BorderThickness="1"
-                            Padding="15" Margin="0,0,0,15" CornerRadius="4">
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-
-                            <TextBlock Text="Clasificacion y ubicacion"
-                                       FontSize="16" FontWeight="SemiBold"
-                                       Margin="0,0,0,10" Foreground="#2C3E50"/>
-
-                            <Grid Grid.Row="1">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-
-                                <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,10,0">
-                                    <TextBlock Text="Tipo de equipo:" Style="{StaticResource LabelStyle}"/>
-                                    <ComboBox ItemsSource="{Binding TiposEquipo}"
-                                              SelectedItem="{Binding TipoEquipoSeleccionado}"
-                                              DisplayMemberPath="Nombre"
-                                              Height="35" Padding="10,5"
-                                              VerticalContentAlignment="Center"
-                                              BorderThickness="1" BorderBrush="#CCCCCC"
-                                              Margin="0,0,0,15"/>
-                                </StackPanel>
-
-                                <StackPanel Grid.Row="0" Grid.Column="1" Margin="10,0,0,0">
-                                    <TextBlock Text="Estado:" Style="{StaticResource LabelStyle}"/>
-                                    <ComboBox ItemsSource="{Binding Estados}"
-                                              SelectedItem="{Binding EstadoSeleccionado}"
-                                              DisplayMemberPath="Nombre"
-                                              Height="35" Padding="10,5"
-                                              VerticalContentAlignment="Center"
-                                              BorderThickness="1" BorderBrush="#CCCCCC"
-                                              Margin="0,0,0,15"/>
-                                </StackPanel>
-
-                                <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,10,0">
-                                    <TextBlock Text="Sede:" Style="{StaticResource LabelStyle}"/>
-                                    <ComboBox ItemsSource="{Binding Sedes}"
-                                              SelectedItem="{Binding SedeSeleccionada}"
-                                              DisplayMemberPath="Nombre"
-                                              Height="35" Padding="10,5"
-                                              VerticalContentAlignment="Center"
-                                              BorderThickness="1" BorderBrush="#CCCCCC"
-                                              Margin="0,0,0,15"/>
-                                </StackPanel>
-
-                                <StackPanel Grid.Row="1" Grid.Column="1" Margin="10,0,0,0">
-                                    <TextBlock Text="Area:" Style="{StaticResource LabelStyle}"/>
-                                    <ComboBox ItemsSource="{Binding Areas}"
-                                              SelectedItem="{Binding AreaSeleccionada}"
-                                              DisplayMemberPath="Nombre"
-                                              Height="35" Padding="10,5"
-                                              VerticalContentAlignment="Center"
-                                              BorderThickness="1" BorderBrush="#CCCCCC"
-                                              Margin="0,0,0,15"/>
-                                </StackPanel>
-
-                                <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,10,0">
-                                    <TextBlock Text="Zona:" Style="{StaticResource LabelStyle}"/>
-                                    <ComboBox ItemsSource="{Binding Zonas}"
-                                              SelectedItem="{Binding ZonaSeleccionada}"
-                                              DisplayMemberPath="Nombre"
-                                              Height="35" Padding="10,5"
-                                              VerticalContentAlignment="Center"
-                                              BorderThickness="1" BorderBrush="#CCCCCC"/>
-                                </StackPanel>
-                            </Grid>
-                        </Grid>
-                    </Border>
+                <StackPanel Margin="0,0,0,12">
+                    <TextBlock Text="Características *" 
+                               FontWeight="Medium" 
+                               Margin="0,0,0,4"/>
+                    <TextBox Text="{Binding Caracteristicas}" 
+                             TextWrapping="Wrap"
+                             AcceptsReturn="True"
+                             Height="80"
+                             Padding="10,8" 
+                             BorderBrush="#D1D5DB" 
+                             BorderThickness="1"/>
                 </StackPanel>
-            </ScrollViewer>
 
-            <!-- Botones -->
-            <StackPanel Grid.Row="2" Orientation="Horizontal"
-                        HorizontalAlignment="Right" Margin="0,20,0,0">
-                <Button Content="Guardar"
-                        Command="{Binding GuardarCommand}"
-                        Style="{StaticResource ActionButtonStyle}"
-                        Margin="0,0,10,0"/>
-                <Button Content="Cancelar"
-                        Command="{Binding CloseCommand}"
-                        Style="{StaticResource SecondaryButtonStyle}"/>
+                <StackPanel Margin="0,0,0,12">
+                    <TextBlock Text="Observaciones" 
+                               FontWeight="Medium" 
+                               Margin="0,0,0,4"/>
+                    <TextBox Text="{Binding Observaciones}" 
+                             TextWrapping="Wrap"
+                             AcceptsReturn="True"
+                             Height="60"
+                             Padding="10,8" 
+                             BorderBrush="#D1D5DB" 
+                             BorderThickness="1"/>
+                </StackPanel>
+
+                <!-- Ubicación -->
+                <TextBlock Text="Ubicación" 
+                           FontWeight="SemiBold" 
+                           FontSize="16" 
+                           Margin="0,12,0,12"/>
+
+                <StackPanel Margin="0,0,0,12">
+                    <TextBlock Text="Sede" 
+                               FontWeight="Medium" 
+                               Margin="0,0,0,4"/>
+                    <ComboBox ItemsSource="{Binding Sedes}" 
+                              SelectedItem="{Binding SedeSeleccionada}"
+                              DisplayMemberPath="Nombre" 
+                              Padding="10,8" 
+                              BorderBrush="#D1D5DB" 
+                              BorderThickness="1"/>
+                </StackPanel>
+
+                <StackPanel Margin="0,0,0,12"
+                            IsEnabled="{Binding SedeSeleccionada, Converter={StaticResource NotNullToBoolConverter}}">
+                    <TextBlock Text="Área" 
+                               FontWeight="Medium" 
+                               Margin="0,0,0,4"/>
+                    <ComboBox ItemsSource="{Binding Areas}" 
+                              SelectedItem="{Binding AreaSeleccionada}"
+                              DisplayMemberPath="Nombre" 
+                              Padding="10,8" 
+                              BorderBrush="#D1D5DB" 
+                              BorderThickness="1"/>
+                </StackPanel>
+
+                <StackPanel Margin="0,0,0,12"
+                            IsEnabled="{Binding AreaSeleccionada, Converter={StaticResource NotNullToBoolConverter}}">
+                    <TextBlock Text="Zona" 
+                               FontWeight="Medium" 
+                               Margin="0,0,0,4"/>
+                    <ComboBox ItemsSource="{Binding Zonas}" 
+                              SelectedItem="{Binding ZonaSeleccionada}"
+                              DisplayMemberPath="Nombre" 
+                              Padding="10,8" 
+                              BorderBrush="#D1D5DB" 
+                              BorderThickness="1"/>
+                </StackPanel>
+
+                <TextBlock Text="* Campos obligatorios" 
+                           Foreground="#9E9E9E" 
+                           FontStyle="Italic"
+                           Margin="0,12,0,0"/>
             </StackPanel>
+        </ScrollViewer>
 
-            <!-- Loading -->
-            <Grid Grid.Row="0" Grid.RowSpan="3"
-                  Background="#80FFFFFF"
-                  Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <TextBlock Text="Cargando..." FontSize="16" Margin="0,0,0,10"/>
-                    <ProgressBar IsIndeterminate="True" Width="200" Height="10"/>
+        <!-- Botones de acción -->
+        <Border Grid.Row="2" 
+                Background="#F5F7FA" 
+                BorderBrush="#E1E5EB" 
+                BorderThickness="0,1,0,0" 
+                Padding="24,16">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Cancelar" 
+                        Command="{Binding CloseCommand}" 
+                        Padding="16,8" 
+                        Margin="0,0,12,0"
+                        Background="#F0F2F5" 
+                        Foreground="#2C3E50" 
+                        BorderBrush="#D1D5DB"
+                        BorderThickness="1">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="4"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
+                <Button Content="Guardar" 
+                        Command="{Binding GuardarCommand}" 
+                        Padding="16,8"
+                        Background="#3498DB" 
+                        Foreground="White" 
+                        BorderThickness="0">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="4"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
+            </StackPanel>
+        </Border>
+
+        <!-- Overlay de carga -->
+        <Grid Grid.Row="0" Grid.RowSpan="3" 
+              Background="#80000000" 
+              Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Border Padding="20" 
+                   BorderBrush="#E1E5EB" 
+                   BorderThickness="1" 
+                   CornerRadius="6">
+                <StackPanel HorizontalAlignment="Center" 
+                            VerticalAlignment="Center"
+                            Background="White">
+                    
+                    <TextBlock Text="Cargando..." 
+                               FontSize="16" 
+                               Margin="0,0,0,12"/>
+                    <ProgressBar IsIndeterminate="True" 
+                                 Height="4" 
+                                 Width="200"/>  
                 </StackPanel>
-            </Grid>
+            </Border>
         </Grid>
-    </Border>
+    </Grid>
 </Window>

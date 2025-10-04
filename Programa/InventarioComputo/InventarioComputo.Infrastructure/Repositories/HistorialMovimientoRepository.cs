@@ -28,8 +28,8 @@ namespace InventarioComputo.Infrastructure.Repositories
         public async Task<IReadOnlyList<HistorialMovimiento>> ObtenerHistorialEquipoAsync(int equipoId, CancellationToken ct = default)
         {
             return await _context.HistorialMovimientos
-                .Include(h => h.UsuarioAnterior)
-                .Include(h => h.UsuarioNuevo)
+                .Include(h => h.EmpleadoAnterior)
+                .Include(h => h.EmpleadoNuevo)
                 .Include(h => h.UsuarioResponsable)
                 .Include(h => h.ZonaAnterior).ThenInclude(z => z.Area).ThenInclude(a => a.Sede)
                 .Include(h => h.ZonaNueva).ThenInclude(z => z.Area).ThenInclude(a => a.Sede)
@@ -43,8 +43,8 @@ namespace InventarioComputo.Infrastructure.Repositories
         {
             return await _context.HistorialMovimientos
                 .Where(h => h.EquipoComputoId == equipoId)
-                .Include(h => h.UsuarioAnterior)
-                .Include(h => h.UsuarioNuevo)
+                .Include(h => h.EmpleadoAnterior)
+                .Include(h => h.EmpleadoNuevo)
                 .Include(h => h.ZonaAnterior)
                 .Include(h => h.ZonaNueva)
                 .Include(h => h.UsuarioResponsable)
@@ -55,8 +55,9 @@ namespace InventarioComputo.Infrastructure.Repositories
 
         public async Task<IReadOnlyList<HistorialMovimiento>> ObtenerPorUsuarioAsync(int usuarioId, CancellationToken ct = default)
         {
+            // Nota: usuarioId se refiere al UsuarioResponsable (cuenta del sistema)
             return await _context.HistorialMovimientos
-                .Where(h => h.UsuarioAnteriorId == usuarioId || h.UsuarioNuevoId == usuarioId)
+                .Where(h => h.UsuarioResponsableId == usuarioId)
                 .Include(h => h.EquipoComputo)
                 .Include(h => h.UsuarioResponsable)
                 .OrderByDescending(h => h.FechaMovimiento)

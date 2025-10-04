@@ -26,6 +26,8 @@
 
         <!-- Convertidor para iniciales del usuario -->
         <converters:InitialsConverter x:Key="InitialsConverter"/>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <converters:BoolToTextConverter x:Key="BoolToTextConverter"/>
     </Window.Resources>
 
     <Grid>
@@ -231,6 +233,26 @@
                                        FontSize="14"/>
                         </Grid>
                     </Button>
+
+                    <!-- NUEVO: Empleados con el mismo diseño -->
+                    <Button Style="{StaticResource MenuButtonStyle}"
+                            Command="{Binding MostrarEmpleadosCommand}"
+                            Visibility="{Binding EsAdministrador, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="40"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" 
+                                       Text="&#xE716;" 
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="18"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" 
+                                       Text="Empleados"
+                                       FontSize="14"/>
+                        </Grid>
+                    </Button>
                 </StackPanel>
 
                 <!-- Usuario y Boton Cerrar Sesion -->
@@ -285,7 +307,7 @@
 
         <!-- Contenido principal -->
         <ContentControl Grid.Column="1" 
-                        Content="{Binding CurrentViewModel}" 
+                        Content="{Binding CurrentView}" 
                         Margin="20"/>
     </Grid>
 </Window>

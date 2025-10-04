@@ -2,26 +2,34 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:conv="clr-namespace:InventarioComputo.UI.Converters">
 
-  <!-- Instancias directas de tus convertidores (mismo ensamblado, no hace falta assembly=...) -->
-  <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-  <conv:InvertedBooleanToVisibilityConverter x:Key="InvertedBooleanToVisibilityConverter" />
-  <conv:InvertBooleanConverter x:Key="InvertBooleanConverter" />
-  <conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
-  <conv:NullToBoolConverter x:Key="NullToBoolConverter" />
-  <conv:NotNullToBoolConverter x:Key="NotNullToBoolConverter" />
+    <!-- Visibility -->
+    <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    <conv:InvertedBooleanToVisibilityConverter x:Key="InvertedBooleanToVisibilityConverter"/>
+    <conv:ObjectToVisibilityConverter x:Key="ObjectToVisibilityConverter"/>
+    <conv:MultiAndBoolToVisibilityConverter x:Key="MultiAndBoolToVisibilityConverter"/>
 
-  <conv:BoolToStringConverter x:Key="BoolToStringConverter" />
-  <conv:BoolToStatusText x:Key="BoolToStatusText" />
-  <conv:BoolToActivoConverter x:Key="BoolToActivoConverter" />
-  <conv:ActiveStatusConverter x:Key="ActiveStatusConverter" />
-  <!-- NUEVO: clave que falta y que usa MainWindow.xaml -->
-  <conv:BoolToTextConverter x:Key="BoolToTextConverter" />
+    <!-- Boolean a texto/color/numero -->
+    <conv:BoolToTextConverter x:Key="BoolToTextConverter"/>
+    <conv:BoolToStringConverter x:Key="BoolToStringConverter"/>
+    <conv:BoolToStatusText x:Key="BoolToStatusText"/>
+    <conv:BoolToActivoConverter x:Key="BoolToActivoConverter"/>
+    <conv:ActiveStatusConverter x:Key="ActiveStatusConverter"/>
+    <conv:BoolToStatusBrush x:Key="BoolToStatusBrush"/>
+    <conv:StatusColorConverter x:Key="StatusColorConverter"/>
+    <conv:BoolToStatusColor x:Key="BoolToStatusColor"/>
+    <conv:BoolToNumConverter x:Key="BoolToNumConverter"/>
 
-  <conv:StatusColorConverter x:Key="StatusColorConverter" />
-  <conv:BoolToStatusBrush x:Key="BoolToStatusBrush" />
-  <conv:ColorHexToBrushConverter x:Key="ColorHexToBrushConverter" />
-  <conv:StringToColorConverter x:Key="StringToColorConverter" />
+    <!-- Colores -->
+    <conv:ColorHexToBrushConverter x:Key="ColorHexToBrushConverter"/>
+    <conv:ColorFromHexConverter x:Key="ColorFromHexConverter"/>
+    <conv:StringToColorConverter x:Key="StringToColorConverter"/>
 
-  <conv:MenuWidthConverter x:Key="MenuWidthConverter" />
-  <conv:MultiAndBoolToVisibilityConverter x:Key="MultiAndBoolToVisibilityConverter" />
+    <!-- Otros -->
+    <conv:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+    <conv:InvertBooleanConverter x:Key="InvertBooleanConverter"/>
+    <conv:NullToBoolConverter x:Key="NullToBoolConverter"/>
+    <conv:NotNullToBoolConverter x:Key="NotNullToBoolConverter"/>
+
+    <!-- Para iniciales -->
+    <conv:InitialsConverter x:Key="InitialsConverter"/>
 </ResourceDictionary>

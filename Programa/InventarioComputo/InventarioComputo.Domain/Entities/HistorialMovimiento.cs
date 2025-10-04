@@ -8,10 +8,10 @@ namespace InventarioComputo.Domain.Entities
         public int EquipoComputoId { get; set; }
         public DateTime FechaMovimiento { get; set; }
 
-        public virtual EquipoComputo EquipoComputo { get; set; } = new(); // Inicializar
+        public virtual EquipoComputo EquipoComputo { get; set; } = new();
 
-        public int? UsuarioAnteriorId { get; set; }
-        public virtual Usuario? UsuarioAnterior { get; set; }
+        public int? EmpleadoAnteriorId { get; set; }
+        public virtual Empleado? EmpleadoAnterior { get; set; }
 
         public int? SedeAnteriorId { get; set; }
         public virtual Sede? SedeAnterior { get; set; }
@@ -22,8 +22,8 @@ namespace InventarioComputo.Domain.Entities
         public int? ZonaAnteriorId { get; set; }
         public virtual Zona? ZonaAnterior { get; set; }
 
-        public int? UsuarioNuevoId { get; set; }
-        public virtual Usuario? UsuarioNuevo { get; set; }
+        public int? EmpleadoNuevoId { get; set; }
+        public virtual Empleado? EmpleadoNuevo { get; set; }
 
         public int? SedeNuevaId { get; set; }
         public virtual Sede? SedeNueva { get; set; }
@@ -34,9 +34,9 @@ namespace InventarioComputo.Domain.Entities
         public int? ZonaNuevaId { get; set; }
         public virtual Zona? ZonaNueva { get; set; }
 
-        public string Motivo { get; set; } = string.Empty; // Inicializar
+        public string Motivo { get; set; } = string.Empty;
 
         public int UsuarioResponsableId { get; set; }
-        public virtual Usuario UsuarioResponsable { get; set; } = new(); // Inicializar
+        public virtual Usuario UsuarioResponsable { get; set; } = new();
     }
 }

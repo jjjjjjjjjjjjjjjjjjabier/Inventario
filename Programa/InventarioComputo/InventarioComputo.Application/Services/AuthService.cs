@@ -3,6 +3,7 @@ using InventarioComputo.Application.Contracts.Repositories;
 using InventarioComputo.Domain.Entities;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -10,104 +11,92 @@ namespace InventarioComputo.Application.Services
 {
     public class AuthService : IAuthService
     {
-        private readonly IUsuarioRepository _usuarioRepository;
-        private readonly IRolRepository _rolRepository;
-        private readonly IPasswordHasher _passwordHasher;
+        private readonly IUsuarioRepository _usuarioRepo;
+        private readonly IRolRepository _rolRepo;
+        private readonly IPasswordHasher _hasher;
 
-        public AuthService(
-            IUsuarioRepository usuarioRepository,
-            IRolRepository rolRepository,
-            IPasswordHasher passwordHasher)
+        public AuthService(IUsuarioRepository usuarioRepo, IRolRepository rolRepo, IPasswordHasher hasher)
         {
-            _usuarioRepository = usuarioRepository;
-            _rolRepository = rolRepository;
-            _passwordHasher = passwordHasher;
+            _usuarioRepo = usuarioRepo;
+            _rolRepo = rolRepo;
+            _hasher = hasher;
         }
 
         public async Task<Usuario> AuthenticateAsync(string username, string password, CancellationToken ct = default)
         {
-            var usuario = await _usuarioRepository.ObtenerPorNombreUsuarioAsync(username, ct);
-            if (usuario == null || !_passwordHasher.VerifyPassword(password, usuario.PasswordHash))
-                throw new UnauthorizedAccessException("Credenciales inválidas");
-            
+            // Reutiliza el repositorio (hash/validación interna)
+            var ok = await _usuarioRepo.VerificarCredencialesAsync(username, password, ct);
+            if (!ok) throw new UnauthorizedAccessException("Credenciales inválidas.");
+
+            var usuario = await _usuarioRepo.ObtenerPorNombreUsuarioAsync(username, ct);
+            if (usuario == null || !usuario.Activo)
+                throw new UnauthorizedAccessException("Usuario no encontrado o inactivo.");
+
             return usuario;
         }
 
-        public async Task<bool> ValidarUsuarioAsync(string username, string password, CancellationToken ct = default)
-        {
-            var usuario = await _usuarioRepository.ObtenerPorNombreUsuarioAsync(username, ct);
-            return usuario != null && _passwordHasher.VerifyPassword(password, usuario.PasswordHash);
-        }
+        public Task<bool> ValidarUsuarioAsync(string username, string password, CancellationToken ct = default)
+            => _usuarioRepo.VerificarCredencialesAsync(username, password, ct);
 
-        public async Task<Usuario?> ObtenerPorNombreUsuarioAsync(string nombreUsuario, CancellationToken ct = default)
-        {
-            return await _usuarioRepository.ObtenerPorNombreUsuarioAsync(nombreUsuario, ct);
-        }
+        public Task<Usuario?> ObtenerPorNombreUsuarioAsync(string nombreUsuario, CancellationToken ct = default)
+            => _usuarioRepo.ObtenerPorNombreUsuarioAsync(nombreUsuario, ct);
 
-        public async Task<IReadOnlyList<Rol>> ObtenerRolesDeUsuarioAsync(int usuarioId, CancellationToken ct = default)
-        {
-            return await _rolRepository.ObtenerRolesPorUsuarioIdAsync(usuarioId, ct);
-        }
+        public Task<IReadOnlyList<Rol>> ObtenerRolesDeUsuarioAsync(int usuarioId, CancellationToken ct = default)
+            => _usuarioRepo.ObtenerRolesDeUsuarioAsync(usuarioId, ct);
+
+        public Task<IReadOnlyList<Usuario>> BuscarPorRolIdAsync(int rolId, CancellationToken ct = default)
+            => _usuarioRepo.BuscarPorRolIdAsync(rolId, ct);
 
         public async Task CrearUsuarioAdministradorSiNoExisteAsync(CancellationToken ct = default)
         {
+            // Asegurar rol "Administrador"
+            var rolAdmin = await _rolRepo.ObtenerPorNombreAsync("Administrador", ct);
+            if (rolAdmin == null)
+            {
+                rolAdmin = await _rolRepo.GuardarAsync(new Rol { Nombre = "Administrador" }, ct);
+            }
+
+            // Usuario admin por defecto
             const string adminUser = "admin";
-            var usuario = await _usuarioRepository.ObtenerPorNombreUsuarioAsync(adminUser, ct);
-            
-            if (usuario != null) 
-                return;
+            const string adminPass = "admin123";
+            var usuario = await _usuarioRepo.ObtenerPorNombreUsuarioAsync(adminUser, ct);
 
-            // Buscar o crear el rol de administrador
-            var adminRol = await _rolRepository.ObtenerPorNombreAsync("Administrador", ct);
-            int adminRolId;
-            
-            if (adminRol == null)
+            if (usuario == null)
             {
-                adminRolId = await _rolRepository.CrearRolAsync(new Rol { Nombre = "Administrador" }, ct);
+                usuario = new Usuario
+                {
+                    NombreUsuario = adminUser,
+                    NombreCompleto = "Administrador del Sistema",
+                    PasswordHash = _hasher.HashPassword(adminPass),
+                    Activo = true
+                };
+
+                var nuevoId = await _usuarioRepo.CrearUsuarioAsync(usuario, ct);
+                usuario.Id = nuevoId;
             }
-            else
+
+            // Asegurar asignación de rol
+            var rolesUsuario = await _usuarioRepo.ObtenerRolesDeUsuarioAsync(usuario.Id, ct);
+            if (!rolesUsuario.Any(r => r.Id == rolAdmin.Id))
             {
-                adminRolId = adminRol.Id;
+                await _usuarioRepo.AsignarRolUsuarioAsync(usuario.Id, rolAdmin.Id, ct);
             }
-
-            // Crear usuario admin
-            var nuevoAdmin = new Usuario
-            {
-                NombreUsuario = adminUser,
-                NombreCompleto = "Administrador del Sistema",
-                PasswordHash = _passwordHasher.HashPassword("admin123"), // contraseña semilla
-                Activo = true
-            };
-
-            int nuevoUsuarioId = await _usuarioRepository.CrearUsuarioAsync(nuevoAdmin, ct);
-            
-            // Asignar rol admin
-            await _rolRepository.AsignarRolAUsuarioAsync(nuevoUsuarioId, adminRolId, ct);
-        }
-
-        public async Task<IReadOnlyList<Usuario>> BuscarPorRolIdAsync(int rolId, CancellationToken ct = default)
-        {
-            return await _usuarioRepository.BuscarPorRolIdAsync(rolId, ct);
         }
 
         public async Task<Usuario> RegistrarUsuarioAsync(Usuario usuario, string password, int rolId, CancellationToken ct = default)
         {
-            // Verificar si ya existe un usuario con ese nombre
-            var existente = await _usuarioRepository.ObtenerPorNombreUsuarioAsync(usuario.NombreUsuario, ct);
-            if (existente != null)
-                throw new InvalidOperationException($"Ya existe un usuario con el nombre '{usuario.NombreUsuario}'");
+            if (usuario == null) throw new ArgumentNullException(nameof(usuario));
+            if (string.IsNullOrWhiteSpace(password)) throw new ArgumentException("La contraseña es obligatoria.", nameof(password));
 
-            // Hashear la contraseña y asignarla
-            usuario.PasswordHash = _passwordHasher.HashPassword(password);
-            
-            // Crear el usuario
-            int userId = await _usuarioRepository.CrearUsuarioAsync(usuario, ct);
-            
-            // Asignar el rol
-            await _rolRepository.AsignarRolAUsuarioAsync(userId, rolId, ct);
-            
-            // Devolver el usuario con el ID asignado
-            usuario.Id = userId;
+            usuario.NombreUsuario = usuario.NombreUsuario?.Trim() ?? string.Empty;
+            usuario.NombreCompleto = usuario.NombreCompleto?.Trim() ?? usuario.NombreUsuario;
+            usuario.PasswordHash = _hasher.HashPassword(password);
+            usuario.Activo = true;
+
+            var id = await _usuarioRepo.CrearUsuarioAsync(usuario, ct);
+            usuario.Id = id;
+
+            await _usuarioRepo.AsignarRolUsuarioAsync(usuario.Id, rolId, ct);
             return usuario;
         }
     }

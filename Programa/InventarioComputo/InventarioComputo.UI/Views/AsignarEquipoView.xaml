@@ -3,118 +3,48 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:InventarioComputo.UI.Views"
+        xmlns:conv="clr-namespace:InventarioComputo.UI.Converters"
         mc:Ignorable="d"
-        Title="Asignar Equipo a Usuario"
-        Height="450" Width="650"
+        Title="Asignar Equipo"
+        SizeToContent="Height"
+        Width="550"
         WindowStartupLocation="CenterOwner"
-        Background="White">
+        ResizeMode="NoResize"
+        Background="#F8F9FA">
 
     <Window.Resources>
-        <Style x:Key="FormButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#0078D7"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Padding" Value="20,8"/>
-            <Setter Property="MinWidth" Value="100"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                Padding="{TemplateBinding Padding}"
-                                CornerRadius="20">
-                            <ContentPresenter HorizontalAlignment="Center" 
-                                              VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#0063B1"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Background" Value="#CCCCCC"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="CancelButtonStyle" TargetType="Button">
-            <Setter Property="Background" Value="#E0E0E0"/>
-            <Setter Property="Foreground" Value="#333333"/>
-            <Setter Property="Padding" Value="20,8"/>
-            <Setter Property="MinWidth" Value="100"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                Padding="{TemplateBinding Padding}"
-                                CornerRadius="20">
-                            <ContentPresenter HorizontalAlignment="Center" 
-                                              VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#CCCCCC"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style TargetType="TextBlock" x:Key="LabelStyle">
-            <Setter Property="Margin" Value="0,0,0,5"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Foreground" Value="#333333"/>
-        </Style>
-
-        <Style TargetType="ComboBox">
-            <Setter Property="Height" Value="35"/>
-            <Setter Property="Padding" Value="10,5"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="#CCCCCC"/>
-        </Style>
-
-        <Style TargetType="TextBox">
-            <Setter Property="Height" Value="35"/>
-            <Setter Property="Padding" Value="10,5"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="#CCCCCC"/>
-        </Style>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <conv:ObjectToVisibilityConverter x:Key="ObjectToVisibilityConverter"/>
     </Window.Resources>
 
-    <Border Padding="30">
-        <Grid>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
+    <Grid Margin="0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
-            <!-- Header -->
-            <TextBlock Grid.Row="0" 
-                       Text="Asignar Equipo a Usuario"
-                       FontSize="20" 
-                       FontWeight="Bold"
-                       Margin="0,0,0,20"
+        <!-- Encabezado -->
+        <Border Grid.Row="0" 
+                Background="#F5F7FA" 
+                BorderBrush="#E1E5EB" 
+                BorderThickness="0,0,0,1" 
+                Padding="24,16">
+            <TextBlock Text="Asignación de Equipo" 
+                       FontSize="22" 
+                       FontWeight="Medium" 
                        Foreground="#2C3E50"/>
+        </Border>
 
-            <!-- Información del Equipo -->
-            <Border Grid.Row="1" 
-                    Background="#F5F5F5" 
-                    BorderBrush="#DDDDDD" 
-                    BorderThickness="1"
-                    Padding="15" 
-                    Margin="0,0,0,15"
-                    CornerRadius="4">
+        <!-- Formulario -->
+        <StackPanel Grid.Row="1" Margin="24,16">
+            <!-- Informacion del equipo -->
+            <Border Background="#F5F7FA" 
+                    BorderBrush="#E1E5EB" 
+                    BorderThickness="1" 
+                    CornerRadius="4" 
+                    Padding="16" 
+                    Margin="0,0,0,20">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -123,84 +53,218 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <StackPanel Grid.Row="0" Grid.Column="0">
-                        <TextBlock Text="Etiqueta:" FontWeight="SemiBold"/>
-                        <TextBlock Text="{Binding Equipo.EtiquetaInventario}" Margin="0,0,0,5"/>
+                    <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,8,8">
+                        <TextBlock Text="Número de Serie" 
+                                   FontWeight="Medium" 
+                                   FontSize="12" 
+                                   Foreground="#666666"/>
+                        <TextBlock Text="{Binding Equipo.NumeroSerie}" 
+                                   FontSize="14"/>
                     </StackPanel>
 
-                    <StackPanel Grid.Row="0" Grid.Column="1">
-                        <TextBlock Text="Número de Serie:" FontWeight="SemiBold"/>
-                        <TextBlock Text="{Binding Equipo.NumeroSerie}" Margin="0,0,0,5"/>
+                    <StackPanel Grid.Column="1" Grid.Row="0" Margin="8,0,0,8">
+                        <TextBlock Text="Etiqueta" 
+                                   FontWeight="Medium" 
+                                   FontSize="12" 
+                                   Foreground="#666666"/>
+                        <TextBlock Text="{Binding Equipo.EtiquetaInventario}" 
+                                   FontSize="14"/>
                     </StackPanel>
 
-                    <StackPanel Grid.Row="1" Grid.Column="0">
-                        <TextBlock Text="Tipo:" FontWeight="SemiBold"/>
-                        <TextBlock Text="{Binding Equipo.TipoEquipo.Nombre}" Margin="0,0,0,5"/>
+                    <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,8,8">
+                        <TextBlock Text="Marca / Modelo" 
+                                   FontWeight="Medium" 
+                                   FontSize="12" 
+                                   Foreground="#666666"/>
+                        <TextBlock FontSize="14">
+                            <Run Text="{Binding Equipo.Marca}"/>
+                            <Run Text=" / "/>
+                            <Run Text="{Binding Equipo.Modelo}"/>
+                        </TextBlock>
                     </StackPanel>
 
-                    <StackPanel Grid.Row="1" Grid.Column="1">
-                        <TextBlock Text="Estado Actual:" FontWeight="SemiBold"/>
-                        <TextBlock Text="{Binding Equipo.Estado.Nombre}" Margin="0,0,0,5"/>
+                    <StackPanel Grid.Column="1" Grid.Row="1" Margin="8,0,0,8">
+                        <TextBlock Text="Tipo" 
+                                   FontWeight="Medium" 
+                                   FontSize="12" 
+                                   Foreground="#666666"/>
+                        <TextBlock Text="{Binding Equipo.TipoEquipo.Nombre}" 
+                                   FontSize="14"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2">
+                        <TextBlock Text="Asignación Actual" 
+                                   FontWeight="Medium" 
+                                   FontSize="12" 
+                                   Foreground="#666666"/>
+                        <TextBlock FontSize="14" TextWrapping="Wrap">
+                            <Run Text="{Binding AsignacionActual}"/>
+                        </TextBlock>
                     </StackPanel>
                 </Grid>
             </Border>
 
-            <!-- Formulario de Asignación -->
-            <Grid Grid.Row="2" Margin="0,10,0,0">
+            <!-- Formulario de asignacion -->
+            <TextBlock Text="Nueva Asignación" 
+                       FontWeight="SemiBold" 
+                       FontSize="16" 
+                       Margin="0,0,0,12"/>
+
+            <!-- Seleccionar tipo de asignacion -->
+            <Grid Margin="0,0,0,16">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                    <TextBlock Text="Usuario:" Style="{StaticResource LabelStyle}"/>
-                    <ComboBox ItemsSource="{Binding Usuarios}"
-                              SelectedItem="{Binding UsuarioSeleccionado}"
-                              DisplayMemberPath="NombreCompleto"/>
-                </StackPanel>
+                <RadioButton Grid.Column="0" 
+                             Content="Asignar a Empleado" 
+                             IsChecked="{Binding AsignarAEmpleado}"
+                             GroupName="TipoAsignacion"
+                             VerticalAlignment="Center"
+                             Margin="0,0,8,0"/>
 
-                <StackPanel Grid.Column="1" Margin="10,0,0,0">
-                    <TextBlock Text="Observaciones:" Style="{StaticResource LabelStyle}"/>
-                    <TextBox Text="{Binding Observaciones, UpdateSourceTrigger=PropertyChanged}"
-                             Height="70"
-                             TextWrapping="Wrap"
-                             AcceptsReturn="True"
-                             VerticalAlignment="Stretch"
-                             VerticalContentAlignment="Top"
-                             VerticalScrollBarVisibility="Auto"/>
-                </StackPanel>
+                <RadioButton Grid.Column="1" 
+                             Content="Asignar a Ubicación" 
+                             IsChecked="{Binding AsignarAUbicacion}"
+                             GroupName="TipoAsignacion"
+                             VerticalAlignment="Center"
+                             Margin="8,0,0,0"/>
             </Grid>
 
-            <!-- Botones -->
-            <StackPanel Grid.Row="4" 
-                        Orientation="Horizontal" 
-                        HorizontalAlignment="Right"
-                        Margin="0,20,0,0">
-                <Button Content="Asignar" 
-                        Command="{Binding AsignarCommand}"
-                        Style="{StaticResource FormButtonStyle}"
-                        Margin="0,0,10,0"/>
-
-                <Button Content="Cancelar" 
-                        Command="{Binding CancelarCommand}"
-                        Style="{StaticResource CancelButtonStyle}"/>
+            <!-- Seleccion de empleado -->
+            <StackPanel Visibility="{Binding AsignarAEmpleado, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        Margin="0,0,0,12">
+                <TextBlock Text="Empleado *" 
+                           FontWeight="Medium" 
+                           Margin="0,0,0,4"/>
+                <ComboBox ItemsSource="{Binding Empleados}" 
+                          SelectedItem="{Binding EmpleadoSeleccionado}"
+                          DisplayMemberPath="NombreCompleto"
+                          Padding="10,8" 
+                          BorderBrush="#D1D5DB" 
+                          BorderThickness="1"/>
             </StackPanel>
 
-            <!-- Loading indicator -->
-            <Grid Grid.Row="0" Grid.RowSpan="5" Background="#80FFFFFF"
-                  Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <TextBlock Text="Cargando..." 
-                               FontSize="16"
-                               HorizontalAlignment="Center"
-                               Margin="0,0,0,10"/>
-                    <ProgressBar IsIndeterminate="True" 
-                                 Width="200" 
-                                 Height="10"/>
+            <!-- Selección de ubicacion -->
+            <StackPanel Visibility="{Binding AsignarAUbicacion, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel Margin="0,0,0,12">
+                    <TextBlock Text="Sede *" 
+                               FontWeight="Medium" 
+                               Margin="0,0,0,4"/>
+                    <ComboBox ItemsSource="{Binding Sedes}" 
+                              SelectedItem="{Binding SedeSeleccionada}"
+                              DisplayMemberPath="Nombre"
+                              Padding="10,8" 
+                              BorderBrush="#D1D5DB" 
+                              BorderThickness="1"/>
                 </StackPanel>
-            </Grid>
+
+                <StackPanel Margin="0,0,0,12">
+                    <TextBlock Text="Área *" 
+                               FontWeight="Medium" 
+                               Margin="0,0,0,4"/>
+                    <ComboBox ItemsSource="{Binding Areas}" 
+                              SelectedItem="{Binding AreaSeleccionada}"
+                              DisplayMemberPath="Nombre"
+                              Padding="10,8" 
+                              BorderBrush="#D1D5DB" 
+                              BorderThickness="1"
+                              IsEnabled="{Binding SedeSeleccionada, Converter={StaticResource ObjectToVisibilityConverter}}"/>
+                </StackPanel>
+
+                <StackPanel Margin="0,0,0,12">
+                    <TextBlock Text="Zona *" 
+                               FontWeight="Medium" 
+                               Margin="0,0,0,4"/>
+                    <ComboBox ItemsSource="{Binding Zonas}" 
+                              SelectedItem="{Binding ZonaSeleccionada}"
+                              DisplayMemberPath="Nombre"
+                              Padding="10,8" 
+                              BorderBrush="#D1D5DB" 
+                              BorderThickness="1"
+                              IsEnabled="{Binding AreaSeleccionada, Converter={StaticResource ObjectToVisibilityConverter}}"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Motivo de asignacion -->
+            <StackPanel Margin="0,8,0,12">
+                <TextBlock Text="Motivo *" 
+                           FontWeight="Medium" 
+                           Margin="0,0,0,4"/>
+                <TextBox Text="{Binding Motivo}" 
+                         TextWrapping="Wrap"
+                         AcceptsReturn="True"
+                         Height="60"
+                         Padding="10,8" 
+                         BorderBrush="#D1D5DB" 
+                         BorderThickness="1"/>
+            </StackPanel>
+
+            <TextBlock Text="* Campos obligatorios" 
+                       Foreground="#9E9E9E" 
+                       FontStyle="Italic"
+                       Margin="0,8,0,0"/>
+        </StackPanel>
+
+        <Border Grid.Row="2" 
+                Background="#F5F7FA" 
+                BorderBrush="#E1E5EB" 
+                BorderThickness="0,1,0,0" 
+                Padding="24,16">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Cancelar" 
+                        Command="{Binding CancelarCommand}" 
+                        Padding="16,8" 
+                        Margin="0,0,12,0"
+                        Background="#F0F2F5" 
+                        Foreground="#2C3E50" 
+                        BorderBrush="#D1D5DB"
+                        BorderThickness="1">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="4"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
+                <Button Content="Guardar Asignación" 
+                        Command="{Binding GuardarCommand}" 
+                        Padding="16,8"
+                        Background="#3498DB" 
+                        Foreground="White" 
+                        BorderThickness="0">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="4"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
+            </StackPanel>
+        </Border>
+
+        <!-- Overlay de carga -->
+        <Grid Grid.Row="0" Grid.RowSpan="3" 
+              Background="#80000000" 
+              Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Border HorizontalAlignment="Center" 
+                    VerticalAlignment="Center"
+                    Background="White"
+                    Padding="24,16"
+                    BorderBrush="#E1E5EB"
+                    BorderThickness="1"
+                    CornerRadius="4">
+                <StackPanel>
+                    <TextBlock Text="Guardando asignación..." 
+                               FontSize="16" 
+                               Margin="0,0,0,12"/>
+                    <ProgressBar IsIndeterminate="True" 
+                                 Height="4" 
+                                 Width="200"/>
+                </StackPanel>
+            </Border>
         </Grid>
-    </Border>
+    </Grid>
 </Window>

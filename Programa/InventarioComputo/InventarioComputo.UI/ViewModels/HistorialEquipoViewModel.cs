@@ -6,6 +6,7 @@ using InventarioComputo.UI.ViewModels.Base;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -15,13 +16,11 @@ namespace InventarioComputo.UI.ViewModels
     {
         private readonly IMovimientoService _movimientoSrv;
         private readonly IEquipoComputoService _equipoSrv;
-        private EquipoComputo? _equipo;
 
-        // Propiedades requeridas por la vista
+        [ObservableProperty]
+        private EquipoComputo? _equipo; // EXPUESTO PARA EL XAML
+
         public string Titulo { get; private set; } = "Historial de Movimientos";
-        public string EquipoInfo { get; private set; } = string.Empty;
-        public string DetalleEquipo { get; private set; } = string.Empty;
-
         public ObservableCollection<HistorialMovimiento> Movimientos { get; } = new();
 
         public HistorialEquipoViewModel(
@@ -41,20 +40,15 @@ namespace InventarioComputo.UI.ViewModels
             {
                 Movimientos.Clear();
 
-                _equipo = await _equipoSrv.ObtenerPorIdAsync(equipoId);
-                if (_equipo != null)
+                var equipo = await _equipoSrv.ObtenerPorIdAsync(equipoId);
+                Equipo = equipo;
+                if (Equipo != null)
                 {
-                    EquipoInfo = $"Equipo: {_equipo.NumeroSerie} - {_equipo.Marca} {_equipo.Modelo}";
-                    DetalleEquipo = $"Etiqueta: {_equipo.EtiquetaInventario} | Estado: {_equipo.Estado?.Nombre ?? "N/A"} | Tipo: {_equipo.TipoEquipo?.Nombre ?? "N/A"}";
-                    Titulo = $"Historial de Movimientos - {_equipo.NumeroSerie}";
-
-                    OnPropertyChanged(nameof(EquipoInfo));
-                    OnPropertyChanged(nameof(DetalleEquipo));
+                    Titulo = $"Historial de Movimientos - {Equipo.NumeroSerie}";
                     OnPropertyChanged(nameof(Titulo));
 
                     var historial = await _movimientoSrv.ObtenerHistorialPorEquipoAsync(equipoId);
-                    foreach (var mov in historial)
-                        Movimientos.Add(mov);
+                    foreach (var mov in historial) Movimientos.Add(mov);
                 }
             }
             catch (Exception ex)

@@ -14,7 +14,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using System;
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 
@@ -26,7 +28,7 @@ namespace InventarioComputo.UI
 
         public App()
         {
-            InitializeComponent(); // activar carga de App.xaml
+            InitializeComponent();
 
             _host = Host.CreateDefaultBuilder()
                 .UseSerilog((host, loggerConfig) =>
@@ -48,16 +50,12 @@ namespace InventarioComputo.UI
                 {
                     var connectionString = hostContext.Configuration.GetConnectionString("DefaultConnection");
                     services.AddDbContext<InventarioDbContext>(options =>
-                        options
-                            .UseSqlServer(connectionString)
-                            .EnableDetailedErrors()           // + detalle de errores
-                            .EnableSensitiveDataLogging()     // + parámetros de comandos en logs (solo en dev)
-                    );
+                        options.UseSqlServer(connectionString)
+                               .EnableDetailedErrors()
+                               .EnableSensitiveDataLogging());
 
-                    // Seguridad
                     services.AddSingleton<IPasswordHasher, PasswordHasher>();
 
-                    // Repos
                     services.AddScoped<ISedeRepository, SedeRepository>();
                     services.AddScoped<IAreaRepository, AreaRepository>();
                     services.AddScoped<IZonaRepository, ZonaRepository>();
@@ -67,11 +65,9 @@ namespace InventarioComputo.UI
                     services.AddScoped<IEquipoComputoRepository, EquipoComputoRepository>();
                     services.AddScoped<IUsuarioRepository, UsuarioRepository>();
                     services.AddScoped<IRolRepository, RolRepository>();
-
-                    // Repositorio para Historial
+                    services.AddScoped<IEmpleadoRepository, EmpleadoRepository>();
                     services.AddScoped<IHistorialMovimientoRepository, HistorialMovimientoRepository>();
 
-                    // Servicios de aplicación
                     services.AddScoped<ISedeService, SedeService>();
                     services.AddScoped<IAreaService, AreaService>();
                     services.AddScoped<IZonaService, ZonaService>();
@@ -86,12 +82,11 @@ namespace InventarioComputo.UI
                     services.AddScoped<IMovimientoService, MovimientoService>();
                     services.AddScoped<IRolService, RolService>();
                     services.AddScoped<IBitacoraService, InventarioComputo.Infrastructure.Services.BitacoraService>();
+                    services.AddScoped<IEmpleadoService, EmpleadoService>();
 
-                    // Servicios de la UI
                     services.AddSingleton<DialogService>();
                     services.AddSingleton<IDialogService>(sp => sp.GetRequiredService<DialogService>());
 
-                    // ViewModels
                     services.AddTransient<MainWindowViewModel>();
                     services.AddTransient<EstadosViewModel>();
                     services.AddTransient<EstadoEditorViewModel>();
@@ -112,8 +107,9 @@ namespace InventarioComputo.UI
                     services.AddTransient<UsuariosViewModel>();
                     services.AddTransient<UsuarioEditorViewModel>();
                     services.AddTransient<UsuarioRolesViewModel>();
+                    services.AddTransient<EmpleadoEditorViewModel>();
+                    services.AddTransient<EmpleadosViewModel>();
 
-                    // Views
                     services.AddTransient<EstadoEditorView>();
                     services.AddTransient<UnidadEditorView>();
                     services.AddTransient<TipoEquipoEditorView>();
@@ -129,9 +125,8 @@ namespace InventarioComputo.UI
                     services.AddTransient<UsuariosView>();
                     services.AddTransient<UsuarioEditorView>();
                     services.AddTransient<UsuarioRolesView>();
-
-                    // UoW
-                    services.AddScoped<IUnitOfWork, EfUnitOfWork>();
+                    services.AddTransient<EmpleadoEditorView>();
+                    services.AddTransient<EmpleadosView>();
                 })
                 .Build();
         }
@@ -153,12 +148,12 @@ namespace InventarioComputo.UI
             dialogService.Register<UsuarioEditorViewModel, Views.UsuarioEditorView>();
             dialogService.Register<UsuarioRolesViewModel, Views.UsuarioRolesView>();
             dialogService.Register<AsignarEquipoViewModel, Views.AsignarEquipoView>();
+            dialogService.Register<EmpleadoEditorViewModel, Views.EmpleadoEditorView>();
 
             using (var scope = _host.Services.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<InventarioDbContext>();
                 var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
-                var env = scope.ServiceProvider.GetRequiredService<IHostEnvironment>();
 
                 try
                 {
@@ -168,13 +163,13 @@ namespace InventarioComputo.UI
                         await db.Database.EnsureDeletedAsync();
                     }
                     await db.Database.MigrateAsync();
+
                     var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
                     await authService.CrearUsuarioAdministradorSiNoExisteAsync();
 
                     var usuarioSrv = scope.ServiceProvider.GetRequiredService<IUsuarioService>();
                     var rolSrv = scope.ServiceProvider.GetRequiredService<IRolService>();
 
-                    // Reemplazamos hostContext por config
                     var adminUser = config.GetSection("SeedUsers:Admin");
                     var consultaUser = config.GetSection("SeedUsers:Consulta");
 
@@ -190,7 +185,7 @@ namespace InventarioComputo.UI
                         var user = await usuarioSrv.ObtenerPorNombreUsuarioAsync(userName);
                         if (user == null)
                         {
-                            user = new InventarioComputo.Domain.Entities.Usuario
+                            user = new Usuario
                             {
                                 NombreUsuario = userName,
                                 NombreCompleto = fullName ?? userName,
@@ -203,30 +198,30 @@ namespace InventarioComputo.UI
                         if (rol != null)
                         {
                             var rolesUsuario = await usuarioSrv.ObtenerRolesDeUsuarioAsync(user.Id);
-                            var yaTiene = rolesUsuario.Any(r => r.Nombre == rolNombre);
+                            var yaTiene = rolesUsuario.Any(r => r.Nombre == rol.Nombre);
                             if (!yaTiene)
                                 await usuarioSrv.AsignarRolUsuarioAsync(user.Id, rol.Id);
                         }
                     }
 
-                    // Usuarios seed (idempotente)
+                    // Nombre de rol consistente con el resto del sistema
                     await EnsureUserAsync(adminUser, "Administrador");
                     await EnsureUserAsync(consultaUser, "Consulta");
                 }
                 catch (Exception ex)
                 {
-                    string BuildExceptionText(Exception e)
+                    string BuildExceptionText(Exception e2)
                     {
                         var sb = new StringBuilder();
                         int level = 0;
-                        while (e != null)
+                        while (e2 != null)
                         {
-                            sb.AppendLine($"[{level}] {e.GetType().Name}: {e.Message}");
-                            if (e is Microsoft.EntityFrameworkCore.DbUpdateException dbex && dbex.Entries?.Count > 0)
+                            sb.AppendLine($"[{level}] {e2.GetType().Name}: {e2.Message}");
+                            if (e2 is Microsoft.EntityFrameworkCore.DbUpdateException dbex && dbex.Entries?.Count > 0)
                             {
                                 sb.AppendLine($"   Entidades afectadas: {string.Join(", ", dbex.Entries.Select(en => en.Metadata.Name))}");
                             }
-                            e = e.InnerException;
+                            e2 = e2.InnerException;
                             level++;
                         }
                         return sb.ToString();
@@ -234,7 +229,7 @@ namespace InventarioComputo.UI
 
                     MessageBox.Show(
                         $"Error al preparar la base de datos:\n\n{BuildExceptionText(ex)}",
-                        "Error de Inicialización",
+                        "Error de Inicializacion",
                         MessageBoxButton.OK,
                         MessageBoxImage.Error);
                     Shutdown();
@@ -246,7 +241,7 @@ namespace InventarioComputo.UI
 
             var loginVM = _host.Services.GetRequiredService<LoginViewModel>();
             var loginView = new LoginView { DataContext = loginVM };
-            var resultado = loginView.ShowDialog();
+            var _ = loginView.ShowDialog();
 
             if (loginVM.LoginExitoso)
             {

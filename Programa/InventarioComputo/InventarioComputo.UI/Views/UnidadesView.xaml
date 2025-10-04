@@ -1,70 +1,17 @@
 ﻿<UserControl x:Class="InventarioComputo.UI.Views.UnidadesView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:sys="clr-namespace:System;assembly=mscorlib"
-             mc:Ignorable="d" 
-             d:DesignHeight="600" d:DesignWidth="800"
-             Loaded="UserControl_Loaded">
+             xmlns:behaviors="clr-namespace:InventarioComputo.UI.Behaviors"
+             xmlns:conv="clr-namespace:InventarioComputo.UI.Converters"
+             mc:Ignorable="d"
+             d:DesignHeight="650" d:DesignWidth="950"
+             behaviors:LoadedCommandBehavior.LoadedCommand="{Binding LoadedCommand}">
 
     <UserControl.Resources>
-        <!-- Estilos locales - sin ResourceDictionary.MergedDictionaries -->
-        <ResourceDictionary>
-            <!-- Tus estilos siguen igual... -->
-            <Style x:Key="ActionButtonStyle" TargetType="Button">
-                <Setter Property="Background" Value="#0078D7"/>
-                <Setter Property="Foreground" Value="White"/>
-                <Setter Property="Padding" Value="15,5"/>
-                <Setter Property="MinWidth" Value="80"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}"
-                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                    Padding="{TemplateBinding Padding}"
-                                    CornerRadius="20">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="#0063B1"/>
-                                </Trigger>
-                                <Trigger Property="IsEnabled" Value="False">
-                                    <Setter Property="Background" Value="#CCCCCC"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
-
-            <Style x:Key="SecondaryButtonStyle" TargetType="Button">
-                <Setter Property="Background" Value="#EFEFEF"/>
-                <Setter Property="Foreground" Value="#333333"/>
-                <Setter Property="Padding" Value="15,5"/>
-                <Setter Property="MinWidth" Value="80"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}"
-                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                    Padding="{TemplateBinding Padding}"
-                                    CornerRadius="20">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="#DDDDDD"/>
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
-        </ResourceDictionary>
+        <conv:ActiveStatusConverter x:Key="ActiveStatusConverter"/>
+        <conv:BoolToStringConverter x:Key="BoolToStringConverter"/>
     </UserControl.Resources>
 
     <Grid>
@@ -72,74 +19,222 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Header -->
-        <TextBlock Grid.Row="0" 
-                   Text="Unidades"
-                   FontSize="24" 
-                   FontWeight="Bold"
-                   Margin="0,0,0,20"
-                   Foreground="#2C3E50"/>
+        <!-- Encabezado -->
+        <Border Grid.Row="0" 
+                Background="#F5F7FA" 
+                BorderBrush="#E1E5EB" 
+                BorderThickness="0,0,0,1" 
+                Padding="24,16">
+            <TextBlock Text="Unidades de Medida" 
+                       FontSize="22" 
+                       FontWeight="Medium" 
+                       Foreground="#2C3E50"/>
+        </Border>
 
-        <!-- Toolbar -->
-        <Grid Grid.Row="1" Margin="0,0,0,10">
+        <!-- Barra de herramientas -->
+        <Grid Grid.Row="1" Margin="24,16">
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
+            <!-- Filtros -->
             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                <CheckBox Content="Mostrar inactivas" 
-                          IsChecked="{Binding MostrarInactivas}"
-                          VerticalAlignment="Center"/>
+                <CheckBox Content="Mostrar inactivos" 
+                          IsChecked="{Binding MostrarInactivos}" 
+                          VerticalAlignment="Center" 
+                          Margin="0,0,16,0"/>
+
+                <Border CornerRadius="4" 
+                        BorderThickness="1" 
+                        BorderBrush="#D1D5DB" 
+                        Background="White" 
+                        Padding="8,0" 
+                        Width="280">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBox Grid.Column="0"
+                                 BorderThickness="0"
+                                 Padding="4" 
+                                 VerticalContentAlignment="Center"
+                                 Text="{Binding Filtro, UpdateSourceTrigger=PropertyChanged}">
+                            <TextBox.Style>
+                                <Style TargetType="TextBox">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="TextBox">
+                                                <Grid>
+                                                    <ScrollViewer x:Name="PART_ContentHost"/>
+                                                    <TextBlock Text="Buscar unidades..." 
+                                                               Foreground="#A0AEC0"
+                                                               Margin="4,0,0,0"
+                                                               VerticalAlignment="Center"
+                                                               IsHitTestVisible="False">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Text, RelativeSource={RelativeSource AncestorType=TextBox}}" Value="">
+                                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Grid>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </TextBox.Style>
+                        </TextBox>
+
+                        <Button Grid.Column="1" 
+                                Content="🔍"
+                                Padding="8,4" 
+                                BorderThickness="0" 
+                                Background="Transparent"
+                                Command="{Binding BuscarCommand}"/>
+                    </Grid>
+                </Border>
             </StackPanel>
 
-            <StackPanel Grid.Column="1" Orientation="Horizontal">
-                <Button Content="Nueva" 
-                        Style="{StaticResource ActionButtonStyle}"
-                        Command="{Binding CrearCommand}"
-                        Margin="5,0"/>
+            <!-- Acciones -->
+            <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Nuevo" 
+                        Command="{Binding CrearCommand}" 
+                        Padding="16,8" 
+                        Margin="0,0,8,0"
+                        Background="#3498DB" 
+                        Foreground="White" 
+                        BorderThickness="0"
+                        Cursor="Hand">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="4"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
 
                 <Button Content="Editar" 
-                        Style="{StaticResource SecondaryButtonStyle}"
-                        Command="{Binding EditarCommand}"
-                        Margin="5,0"/>
+                        Command="{Binding EditarCommand}" 
+                        Padding="16,8" 
+                        Margin="0,0,8,0"
+                        Background="#F0F2F5" 
+                        Foreground="#2C3E50" 
+                        BorderThickness="1"
+                        BorderBrush="#D1D5DB"
+                        Cursor="Hand">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="4"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
 
                 <Button Content="Desactivar" 
-                        Style="{StaticResource SecondaryButtonStyle}"
-                        Command="{Binding EliminarCommand}"
-                        Margin="5,0"/>
+                        Command="{Binding EliminarCommand}" 
+                        Padding="16,8"
+                        Background="#E74C3C" 
+                        Foreground="White" 
+                        BorderThickness="0"
+                        Cursor="Hand">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="4"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
             </StackPanel>
         </Grid>
 
         <!-- DataGrid -->
-        <DataGrid Grid.Row="2" 
-                  AutoGenerateColumns="False" 
-                  ItemsSource="{Binding Unidades}"
-                  SelectedItem="{Binding UnidadSeleccionada}"
-                  Margin="0,10,0,0">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="80"/>
-                <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" Width="200"/>
-                <DataGridTextColumn Header="Abreviatura" Binding="{Binding Abreviatura}" Width="100"/>
-                <DataGridTextColumn Header="Estado" Binding="{Binding Activo, Converter={StaticResource BoolToStatusText}}" Width="100"/>
-            </DataGrid.Columns>
-        </DataGrid>
+        <Border Grid.Row="2" 
+                Margin="24,0,24,24" 
+                BorderThickness="1" 
+                BorderBrush="#E1E5EB"
+                CornerRadius="6"
+                Background="White"
+                Padding="1">
+            <DataGrid ItemsSource="{Binding Unidades}" 
+                      SelectedItem="{Binding UnidadSeleccionada}"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      HeadersVisibility="Column"
+                      GridLinesVisibility="Horizontal"
+                      RowBackground="White"
+                      AlternatingRowBackground="#F9FAFC"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      CanUserReorderColumns="True"
+                      CanUserResizeRows="False"
+                      CanUserSortColumns="True"
+                      BorderThickness="0"
+                      SelectionMode="Single"
+                      SelectionUnit="FullRow">
+                <DataGrid.Resources>
+                    <Style TargetType="DataGridColumnHeader">
+                        <Setter Property="Background" Value="#F5F7FA"/>
+                        <Setter Property="Foreground" Value="#2C3E50"/>
+                        <Setter Property="FontWeight" Value="SemiBold"/>
+                        <Setter Property="Padding" Value="10,12"/>
+                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                        <Setter Property="BorderBrush" Value="#E1E5EB"/>
+                    </Style>
+                    <Style TargetType="DataGridRow">
+                        <Setter Property="Height" Value="40"/>
+                    </Style>
+                    <Style TargetType="DataGridCell">
+                        <Setter Property="Padding" Value="10,8"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Setter Property="VerticalAlignment" Value="Center"/>
+                    </Style>
+                </DataGrid.Resources>
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Nombre" 
+                                        Binding="{Binding Nombre}" 
+                                        Width="2*"/>
+                    <DataGridTextColumn Header="Abreviatura" 
+                                        Binding="{Binding Abreviatura}" 
+                                        Width="*"/>
+                    <DataGridTemplateColumn Header="Activo" Width="80">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Activo, Converter={StaticResource BoolToStringConverter}}" 
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
 
-        <!-- Loading indicator -->
-        <Grid Grid.Row="0" Grid.RowSpan="4" Background="#80FFFFFF"
+        <!-- Indicador de carga -->
+        <Grid Grid.Row="0" Grid.RowSpan="3" 
+              Background="#80000000" 
               Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                <TextBlock Text="Cargando..." 
-                           FontSize="16"
-                           HorizontalAlignment="Center"
-                           Margin="0,0,0,10"/>
-                <ProgressBar IsIndeterminate="True" 
-                             Width="200" 
-                             Height="10"/>
-            </StackPanel>
+            <Border Padding="20">
+                <StackPanel HorizontalAlignment="Center" 
+                            VerticalAlignment="Center"
+                            Background="White">
+    
+                    <TextBlock Text="Cargando unidades..." 
+                               FontSize="16" 
+                               Margin="0,0,0,12"/>
+                    <ProgressBar IsIndeterminate="True" 
+                                 Height="4" 
+                                 Width="200"/>
+                </StackPanel>
+            </Border>
+            
         </Grid>
     </Grid>
 </UserControl>
