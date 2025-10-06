@@ -1,3 +1,4 @@
+using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using InventarioComputo.Application.Contracts;
@@ -64,27 +65,35 @@ namespace InventarioComputo.UI.ViewModels
             OnPropertyChanged(nameof(Activo));
         }
 
-        [RelayCommand]
+        [RelayCommand(AllowConcurrentExecutions = false)]
         public async Task GuardarAsync()
         {
-            if (string.IsNullOrWhiteSpace(NombreCompleto) || NombreCompleto.Length > 200)
-            {
-                _dialog.ShowError("El nombre es obligatorio y no debe exceder 200 caracteres.");
-                return;
-            }
-            if (Correo?.Length > 150)
-            {
-                _dialog.ShowError("El correo no debe exceder 150 caracteres.");
-                return;
-            }
-            if (Telefono?.Length > 50)
-            {
-                _dialog.ShowError("El teléfono no debe exceder 50 caracteres.");
-                return;
-            }
+            if (IsBusy) return;
+            IsBusy = true;
 
             try
             {
+                if (string.IsNullOrWhiteSpace(NombreCompleto) || NombreCompleto.Length > 200)
+                {
+                    _dialog.ShowError("El nombre es obligatorio y no debe exceder 200 caracteres.");
+                    return;
+                }
+                if (Correo?.Length > 150)
+                {
+                    _dialog.ShowError("El correo no debe exceder 150 caracteres.");
+                    return;
+                }
+                if (!string.IsNullOrWhiteSpace(Telefono) && Telefono.Any(c => !char.IsDigit(c)))
+                {
+                    _dialog.ShowError("El teléfono solo debe contener números.");
+                    return;
+                }
+                if (Telefono?.Length > 50)
+                {
+                    _dialog.ShowError("El teléfono no debe exceder 50 caracteres.");
+                    return;
+                }
+
                 await _srv.GuardarAsync(_entidad);
                 _dialog.ShowInfo("Empleado guardado correctamente.");
                 DialogResult = true;
@@ -98,6 +107,10 @@ namespace InventarioComputo.UI.ViewModels
             {
                 Logger?.LogError(ex, "Error al guardar empleado");
                 _dialog.ShowError("Ocurrió un error al guardar: " + ex.Message);
+            }
+            finally
+            {
+                IsBusy = false;
             }
         }
 

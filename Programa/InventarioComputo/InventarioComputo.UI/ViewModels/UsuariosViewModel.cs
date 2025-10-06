@@ -26,6 +26,9 @@ namespace InventarioComputo.UI.ViewModels
         private bool _mostrarInactivos;
 
         [ObservableProperty]
+        private string _filtro = string.Empty;
+
+        [ObservableProperty]
         private bool _esAdministrador;
 
         public ObservableCollection<Usuario> Usuarios { get; } = new();
@@ -45,6 +48,7 @@ namespace InventarioComputo.UI.ViewModels
         }
 
         partial void OnMostrarInactivosChanged(bool value) => _ = BuscarAsync();
+        partial void OnFiltroChanged(string value) => _ = BuscarAsync();
 
         [RelayCommand]
         public async Task LoadedAsync() => await BuscarAsync();
@@ -56,7 +60,8 @@ namespace InventarioComputo.UI.ViewModels
             try
             {
                 Usuarios.Clear();
-                var lista = await _srv.BuscarAsync(null, MostrarInactivos);
+                var filtro = string.IsNullOrWhiteSpace(Filtro) ? null : Filtro.Trim();
+                var lista = await _srv.BuscarAsync(filtro, MostrarInactivos);
                 foreach (var item in lista) Usuarios.Add(item);
             }
             catch (Exception ex)

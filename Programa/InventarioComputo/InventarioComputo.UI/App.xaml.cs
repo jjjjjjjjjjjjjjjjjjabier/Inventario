@@ -68,6 +68,9 @@ namespace InventarioComputo.UI
                     services.AddScoped<IEmpleadoRepository, EmpleadoRepository>();
                     services.AddScoped<IHistorialMovimientoRepository, HistorialMovimientoRepository>();
 
+                    // Registrar UnitOfWork para transacciones
+                    services.AddScoped<IUnitOfWork, EfUnitOfWork>();
+
                     services.AddScoped<ISedeService, SedeService>();
                     services.AddScoped<IAreaService, AreaService>();
                     services.AddScoped<IZonaService, ZonaService>();
@@ -76,7 +79,7 @@ namespace InventarioComputo.UI
                     services.AddScoped<ITipoEquipoService, TipoEquipoService>();
                     services.AddScoped<IEquipoComputoService, EquipoComputoService>();
                     services.AddScoped<IAuthService, AuthService>();
-                    services.AddScoped<ISessionService, SessionService>();
+                    services.AddSingleton<ISessionService, SessionService>();
                     services.AddScoped<IUsuarioService, UsuarioService>();
                     services.AddScoped<IReporteService, ReporteService>();
                     services.AddScoped<IMovimientoService, MovimientoService>();

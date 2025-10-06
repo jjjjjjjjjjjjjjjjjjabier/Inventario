@@ -18,11 +18,11 @@ namespace InventarioComputo.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<IReadOnlyList<TipoEquipo>> BuscarAsync(string? filtro, bool incluirInactivas, CancellationToken ct)
+        public async Task<IReadOnlyList<TipoEquipo>> BuscarAsync(string? filtro, bool incluirInactivos, CancellationToken ct = default)
         {
             var query = _context.TiposEquipo.AsQueryable();
 
-            if (!incluirInactivas)
+            if (!incluirInactivos)
             {
                 query = query.Where(t => t.Activo);
             }
@@ -35,20 +35,39 @@ namespace InventarioComputo.Infrastructure.Repositories
             return await query.OrderBy(t => t.Nombre).AsNoTracking().ToListAsync(ct);
         }
 
-        public async Task<TipoEquipo?> ObtenerPorIdAsync(int id, CancellationToken ct)
+        public Task<TipoEquipo?> ObtenerPorIdAsync(int id, CancellationToken ct = default)
         {
-            return await _context.TiposEquipo.FindAsync(new object[] { id }, ct);
+            return _context.TiposEquipo.AsNoTracking().FirstOrDefaultAsync(t => t.Id == id, ct);
         }
 
-        public async Task<TipoEquipo> GuardarAsync(TipoEquipo entidad, CancellationToken ct)
+        public async Task<TipoEquipo> GuardarAsync(TipoEquipo entidad, CancellationToken ct = default)
         {
             if (entidad.Id == 0)
             {
+                // Validar que no haya otro TipoEquipo con el mismo nombre (case-insensitive)
+                var existe = await _context.TiposEquipo
+                    .AnyAsync(t => t.Nombre.ToLower() == entidad.Nombre.ToLower(), ct);
+
+                if (existe)
+                {
+                    throw new InvalidOperationException($"Ya existe un tipo de equipo con el nombre '{entidad.Nombre}'.");
+                }
+
                 await _context.TiposEquipo.AddAsync(entidad, ct);
             }
             else
             {
-                var local = _context.TiposEquipo.Local.FirstOrDefault(e => e.Id == entidad.Id);
+                // Validar que no haya otro TipoEquipo con el mismo nombre (case-insensitive)
+                var existe = await _context.TiposEquipo
+                    .Where(t => t.Id != entidad.Id)
+                    .AnyAsync(t => t.Nombre.ToLower() == entidad.Nombre.ToLower(), ct);
+
+                if (existe)
+                {
+                    throw new InvalidOperationException($"Ya existe un tipo de equipo con el nombre '{entidad.Nombre}'.");
+                }
+
+                var local = _context.TiposEquipo.Local.FirstOrDefault(t => t.Id == entidad.Id);
                 if (local != null)
                 {
                     _context.Entry(local).State = EntityState.Detached;
@@ -57,31 +76,30 @@ namespace InventarioComputo.Infrastructure.Repositories
                 _context.Attach(entidad);
                 _context.Entry(entidad).State = EntityState.Modified;
             }
+
             await _context.SaveChangesAsync(ct);
             return entidad;
         }
 
-        public async Task EliminarAsync(int id, CancellationToken ct)
+        public async Task EliminarAsync(int id, CancellationToken ct = default)
         {
-            var entidad = await _context.TiposEquipo.FindAsync(new object[] { id }, ct);
-            if (entidad != null)
+            var tipoEquipo = await _context.TiposEquipo.FindAsync(new object[] { id }, ct);
+            if (tipoEquipo != null)
             {
-                entidad.Activo = false;
-                _context.Entry(entidad).State = EntityState.Modified;
+                tipoEquipo.Activo = false;
+                _context.Entry(tipoEquipo).State = EntityState.Modified;
                 await _context.SaveChangesAsync(ct);
             }
         }
 
-        public async Task<bool> ExisteNombreAsync(string nombre, int? idExcluir, CancellationToken ct)
+        public Task<bool> ExisteNombreAsync(string nombre, int? idExcluir = null, CancellationToken ct = default)
         {
-            var query = _context.TiposEquipo.Where(t => t.Nombre.ToLower() == nombre.ToLower());
-
+            var query = _context.TiposEquipo.AsQueryable();
             if (idExcluir.HasValue)
             {
                 query = query.Where(t => t.Id != idExcluir.Value);
             }
-
-            return await query.AsNoTracking().AnyAsync(ct);
+            return query.AnyAsync(t => t.Nombre.ToLower() == nombre.ToLower(), ct);
         }
     }
 }

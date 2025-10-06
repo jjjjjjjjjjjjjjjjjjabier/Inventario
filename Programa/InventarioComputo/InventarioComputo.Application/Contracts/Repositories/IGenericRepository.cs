@@ -1,6 +1,5 @@
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore.Storage;
 
 namespace InventarioComputo.Application.Contracts.Repositories
 {
@@ -9,6 +8,8 @@ namespace InventarioComputo.Application.Contracts.Repositories
         Task<T?> GetByIdAsync(int id, CancellationToken ct = default);
         Task<T> AddAsync(T entity, CancellationToken ct = default);
         Task<T> UpdateAsync(T entity, CancellationToken ct = default);
-        Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken ct = default);
+
+        // Devuelve la abstracción de transacción propia de la capa Application
+        Task<IAppTransaction> BeginTransactionAsync(CancellationToken ct = default);
     }
 }

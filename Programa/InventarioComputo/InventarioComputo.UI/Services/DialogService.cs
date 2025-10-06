@@ -1,92 +1,63 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Windows;
 using InventarioComputo.UI.ViewModels.Base;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace InventarioComputo.UI.Services
 {
-    public class DialogService : IDialogService
+    public sealed class DialogService : IDialogService
     {
-        private readonly Dictionary<Type, Type> _viewModelToViewMap = new();
-        private readonly IServiceProvider _serviceProvider;
+        private readonly IServiceProvider _rootProvider;
+        private readonly ConcurrentDictionary<Type, Type> _registry = new();
 
-        public DialogService(IServiceProvider serviceProvider)
+        public DialogService(IServiceProvider rootProvider)
         {
-            _serviceProvider = serviceProvider;
+            _rootProvider = rootProvider;
         }
 
         public void Register<TViewModel, TView>()
             where TViewModel : BaseViewModel
             where TView : Window
         {
-            _viewModelToViewMap[typeof(TViewModel)] = typeof(TView);
+            _registry[typeof(TViewModel)] = typeof(TView);
         }
 
-        public bool? ShowDialog<TViewModel>(Action<TViewModel> setViewModelState) where TViewModel : BaseViewModel
+        public bool? ShowDialog<TViewModel>(Action<TViewModel> setViewModelState)
+            where TViewModel : BaseViewModel
         {
-            try
-            {
-                var vmType = typeof(TViewModel);
-                Type viewType;
+            if (!_registry.TryGetValue(typeof(TViewModel), out var viewType))
+                throw new InvalidOperationException($"No se registró una vista para {typeof(TViewModel).Name}");
 
-                if (_viewModelToViewMap.TryGetValue(vmType, out var registeredViewType))
-                {
-                    viewType = registeredViewType;
-                }
-                else
-                {
-                    var viewTypeName = vmType.FullName!
-                        .Replace("ViewModels", "Views")
-                        .Replace("ViewModel", "View");
+            // Scope por diálogo: DbContext y dependencias aisladas
+            using var scope = _rootProvider.CreateScope();
+            var sp = scope.ServiceProvider;
 
-                    var resolved = Type.GetType(viewTypeName);
-                    if (resolved == null)
-                        throw new InvalidOperationException($"No se encontró la vista para {vmType.Name} ({viewTypeName}). Regístrela con Register<>().");
+            var vm = sp.GetRequiredService<TViewModel>();
+            setViewModelState?.Invoke(vm);
 
-                    viewType = resolved;
-                }
+            var viewObj = sp.GetRequiredService(viewType);
+            if (viewObj is not Window view)
+                throw new InvalidOperationException($"El tipo registrado {viewType.Name} no es una Window.");
 
-                var window = _serviceProvider.GetService(viewType) as Window
-                             ?? ActivatorUtilities.CreateInstance(_serviceProvider, viewType) as Window
-                             ?? throw new InvalidOperationException($"La vista {viewType.Name} no es una Window.");
+            if (view.DataContext == null)
+                view.DataContext = vm;
 
-                var vmObj = _serviceProvider.GetService(vmType)
-                           ?? ActivatorUtilities.CreateInstance(_serviceProvider, vmType);
+            if (System.Windows.Application.Current?.MainWindow != view)
+                view.Owner = System.Windows.Application.Current?.MainWindow;
 
-                if (vmObj is not TViewModel vm)
-                    throw new InvalidOperationException($"No se pudo crear instancia de {vmType.Name}.");
-
-                setViewModelState(vm);
-                window.DataContext = vm;
-
-                if (System.Windows.Application.Current?.MainWindow != null)
-                {
-                    window.Owner = System.Windows.Application.Current.MainWindow;
-                    window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
-                }
-                else
-                {
-                    window.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-                }
-
-                // Respetar tamaños definidos en XAML de la ventana (no forzar SizeToContent aquí)
-                var result = window.ShowDialog();
-
-                if (vm is IEditorViewModel evm && result == null)
-                    return evm.DialogResult;
-
-                return result;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error al mostrar diálogo: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-                return null;
-            }
+            // Mostrar el diálogo; al cerrar, se libera el scope (y el DbContext)
+            var result = view.ShowDialog();
+            return result;
         }
 
-        public void ShowInfo(string message) => MessageBox.Show(message, "Información", MessageBoxButton.OK, MessageBoxImage.Information);
-        public void ShowError(string message) => MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-        public bool Confirm(string message, string title) => MessageBox.Show(message, title, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
+        public void ShowInfo(string message) =>
+            MessageBox.Show(message, "Información", MessageBoxButton.OK, MessageBoxImage.Information);
+
+        public void ShowError(string message) =>
+            MessageBox.Show(message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+
+        public bool Confirm(string message, string title) =>
+            MessageBox.Show(message, title, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
     }
 }

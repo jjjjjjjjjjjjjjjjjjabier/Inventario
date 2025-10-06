@@ -17,12 +17,11 @@ namespace InventarioComputo.Domain.Entities
         public bool Activo { get; set; }
 
         public int TipoEquipoId { get; set; }
-        public virtual TipoEquipo TipoEquipo { get; set; } = new();
+        public virtual TipoEquipo? TipoEquipo { get; set; } // sin new()
 
         public int EstadoId { get; set; }
-        public virtual Estado Estado { get; set; } = new();
+        public virtual Estado? Estado { get; set; } // sin new()
 
-        // Nuevo: Empleado asignado
         public int? EmpleadoId { get; set; }
         public virtual Empleado? Empleado { get; set; }
 

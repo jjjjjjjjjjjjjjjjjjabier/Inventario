@@ -18,41 +18,30 @@ namespace InventarioComputo.Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<IReadOnlyList<Estado>> BuscarAsync(string? filtro, bool incluirInactivas, CancellationToken ct)
+        public async Task<IReadOnlyList<Estado>> BuscarAsync(string? filtro, bool incluirInactivos, CancellationToken ct = default)
         {
             var query = _context.Estados.AsQueryable();
 
-            if (!incluirInactivas)
+            if (!incluirInactivos)
             {
                 query = query.Where(e => e.Activo);
             }
 
             if (!string.IsNullOrWhiteSpace(filtro))
             {
-                query = query.Where(e => e.Nombre.Contains(filtro) || (e.Descripcion != null && e.Descripcion.Contains(filtro)));
+                query = query.Where(e => e.Nombre.Contains(filtro) ||
+                                        (e.Descripcion != null && e.Descripcion.Contains(filtro)));
             }
 
             return await query.OrderBy(e => e.Nombre).AsNoTracking().ToListAsync(ct);
         }
 
-        public async Task<bool> ExisteNombreAsync(string nombre, int? excluirId, CancellationToken ct)
+        public async Task<Estado?> ObtenerPorIdAsync(int id, CancellationToken ct = default)
         {
-            var query = _context.Estados.Where(e => e.Nombre.ToLower() == nombre.ToLower());
-
-            if (excluirId.HasValue)
-            {
-                query = query.Where(e => e.Id != excluirId.Value);
-            }
-
-            return await query.AnyAsync(ct);
+            return await _context.Estados.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id, ct);
         }
 
-        public async Task<Estado?> ObtenerPorIdAsync(int id, CancellationToken ct)
-        {
-            return await _context.Estados.FirstOrDefaultAsync(e => e.Id == id, ct);
-        }
-
-        public async Task<Estado> GuardarAsync(Estado entidad, CancellationToken ct)
+        public async Task<Estado> GuardarAsync(Estado entidad, CancellationToken ct = default)
         {
             if (entidad.Id == 0)
             {
@@ -60,7 +49,6 @@ namespace InventarioComputo.Infrastructure.Repositories
             }
             else
             {
-                // Evitar entidad duplicada trackeada con la misma PK
                 var local = _context.Estados.Local.FirstOrDefault(e => e.Id == entidad.Id);
                 if (local != null)
                 {
@@ -75,15 +63,27 @@ namespace InventarioComputo.Infrastructure.Repositories
             return entidad;
         }
 
-        public async Task EliminarAsync(int id, CancellationToken ct)
+        public async Task EliminarAsync(int id, CancellationToken ct = default)
         {
-            var entidad = await _context.Estados.FindAsync(new object[] { id }, ct);
-            if (entidad != null)
+            var estado = await _context.Estados.FindAsync(new object[] { id }, ct);
+            if (estado != null)
             {
-                entidad.Activo = false;
-                _context.Entry(entidad).State = EntityState.Modified;
+                estado.Activo = false;
+                _context.Entry(estado).State = EntityState.Modified;
                 await _context.SaveChangesAsync(ct);
             }
+        }
+
+        public Task<bool> ExisteNombreAsync(string nombre, int? idExcluir = null, CancellationToken ct = default)
+        {
+            var query = _context.Estados.AsQueryable();
+
+            if (idExcluir.HasValue)
+            {
+                query = query.Where(e => e.Id != idExcluir.Value);
+            }
+
+            return query.AnyAsync(e => e.Nombre.ToLower() == nombre.ToLower(), ct);
         }
     }
 }

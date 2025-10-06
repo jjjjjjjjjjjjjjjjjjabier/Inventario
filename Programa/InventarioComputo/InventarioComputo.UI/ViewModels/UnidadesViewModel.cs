@@ -25,6 +25,10 @@ namespace InventarioComputo.UI.ViewModels
         [ObservableProperty]
         private bool _mostrarInactivos;
 
+        // NUEVO: filtro de búsqueda real
+        [ObservableProperty]
+        private string _filtro = string.Empty;
+
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(CrearCommand))]
         [NotifyCanExecuteChangedFor(nameof(EditarCommand))]
@@ -73,7 +77,8 @@ namespace InventarioComputo.UI.ViewModels
             try
             {
                 Unidades.Clear();
-                var lista = await _srv.BuscarAsync(null, MostrarInactivos);
+                var filtro = string.IsNullOrWhiteSpace(Filtro) ? null : Filtro.Trim();
+                var lista = await _srv.BuscarAsync(filtro, MostrarInactivos);
                 foreach (var item in lista) Unidades.Add(item);
             }
             catch (Exception ex)

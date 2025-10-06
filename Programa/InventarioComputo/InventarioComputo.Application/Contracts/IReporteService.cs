@@ -9,6 +9,9 @@ namespace InventarioComputo.Application.Contracts
     public interface IReporteService
     {
         Task<IReadOnlyList<EquipoComputo>> ObtenerEquiposFiltradosAsync(FiltroReporteDTO filtro, CancellationToken ct = default);
+
+        Task<IReadOnlyList<ReporteEquipoDTO>> ObtenerEquiposDTOFiltradosAsync(FiltroReporteDTO filtro, CancellationToken ct = default);
+
         Task<byte[]> ExportarExcelAsync(IReadOnlyList<ReporteEquipoDTO> datos, CancellationToken ct = default);
         Task<byte[]> ExportarPDFAsync(IReadOnlyList<ReporteEquipoDTO> datos, CancellationToken ct = default);
     }

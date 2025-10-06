@@ -24,9 +24,9 @@ namespace InventarioComputo.Infrastructure.Repositories
                 .Include(e => e.TipoEquipo)
                 .Include(e => e.Estado)
                 .Include(e => e.Empleado)
-                .Include(e => e.Zona)
-                    .ThenInclude(z => z.Area)
-                        .ThenInclude(a => a.Sede);
+                .Include(e => e.Zona)!.ThenInclude(z => z.Area)!.ThenInclude(a => a.Sede)
+                .Include(e => e.Area)!.ThenInclude(a => a.Sede)
+                .Include(e => e.Sede);
 
         public async Task<IReadOnlyList<EquipoComputo>> ObtenerTodosAsync(bool incluirInactivos, CancellationToken ct = default)
         {
@@ -60,9 +60,7 @@ namespace InventarioComputo.Infrastructure.Repositories
         }
 
         public async Task<EquipoComputo?> ObtenerPorIdAsync(int id, CancellationToken ct = default)
-        {
-            return await BaseQuery().FirstOrDefaultAsync(e => e.Id == id, ct);
-        }
+            => await BaseQuery().AsNoTracking().FirstOrDefaultAsync(e => e.Id == id, ct);
 
         public async Task<EquipoComputo> AgregarAsync(EquipoComputo equipo, CancellationToken ct = default)
         {
@@ -82,12 +80,32 @@ namespace InventarioComputo.Infrastructure.Repositories
 
             _ctx.Attach(equipo);
             var entry = _ctx.Entry(equipo);
-            entry.State = EntityState.Modified;
 
+            // NO marcar toda la entidad como Modified. Solo los campos necesarios.
+            entry.State = EntityState.Unchanged;
+
+            // Campos de identidad y referencia
             entry.Property(e => e.TipoEquipoId).IsModified = true;
             entry.Property(e => e.EstadoId).IsModified = true;
-            entry.Property(e => e.ZonaId).IsModified = true;
             entry.Property(e => e.EmpleadoId).IsModified = true;
+            entry.Property(e => e.ZonaId).IsModified = true;
+
+            // Ubicación derivada
+            if (_ctx.Model.FindEntityType(typeof(EquipoComputo))?.FindProperty(nameof(EquipoComputo.AreaId)) != null)
+                entry.Property(e => e.AreaId).IsModified = true;
+            if (_ctx.Model.FindEntityType(typeof(EquipoComputo))?.FindProperty(nameof(EquipoComputo.SedeId)) != null)
+                entry.Property(e => e.SedeId).IsModified = true;
+
+            // Datos del equipo
+            entry.Property(e => e.NumeroSerie).IsModified = true;
+            entry.Property(e => e.EtiquetaInventario).IsModified = true;
+            entry.Property(e => e.Marca).IsModified = true;
+            entry.Property(e => e.Modelo).IsModified = true;
+            entry.Property(e => e.Caracteristicas).IsModified = true;
+            entry.Property(e => e.Observaciones).IsModified = true;
+            entry.Property(e => e.FechaAdquisicion).IsModified = true;
+            entry.Property(e => e.Costo).IsModified = true;
+            entry.Property(e => e.Activo).IsModified = true;
 
             await _ctx.SaveChangesAsync(ct);
             return equipo;
@@ -109,7 +127,7 @@ namespace InventarioComputo.Infrastructure.Repositories
             var query = _ctx.EquiposComputo.AsQueryable();
             if (idExcluir.HasValue)
                 query = query.Where(e => e.Id != idExcluir.Value);
-            return await query.AnyAsync(e => e.NumeroSerie == numeroSerie, ct);
+            return await query.AnyAsync(e => e.NumeroSerie.ToLower() == numeroSerie.ToLower(), ct);
         }
 
         public async Task<bool> ExistsByEtiquetaInventarioAsync(string etiqueta, int? idExcluir = null, CancellationToken ct = default)
@@ -117,7 +135,7 @@ namespace InventarioComputo.Infrastructure.Repositories
             var query = _ctx.EquiposComputo.AsQueryable();
             if (idExcluir.HasValue)
                 query = query.Where(e => e.Id != idExcluir.Value);
-            return await query.AnyAsync(e => e.EtiquetaInventario == etiqueta, ct);
+            return await query.AnyAsync(e => e.EtiquetaInventario.ToLower() == etiqueta.ToLower(), ct);
         }
 
         private void DesacoplarEntidadesRelacionadas(EquipoComputo equipo)
@@ -126,6 +144,8 @@ namespace InventarioComputo.Infrastructure.Repositories
             equipo.Estado = null;
             equipo.Zona = null;
             equipo.Empleado = null;
+            equipo.Area = null;
+            equipo.Sede = null;
         }
 
         public async Task<IReadOnlyList<EquipoComputo>> ObtenerParaReporteAsync(FiltroReporteDTO filtro, CancellationToken ct = default)
@@ -136,10 +156,14 @@ namespace InventarioComputo.Infrastructure.Repositories
                 query = query.Where(e => e.Activo);
 
             if (filtro.SedeId.HasValue)
-                query = query.Where(e => e.Zona != null && e.Zona.Area != null && e.Zona.Area.SedeId == filtro.SedeId);
+                query = query.Where(e =>
+                    (e.Zona != null && e.Zona.Area != null && e.Zona.Area.SedeId == filtro.SedeId) ||
+                    (e.SedeId != null && e.SedeId == filtro.SedeId));
 
             if (filtro.AreaId.HasValue)
-                query = query.Where(e => e.Zona != null && e.Zona.AreaId == filtro.AreaId);
+                query = query.Where(e =>
+                    (e.Zona != null && e.Zona.AreaId == filtro.AreaId) ||
+                    (e.AreaId != null && e.AreaId == filtro.AreaId));
 
             if (filtro.ZonaId.HasValue)
                 query = query.Where(e => e.ZonaId == filtro.ZonaId);
@@ -150,7 +174,6 @@ namespace InventarioComputo.Infrastructure.Repositories
             if (filtro.TipoEquipoId.HasValue)
                 query = query.Where(e => e.TipoEquipoId == filtro.TipoEquipoId);
 
-            // Compatibilidad: UsuarioId del DTO se interpreta como EmpleadoId
             if (filtro.UsuarioId.HasValue)
                 query = query.Where(e => e.EmpleadoId == filtro.UsuarioId);
 

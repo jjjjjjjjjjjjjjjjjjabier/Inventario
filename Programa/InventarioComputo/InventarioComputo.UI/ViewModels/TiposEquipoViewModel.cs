@@ -27,6 +27,9 @@ namespace InventarioComputo.UI.ViewModels
         private bool _mostrarInactivos;
 
         [ObservableProperty]
+        private string _filtro = string.Empty;
+
+        [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(CrearCommand))]
         [NotifyCanExecuteChangedFor(nameof(EditarCommand))]
         [NotifyCanExecuteChangedFor(nameof(EliminarCommand))]
@@ -56,6 +59,7 @@ namespace InventarioComputo.UI.ViewModels
         }
 
         partial void OnMostrarInactivosChanged(bool value) => _ = BuscarAsync();
+        partial void OnFiltroChanged(string value) => _ = BuscarAsync();
 
         [RelayCommand]
         public async Task LoadedAsync() => await BuscarAsync();
@@ -67,7 +71,8 @@ namespace InventarioComputo.UI.ViewModels
             try
             {
                 TiposEquipo.Clear();
-                var lista = await _srv.BuscarAsync(null, MostrarInactivos);
+                var filtro = string.IsNullOrWhiteSpace(Filtro) ? null : Filtro.Trim();
+                var lista = await _srv.BuscarAsync(filtro, MostrarInactivos);
                 foreach (var item in lista) TiposEquipo.Add(item);
             }
             catch (Exception ex)

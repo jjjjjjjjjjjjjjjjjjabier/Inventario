@@ -10,62 +10,124 @@ namespace InventarioComputo.Application.Services
 {
     public class MovimientoService : IMovimientoService
     {
+        private readonly IHistorialMovimientoRepository _historialRepo;
         private readonly IEquipoComputoRepository _equipoRepo;
-        private readonly IHistorialMovimientoRepository _histRepo;
+        private readonly IZonaRepository _zonaRepo;
+        private readonly IAreaRepository _areaRepo;
+        private readonly ISedeRepository _sedeRepo;
+        private readonly IUnitOfWork _uow;
         private readonly ISessionService _session;
 
-        public MovimientoService(IEquipoComputoRepository equipoRepo,
-                                 IHistorialMovimientoRepository histRepo,
-                                 ISessionService session)
+        public MovimientoService(
+            IHistorialMovimientoRepository historialRepo,
+            IEquipoComputoRepository equipoRepo,
+            IZonaRepository zonaRepo,
+            IAreaRepository areaRepo,
+            ISedeRepository sedeRepo,
+            IUnitOfWork uow,
+            ISessionService session)
         {
+            _historialRepo = historialRepo;
             _equipoRepo = equipoRepo;
-            _histRepo = histRepo;
+            _zonaRepo = zonaRepo;
+            _areaRepo = areaRepo;
+            _sedeRepo = sedeRepo;
+            _uow = uow;
             _session = session;
         }
 
         public Task<IReadOnlyList<HistorialMovimiento>> ObtenerHistorialPorEquipoAsync(int equipoId, CancellationToken ct = default)
-            => _histRepo.ObtenerHistorialEquipoAsync(equipoId, ct);
+            => _historialRepo.ObtenerPorEquipoAsync(equipoId, ct);
 
         public async Task AsignarEquipoAsync(int equipoId, int? empleadoId, int? zonaId, string motivo, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(motivo))
                 throw new ArgumentException("El motivo es obligatorio.", nameof(motivo));
 
-            var equipo = await _equipoRepo.ObtenerPorIdAsync(equipoId, ct) ?? throw new InvalidOperationException("Equipo no encontrado.");
+            var usuarioRespId = _session.UsuarioActual?.Id;
+            if (usuarioRespId == null || usuarioRespId == 0)
+                throw new InvalidOperationException("No se pudo determinar el usuario en sesión. Por favor, cierre sesión y vuelva a iniciarla.");
 
-            var anteriorEmpleadoId = equipo.EmpleadoId;
-            var anteriorZonaId = equipo.ZonaId;
-            var anteriorAreaId = equipo.AreaId;
-            var anteriorSedeId = equipo.SedeId;
+            var actual = await _equipoRepo.ObtenerPorIdAsync(equipoId, ct)
+                ?? throw new InvalidOperationException($"No se encontró el equipo con ID {equipoId}.");
 
-            // Actualizar asignación actual
-            equipo.EmpleadoId = empleadoId;
-            equipo.ZonaId = zonaId;
+            // Valores anteriores
+            int? empleadoAnteriorId = actual.EmpleadoId;
+            int? zonaAnteriorId = actual.ZonaId;
+            int? areaAnteriorId = actual.AreaId ?? actual.Zona?.AreaId;
+            int? sedeAnteriorId = actual.SedeId ?? actual.Zona?.Area?.SedeId;
 
-            // Si zona cambia, derivar area/sede (el repo del equipo debe manejarlos en capa infra si corresponde)
-            await _equipoRepo.ActualizarAsync(equipo, ct);
+            // Mantener ubicación si no se recibe nueva zona
+            int? nuevaZonaId = zonaId ?? actual.ZonaId;
+            int? areaNuevaId = actual.AreaId ?? actual.Zona?.AreaId;
+            int? sedeNuevaId = actual.SedeId ?? actual.Zona?.Area?.SedeId;
 
-            // Registrar historial
-            var hist = new HistorialMovimiento
+            if (zonaId.HasValue)
             {
-                EquipoComputoId = equipo.Id,
-                FechaMovimiento = DateTime.UtcNow,
-                EmpleadoAnteriorId = anteriorEmpleadoId,
-                ZonaAnteriorId = anteriorZonaId,
-                AreaAnteriorId = anteriorAreaId,
-                SedeAnteriorId = anteriorSedeId,
-                EmpleadoNuevoId = empleadoId,
-                ZonaNuevaId = zonaId,
-                AreaNuevaId = equipo.AreaId,
-                SedeNuevaId = equipo.SedeId,
+                var zona = await _zonaRepo.ObtenerPorIdAsync(zonaId.Value, ct)
+                    ?? throw new InvalidOperationException("La zona seleccionada no existe.");
+                areaNuevaId = zona.AreaId;
+
+                var area = await _areaRepo.ObtenerPorIdAsync(zona.AreaId, ct)
+                    ?? throw new InvalidOperationException("El área asociada a la zona no existe.");
+                sedeNuevaId = area.SedeId;
+            }
+
+            var historial = new HistorialMovimiento
+            {
+                EquipoComputoId = equipoId,
+                FechaMovimiento = DateTime.Now,
                 Motivo = motivo.Trim(),
-                UsuarioResponsableId = _session.UsuarioActual?.Id ?? 0
+                UsuarioResponsableId = usuarioRespId.Value,
+                EmpleadoAnteriorId = empleadoAnteriorId,
+                EmpleadoNuevoId = empleadoId,
+                ZonaAnteriorId = zonaAnteriorId,
+                ZonaNuevaId = nuevaZonaId,
+                AreaAnteriorId = areaAnteriorId,
+                AreaNuevaId = areaNuevaId,
+                SedeAnteriorId = sedeAnteriorId,
+                SedeNuevaId = sedeNuevaId
             };
 
-            await _histRepo.AgregarAsync(hist, ct);
+            var equipoActualizar = new EquipoComputo
+            {
+                Id = equipoId,
+                EmpleadoId = empleadoId,
+                ZonaId = nuevaZonaId,
+                AreaId = areaNuevaId,
+                SedeId = sedeNuevaId,
+
+                // Mantener datos requeridos
+                TipoEquipoId = actual.TipoEquipoId,
+                EstadoId = actual.EstadoId,
+                NumeroSerie = actual.NumeroSerie,
+                EtiquetaInventario = actual.EtiquetaInventario,
+                Marca = actual.Marca,
+                Modelo = actual.Modelo,
+                Caracteristicas = actual.Caracteristicas,
+                Observaciones = actual.Observaciones,
+                FechaAdquisicion = actual.FechaAdquisicion,
+                Costo = actual.Costo,
+                Activo = actual.Activo
+            };
+
+            await using var tx = await _uow.BeginTransactionAsync(ct);
+            try
+            {
+                await _historialRepo.AgregarAsync(historial, ct);
+                await _equipoRepo.ActualizarAsync(equipoActualizar, ct);
+                await tx.CommitAsync(ct);
+            }
+            catch
+            {
+                await tx.RollbackAsync(ct);
+                throw;
+            }
         }
 
-        public Task RegistrarMovimientoAsync(int equipoId, int? empleadoNuevoId, int? zonaNuevaId, string motivo, int usuarioResponsableId, CancellationToken ct = default)
-            => AsignarEquipoAsync(equipoId, empleadoNuevoId, zonaNuevaId, motivo, ct);
+        public async Task RegistrarMovimientoAsync(int equipoId, int? empleadoNuevoId, int? zonaNuevaId, string motivo, int usuarioResponsableId, CancellationToken ct = default)
+        {
+            await AsignarEquipoAsync(equipoId, empleadoNuevoId, zonaNuevaId, motivo, ct);
+        }
     }
 }

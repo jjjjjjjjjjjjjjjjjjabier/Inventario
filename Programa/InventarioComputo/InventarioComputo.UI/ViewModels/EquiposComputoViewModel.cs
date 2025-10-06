@@ -28,6 +28,14 @@ namespace InventarioComputo.UI.ViewModels
         [NotifyCanExecuteChangedFor(nameof(AsignarEquipoCommand))]
         private EquipoComputo? _equipoSeleccionado;
 
+        partial void OnEquipoSeleccionadoChanged(EquipoComputo? value)
+        {
+            EditarCommand?.NotifyCanExecuteChanged();
+            EliminarCommand?.NotifyCanExecuteChanged();
+            VerHistorialCommand?.NotifyCanExecuteChanged();
+            AsignarEquipoCommand?.NotifyCanExecuteChanged();
+        }
+
         [ObservableProperty]
         private bool _mostrarInactivos;
 
@@ -66,7 +74,6 @@ namespace InventarioComputo.UI.ViewModels
             _sessionService = sessionService;
             Logger = log;
 
-            // Alinear con el seed/roles reales: "Administrador"
             EsAdministrador = _sessionService.TieneRol("Administrador");
             _sessionService.SesionCambiada += OnSesionCambiada;
         }
@@ -97,7 +104,6 @@ namespace InventarioComputo.UI.ViewModels
         }
 
         private bool PuedeCrearEditar() => EsAdministrador && !IsBusy;
-
         private bool CanEditarEliminar() => EsAdministrador && _equipoSeleccionado != null && !IsBusy;
 
         [RelayCommand(CanExecute = nameof(CanEditarEliminar))]
@@ -180,12 +186,7 @@ namespace InventarioComputo.UI.ViewModels
         public void VerHistorial()
         {
             if (_equipoSeleccionado == null) return;
-
-            _dialogService.ShowDialog<HistorialEquipoViewModel>(vm =>
-            {
-                // No bloquear el hilo UI
-                _ = vm.CargarHistorialAsync(_equipoSeleccionado.Id);
-            });
+            _dialogService.ShowDialog<HistorialEquipoViewModel>(vm => _ = vm.CargarHistorialAsync(_equipoSeleccionado.Id));
         }
 
         private bool CanVerHistorial() => _equipoSeleccionado != null && !IsBusy;
@@ -200,13 +201,9 @@ namespace InventarioComputo.UI.ViewModels
                 var equipo = await _srv.ObtenerPorIdAsync(_equipoSeleccionado.Id);
                 if (equipo != null)
                 {
-                    _dialogService.ShowDialog<AsignarEquipoViewModel>(vm =>
-                    {
-                        // Cargar de forma asíncrona, sin bloquear
-                        _ = vm.InitializeAsync(equipo);
-                    });
-
-                    await BuscarAsync();
+                    var ok = _dialogService.ShowDialog<AsignarEquipoViewModel>(vm => _ = vm.InitializeAsync(equipo));
+                    if (ok == true)
+                        await BuscarAsync();
                 }
             }
             catch (Exception ex)

@@ -10,7 +10,6 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Windows;
 
 namespace InventarioComputo.UI.ViewModels
 {
@@ -30,7 +29,6 @@ namespace InventarioComputo.UI.ViewModels
         private string _titulo = "Nuevo Equipo";
         public bool DialogResult { get; set; }
 
-        // --- Propiedades del formulario ---
         public string NumeroSerie { get => _entidad.NumeroSerie; set => SetProperty(_entidad.NumeroSerie, value, _entidad, (e, v) => e.NumeroSerie = v); }
         public string EtiquetaInventario { get => _entidad.EtiquetaInventario; set => SetProperty(_entidad.EtiquetaInventario, value, _entidad, (e, v) => e.EtiquetaInventario = v); }
         public string Marca { get => _entidad.Marca; set => SetProperty(_entidad.Marca, value, _entidad, (e, v) => e.Marca = v); }
@@ -38,8 +36,8 @@ namespace InventarioComputo.UI.ViewModels
         public string Caracteristicas { get => _entidad.Caracteristicas; set => SetProperty(_entidad.Caracteristicas, value, _entidad, (e, v) => e.Caracteristicas = v); }
         public string? Observaciones { get => _entidad.Observaciones; set => SetProperty(_entidad.Observaciones, value, _entidad, (e, v) => e.Observaciones = v); }
         public DateTime? FechaAdquisicion { get => _entidad.FechaAdquisicion; set => SetProperty(_entidad.FechaAdquisicion, value, _entidad, (e, v) => e.FechaAdquisicion = v); }
+        public decimal Costo { get => _entidad.Costo; set => SetProperty(_entidad.Costo, value, _entidad, (e, v) => e.Costo = v); }
 
-        // --- Propiedades para ComboBoxes ---
         public ObservableCollection<TipoEquipo> TiposEquipo { get; } = new();
         public ObservableCollection<Estado> Estados { get; } = new();
         public ObservableCollection<Sede> Sedes { get; } = new();
@@ -72,8 +70,6 @@ namespace InventarioComputo.UI.ViewModels
             _entidad = equipo;
             if (equipo.Id > 0) Titulo = "Editar Equipo";
             else FechaAdquisicion = DateTime.Today;
-
-            // Cargar los combos y luego seleccionar los valores del equipo
             _ = CargarCombosAsync();
         }
 
@@ -83,7 +79,6 @@ namespace InventarioComputo.UI.ViewModels
             Zonas.Clear();
             if (SedeSeleccionada != null)
             {
-                // Incluir inactivas para poder preseleccionar áreas existentes
                 var areas = await _areaSrv.BuscarAsync(SedeSeleccionada.Id, null, true, default);
                 foreach (var a in areas) Areas.Add(a);
 
@@ -97,7 +92,6 @@ namespace InventarioComputo.UI.ViewModels
             Zonas.Clear();
             if (AreaSeleccionada != null)
             {
-                // Incluir inactivas para poder preseleccionar zonas existentes
                 var zonas = await _zonaSrv.BuscarAsync(AreaSeleccionada.Id, null, true, default);
                 foreach (var z in zonas) Zonas.Add(z);
 
@@ -111,7 +105,6 @@ namespace InventarioComputo.UI.ViewModels
             IsBusy = true;
             try
             {
-                // Cargar catálogos (incluye inactivas para preselección en ediciones)
                 var tipos = await _tipoEquipoSrv.BuscarAsync(null, true);
                 TiposEquipo.Clear();
                 foreach (var t in tipos) TiposEquipo.Add(t);
@@ -145,10 +138,6 @@ namespace InventarioComputo.UI.ViewModels
                             }
                         }
                     }
-                }
-                else
-                {
-                    // valores por defecto opcionales para nuevo
                 }
             }
             catch (Exception ex)
@@ -195,6 +184,11 @@ namespace InventarioComputo.UI.ViewModels
                 _dialogService.ShowError("Las observaciones no pueden exceder 1000 caracteres.");
                 return;
             }
+            if (Costo < 0)
+            {
+                _dialogService.ShowError("El costo no puede ser negativo.");
+                return;
+            }
             if (TipoEquipoSeleccionado == null)
             {
                 _dialogService.ShowError("Debe seleccionar un tipo de equipo.");
@@ -205,13 +199,12 @@ namespace InventarioComputo.UI.ViewModels
                 _dialogService.ShowError("Debe seleccionar un estado.");
                 return;
             }
-            // Ubicación opcional: no forzamos ZonaSeleccionada
 
             try
             {
                 _entidad.TipoEquipoId = TipoEquipoSeleccionado.Id;
                 _entidad.EstadoId = EstadoSeleccionado.Id;
-                _entidad.ZonaId = ZonaSeleccionada?.Id; // opcional
+                _entidad.ZonaId = ZonaSeleccionada?.Id;
 
                 if (_entidad.Id == 0)
                     await _equipoSrv.AgregarAsync(_entidad);
@@ -228,8 +221,9 @@ namespace InventarioComputo.UI.ViewModels
             }
             catch (Exception ex)
             {
+                var msg = ex.GetBaseException().Message; // Mostrar causa real
                 Logger?.LogError(ex, "Error al guardar equipo");
-                _dialogService.ShowError("Ocurrió un error al guardar: " + ex.Message);
+                _dialogService.ShowError("Ocurrió un error al guardar: " + msg);
             }
         }
 

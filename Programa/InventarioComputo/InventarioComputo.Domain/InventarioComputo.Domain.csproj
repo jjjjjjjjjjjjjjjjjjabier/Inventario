@@ -8,7 +8,6 @@
 
 	<ItemGroup>
 	  <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.8" />
-	  <PackageReference Include="QuestPDF" Version="2025.12.0-alpha1" />
 	</ItemGroup>
 
 </Project>

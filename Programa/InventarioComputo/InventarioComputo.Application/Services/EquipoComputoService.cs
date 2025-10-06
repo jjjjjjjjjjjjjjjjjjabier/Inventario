@@ -40,6 +40,14 @@ namespace InventarioComputo.Application.Services
             if (await _repo.ExistsByEtiquetaInventarioAsync(equipo.EtiquetaInventario, null, ct))
                 throw new InvalidOperationException($"Ya existe un equipo con la etiqueta '{equipo.EtiquetaInventario}'.");
 
+            // Defensa adicional (evitar tracking de navegaciones)
+            equipo.TipoEquipo = null;
+            equipo.Estado = null;
+            equipo.Zona = null;
+            equipo.Empleado = null;
+            equipo.Area = null;
+            equipo.Sede = null;
+
             var agregado = await _repo.AgregarAsync(equipo, ct);
 
             await _bitacora.RegistrarAsync(
@@ -62,6 +70,14 @@ namespace InventarioComputo.Application.Services
 
             if (await _repo.ExistsByEtiquetaInventarioAsync(equipo.EtiquetaInventario, equipo.Id, ct))
                 throw new InvalidOperationException($"Ya existe otro equipo con la etiqueta '{equipo.EtiquetaInventario}'.");
+
+            // Defensa adicional (evitar tracking de navegaciones)
+            equipo.TipoEquipo = null;
+            equipo.Estado = null;
+            equipo.Zona = null;
+            equipo.Empleado = null;
+            equipo.Area = null;
+            equipo.Sede = null;
 
             await _repo.ActualizarAsync(equipo, ct);
 
@@ -110,6 +126,8 @@ namespace InventarioComputo.Application.Services
             if (e.Modelo.Length > 100) throw new ArgumentException("Modelo demasiado largo (máx. 100).", nameof(e.Modelo));
             if (e.Caracteristicas.Length > 500) throw new ArgumentException("Caracteristicas demasiado largas (máx. 500).", nameof(e.Caracteristicas));
             if (e.Observaciones?.Length > 1000) throw new ArgumentException("Observaciones demasiado largas (máx. 1000).", nameof(e.Observaciones));
+
+            if (e.Costo < 0) throw new ArgumentException("El costo no puede ser negativo.", nameof(e.Costo));
         }
     }
 }

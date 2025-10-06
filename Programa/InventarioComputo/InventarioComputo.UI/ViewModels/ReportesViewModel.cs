@@ -8,11 +8,10 @@ using InventarioComputo.UI.ViewModels.Base;
 using Microsoft.Extensions.Logging;
 using Microsoft.Win32;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using System.IO;
 
 namespace InventarioComputo.UI.ViewModels
 {
@@ -24,7 +23,7 @@ namespace InventarioComputo.UI.ViewModels
         private readonly ISedeService _sedeService;
         private readonly IAreaService _areaService;
         private readonly IZonaService _zonaService;
-        private readonly IUsuarioService _usuarioService;
+        private readonly IEmpleadoService _empleadoService;
         private readonly IDialogService _dialogService;
 
         public ObservableCollection<TipoEquipo> TiposEquipo { get; } = new();
@@ -32,16 +31,25 @@ namespace InventarioComputo.UI.ViewModels
         public ObservableCollection<Sede> Sedes { get; } = new();
         public ObservableCollection<Area> Areas { get; } = new();
         public ObservableCollection<Zona> Zonas { get; } = new();
-        public ObservableCollection<Usuario> Usuarios { get; } = new();
+        public ObservableCollection<Empleado> Empleados { get; } = new();
 
-        public ObservableCollection<EquipoComputo> Resultados { get; } = new();
+        // Resultados del reporte: DTOs listos para UI/PDF/Excel
+        public ObservableCollection<ReporteEquipoDTO> Resultados { get; } = new();
 
         [ObservableProperty] private TipoEquipo? _tipoEquipoSeleccionado;
         [ObservableProperty] private Estado? _estadoSeleccionado;
         [ObservableProperty] private Sede? _sedeSeleccionada;
         [ObservableProperty] private Area? _areaSeleccionada;
         [ObservableProperty] private Zona? _zonaSeleccionada;
-        [ObservableProperty] private Usuario? _usuarioSeleccionado;
+
+        // Definición explícita para evitar CS0103 (no depender del generador aquí)
+        private Empleado? _empleadoSeleccionado;
+        public Empleado? EmpleadoSeleccionado
+        {
+            get => _empleadoSeleccionado;
+            set => SetProperty(ref _empleadoSeleccionado, value);
+        }
+
         [ObservableProperty] private DateTime? _fechaDesde;
         [ObservableProperty] private DateTime? _fechaHasta;
         [ObservableProperty] private bool _incluirInactivos;
@@ -53,7 +61,7 @@ namespace InventarioComputo.UI.ViewModels
             ISedeService sedeService,
             IAreaService areaService,
             IZonaService zonaService,
-            IUsuarioService usuarioService,
+            IEmpleadoService empleadoService,
             IDialogService dialogService,
             ILogger<ReportesViewModel> logger)
         {
@@ -63,7 +71,7 @@ namespace InventarioComputo.UI.ViewModels
             _sedeService = sedeService;
             _areaService = areaService;
             _zonaService = zonaService;
-            _usuarioService = usuarioService;
+            _empleadoService = empleadoService;
             _dialogService = dialogService;
             Logger = logger;
         }
@@ -85,8 +93,8 @@ namespace InventarioComputo.UI.ViewModels
                 Sedes.Clear();
                 foreach (var s in await _sedeService.BuscarAsync(null, true)) Sedes.Add(s);
 
-                Usuarios.Clear();
-                foreach (var u in await _usuarioService.BuscarAsync(null, true)) Usuarios.Add(u);
+                Empleados.Clear();
+                foreach (var emp in await _empleadoService.ObtenerTodosAsync(false)) Empleados.Add(emp);
             }
             catch (Exception ex)
             {
@@ -98,11 +106,8 @@ namespace InventarioComputo.UI.ViewModels
 
         partial void OnSedeSeleccionadaChanged(Sede? value)
         {
-            // Limpiar selecciones dependientes
             AreaSeleccionada = null;
             ZonaSeleccionada = null;
-
-            // Disparar la carga de áreas
             _ = CargarAreasAsync();
         }
 
@@ -116,61 +121,46 @@ namespace InventarioComputo.UI.ViewModels
 
             try
             {
-                IsBusy = true;
                 var areas = await _areaService.BuscarAsync(SedeSeleccionada.Id, null, true);
-                foreach (var area in areas)
-                {
-                    Areas.Add(area);
-                }
+                foreach (var area in areas) Areas.Add(area);
             }
             catch (Exception ex)
             {
                 Logger?.LogError(ex, "Error cargando áreas");
             }
-            finally
-            {
-                IsBusy = false;
-            }
         }
 
         partial void OnAreaSeleccionadaChanged(Area? value)
         {
-            // Limpiar selección dependiente
             ZonaSeleccionada = null;
-
-            // Disparar carga de zonas
             _ = CargarZonasAsync();
         }
 
         private async Task CargarZonasAsync()
         {
             Zonas.Clear();
-
-            if (AreaSeleccionada == null)
-                return;
+            if (AreaSeleccionada == null) return;
 
             try
             {
-                IsBusy = true;
                 var zonas = await _zonaService.BuscarAsync(AreaSeleccionada.Id, null, true);
-                foreach (var zona in zonas)
-                {
-                    Zonas.Add(zona);
-                }
+                foreach (var zona in zonas) Zonas.Add(zona);
             }
             catch (Exception ex)
             {
                 Logger?.LogError(ex, "Error cargando zonas");
-            }
-            finally
-            {
-                IsBusy = false;
             }
         }
 
         [RelayCommand]
         public async Task GenerarReporteAsync()
         {
+            if (FechaDesde.HasValue && FechaHasta.HasValue && FechaDesde > FechaHasta)
+            {
+                _dialogService.ShowError("La fecha inicial no puede ser mayor que la fecha final.");
+                return;
+            }
+
             IsBusy = true;
             try
             {
@@ -181,15 +171,16 @@ namespace InventarioComputo.UI.ViewModels
                     SedeId = SedeSeleccionada?.Id,
                     AreaId = AreaSeleccionada?.Id,
                     ZonaId = ZonaSeleccionada?.Id,
-                    UsuarioId = UsuarioSeleccionado?.Id,
+                    // Compatibilidad: UsuarioId = EmpleadoId
+                    UsuarioId = EmpleadoSeleccionado?.Id,
                     FechaDesde = FechaDesde,
                     FechaHasta = FechaHasta,
                     IncluirInactivos = IncluirInactivos
                 };
 
                 Resultados.Clear();
-                var equipos = await _reporteService.ObtenerEquiposFiltradosAsync(filtro);
-                foreach (var e in equipos) Resultados.Add(e);
+                var dto = await _reporteService.ObtenerEquiposDTOFiltradosAsync(filtro);
+                foreach (var r in dto) Resultados.Add(r);
 
                 if (Resultados.Count == 0)
                     _dialogService.ShowInfo("No se encontraron equipos con los criterios especificados.");
@@ -197,24 +188,25 @@ namespace InventarioComputo.UI.ViewModels
             catch (Exception ex)
             {
                 Logger?.LogError(ex, "Error generando reporte");
-                _dialogService.ShowError("Ocurrió un error al generar el reporte: " + ex.Message);
+                _dialogService.ShowError("Ocurrió un error al generar el reporte.");
             }
             finally { IsBusy = false; }
         }
 
         [RelayCommand]
-        public async Task LimpiarFiltrosAsync()
+        public Task LimpiarFiltrosAsync()
         {
             TipoEquipoSeleccionado = null;
             EstadoSeleccionado = null;
             SedeSeleccionada = null;
             AreaSeleccionada = null;
             ZonaSeleccionada = null;
-            UsuarioSeleccionado = null;
+            EmpleadoSeleccionado = null;
             FechaDesde = null;
             FechaHasta = null;
             IncluirInactivos = false;
             Resultados.Clear();
+            return Task.CompletedTask;
         }
 
         [RelayCommand]
@@ -239,15 +231,14 @@ namespace InventarioComputo.UI.ViewModels
             IsBusy = true;
             try
             {
-                var dto = MapearResultadosADTO(Resultados);
-                var bytes = await _reporteService.ExportarExcelAsync(dto);
+                var bytes = await _reporteService.ExportarExcelAsync(Resultados.ToList());
                 await File.WriteAllBytesAsync(save.FileName, bytes);
                 _dialogService.ShowInfo("Reporte en Excel generado correctamente.");
             }
             catch (Exception ex)
             {
                 Logger?.LogError(ex, "Error exportando a Excel");
-                _dialogService.ShowError("No se pudo exportar a Excel: " + ex.Message);
+                _dialogService.ShowError("No se pudo exportar a Excel.");
             }
             finally { IsBusy = false; }
         }
@@ -261,58 +252,27 @@ namespace InventarioComputo.UI.ViewModels
                 return;
             }
 
+            var sfd = new SaveFileDialog
+            {
+                Filter = "PDF (*.pdf)|*.pdf",
+                FileName = $"Inventario_{DateTime.Now:yyyyMMdd_HHmm}.pdf"
+            };
+            if (sfd.ShowDialog() != true)
+                return;
+
+            IsBusy = true;
             try
             {
-                var datos = MapearResultadosADTO(Resultados);
-
-                var sfd = new SaveFileDialog
-                {
-                    Filter = "PDF (*.pdf)|*.pdf",
-                    FileName = $"Inventario_{DateTime.Now:yyyyMMdd_HHmm}.pdf"
-                };
-                if (sfd.ShowDialog() == true)
-                {
-                    var bytes = await _reporteService.ExportarPDFAsync(datos);
-                    await File.WriteAllBytesAsync(sfd.FileName, bytes);
-                    _dialogService.ShowInfo("Reporte PDF generado correctamente.");
-                }
+                var bytes = await _reporteService.ExportarPDFAsync(Resultados.ToList());
+                await File.WriteAllBytesAsync(sfd.FileName, bytes);
+                _dialogService.ShowInfo("Reporte PDF generado correctamente.");
             }
             catch (Exception ex)
             {
                 Logger?.LogError(ex, "Error exportando PDF");
                 _dialogService.ShowError("Ocurrió un error al exportar a PDF.");
             }
-        }
-
-        private static List<ReporteEquipoDTO> MapearResultadosADTO(ObservableCollection<EquipoComputo> equipos)
-        {
-            var list = new List<ReporteEquipoDTO>(equipos.Count);
-            foreach (var e in equipos)
-            {
-                string ubicacion = string.Empty;
-                if (e.Zona != null)
-                {
-                    var sede = e.Zona.Area?.Sede?.Nombre ?? "";
-                    var area = e.Zona.Area?.Nombre ?? "";
-                    var zona = e.Zona.Nombre ?? "";
-                    ubicacion = string.Join(" > ", new[] { sede, area, zona }.Where(x => !string.IsNullOrWhiteSpace(x)));
-                }
-
-                list.Add(new ReporteEquipoDTO
-                {
-                    EtiquetaInventario = e.EtiquetaInventario,
-                    NumeroSerie = e.NumeroSerie,
-                    Marca = e.Marca,
-                    Modelo = e.Modelo,
-                    TipoEquipo = e.TipoEquipo?.Nombre,
-                    Estado = e.Estado?.Nombre,
-                    Ubicacion = ubicacion,
-                    UsuarioAsignado = e.Empleado?.NombreCompleto,
-                    FechaAdquisicion = e.FechaAdquisicion.HasValue ? e.FechaAdquisicion.Value : DateTime.Now,
-                    Activo = e.Activo
-                });
-            }
-            return list;
+            finally { IsBusy = false; }
         }
     }
 }

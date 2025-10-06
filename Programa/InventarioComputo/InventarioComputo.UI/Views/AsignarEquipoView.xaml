@@ -7,221 +7,214 @@
         mc:Ignorable="d"
         Title="Asignar Equipo"
         SizeToContent="Height"
-        Width="550"
+        Width="560"
+        MaxHeight="680"
+        MinWidth="520"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize"
+        ResizeMode="CanResize"
         Background="#F8F9FA">
-
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
-        <conv:ObjectToVisibilityConverter x:Key="ObjectToVisibilityConverter"/>
+        <conv:NotNullToBoolConverter x:Key="NotNullToBoolConverter"/>
     </Window.Resources>
 
-    <Grid Margin="0">
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Encabezado -->
-        <Border Grid.Row="0" 
-                Background="#F5F7FA" 
-                BorderBrush="#E1E5EB" 
-                BorderThickness="0,0,0,1" 
+        <Border Grid.Row="0"
+                Background="#F5F7FA"
+                BorderBrush="#E1E5EB"
+                BorderThickness="0,0,0,1"
                 Padding="24,16">
-            <TextBlock Text="Asignación de Equipo" 
-                       FontSize="22" 
-                       FontWeight="Medium" 
+            <TextBlock Text="Asignación de Equipo"
+                       FontSize="22"
+                       FontWeight="Medium"
                        Foreground="#2C3E50"/>
         </Border>
 
-        <!-- Formulario -->
-        <StackPanel Grid.Row="1" Margin="24,16">
-            <!-- Informacion del equipo -->
-            <Border Background="#F5F7FA" 
-                    BorderBrush="#E1E5EB" 
-                    BorderThickness="1" 
-                    CornerRadius="4" 
-                    Padding="16" 
-                    Margin="0,0,0,20">
-                <Grid>
+        <!-- Contenido desplazable -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="24,16">
+                <!-- Información del equipo -->
+                <Border Background="#F5F7FA"
+                        BorderBrush="#E1E5EB"
+                        BorderThickness="1"
+                        CornerRadius="4"
+                        Padding="16"
+                        Margin="0,0,0,20">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,8,8">
+                            <TextBlock Text="Número de Serie"
+                                       FontWeight="Medium"
+                                       FontSize="12"
+                                       Foreground="#666666"/>
+                            <TextBlock Text="{Binding NumeroSerie}"
+                                       FontSize="14"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Grid.Row="0" Margin="8,0,0,8">
+                            <TextBlock Text="Etiqueta"
+                                       FontWeight="Medium"
+                                       FontSize="12"
+                                       Foreground="#666666"/>
+                            <TextBlock Text="{Binding Etiqueta}"
+                                       FontSize="14"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,8,8">
+                            <TextBlock Text="Descripción"
+                                       FontWeight="Medium"
+                                       FontSize="12"
+                                       Foreground="#666666"/>
+                            <TextBlock Text="{Binding DescripcionEquipo}"
+                                       FontSize="14"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Grid.Row="1" Margin="8,0,0,8">
+                            <TextBlock Text="Asignación Actual"
+                                       FontWeight="Medium"
+                                       FontSize="12"
+                                       Foreground="#666666"/>
+                            <TextBlock Text="{Binding AsignacionActual}"
+                                       FontSize="14"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Formulario de asignación -->
+                <TextBlock Text="Nueva Asignación"
+                           FontWeight="SemiBold"
+                           FontSize="16"
+                           Margin="0,0,0,12"/>
+
+                <!-- Tipo de asignación -->
+                <Grid Margin="0,0,0,16">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
 
-                    <StackPanel Grid.Column="0" Grid.Row="0" Margin="0,0,8,8">
-                        <TextBlock Text="Número de Serie" 
-                                   FontWeight="Medium" 
-                                   FontSize="12" 
-                                   Foreground="#666666"/>
-                        <TextBlock Text="{Binding Equipo.NumeroSerie}" 
-                                   FontSize="14"/>
-                    </StackPanel>
+                    <RadioButton Grid.Column="0"
+                                 Content="Asignar a Empleado"
+                                 IsChecked="{Binding AsignarAEmpleado}"
+                                 GroupName="TipoAsignacion"
+                                 VerticalAlignment="Center"
+                                 Margin="0,0,8,0"/>
 
-                    <StackPanel Grid.Column="1" Grid.Row="0" Margin="8,0,0,8">
-                        <TextBlock Text="Etiqueta" 
-                                   FontWeight="Medium" 
-                                   FontSize="12" 
-                                   Foreground="#666666"/>
-                        <TextBlock Text="{Binding Equipo.EtiquetaInventario}" 
-                                   FontSize="14"/>
-                    </StackPanel>
-
-                    <StackPanel Grid.Column="0" Grid.Row="1" Margin="0,0,8,8">
-                        <TextBlock Text="Marca / Modelo" 
-                                   FontWeight="Medium" 
-                                   FontSize="12" 
-                                   Foreground="#666666"/>
-                        <TextBlock FontSize="14">
-                            <Run Text="{Binding Equipo.Marca}"/>
-                            <Run Text=" / "/>
-                            <Run Text="{Binding Equipo.Modelo}"/>
-                        </TextBlock>
-                    </StackPanel>
-
-                    <StackPanel Grid.Column="1" Grid.Row="1" Margin="8,0,0,8">
-                        <TextBlock Text="Tipo" 
-                                   FontWeight="Medium" 
-                                   FontSize="12" 
-                                   Foreground="#666666"/>
-                        <TextBlock Text="{Binding Equipo.TipoEquipo.Nombre}" 
-                                   FontSize="14"/>
-                    </StackPanel>
-
-                    <StackPanel Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2">
-                        <TextBlock Text="Asignación Actual" 
-                                   FontWeight="Medium" 
-                                   FontSize="12" 
-                                   Foreground="#666666"/>
-                        <TextBlock FontSize="14" TextWrapping="Wrap">
-                            <Run Text="{Binding AsignacionActual}"/>
-                        </TextBlock>
-                    </StackPanel>
+                    <RadioButton Grid.Column="1"
+                                 Content="Asignar a Ubicación"
+                                 IsChecked="{Binding AsignarAUbicacion}"
+                                 GroupName="TipoAsignacion"
+                                 VerticalAlignment="Center"
+                                 Margin="8,0,0,0"/>
                 </Grid>
-            </Border>
 
-            <!-- Formulario de asignacion -->
-            <TextBlock Text="Nueva Asignación" 
-                       FontWeight="SemiBold" 
-                       FontSize="16" 
-                       Margin="0,0,0,12"/>
-
-            <!-- Seleccionar tipo de asignacion -->
-            <Grid Margin="0,0,0,16">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-
-                <RadioButton Grid.Column="0" 
-                             Content="Asignar a Empleado" 
-                             IsChecked="{Binding AsignarAEmpleado}"
-                             GroupName="TipoAsignacion"
-                             VerticalAlignment="Center"
-                             Margin="0,0,8,0"/>
-
-                <RadioButton Grid.Column="1" 
-                             Content="Asignar a Ubicación" 
-                             IsChecked="{Binding AsignarAUbicacion}"
-                             GroupName="TipoAsignacion"
-                             VerticalAlignment="Center"
-                             Margin="8,0,0,0"/>
-            </Grid>
-
-            <!-- Seleccion de empleado -->
-            <StackPanel Visibility="{Binding AsignarAEmpleado, Converter={StaticResource BooleanToVisibilityConverter}}"
-                        Margin="0,0,0,12">
-                <TextBlock Text="Empleado *" 
-                           FontWeight="Medium" 
-                           Margin="0,0,0,4"/>
-                <ComboBox ItemsSource="{Binding Empleados}" 
-                          SelectedItem="{Binding EmpleadoSeleccionado}"
-                          DisplayMemberPath="NombreCompleto"
-                          Padding="10,8" 
-                          BorderBrush="#D1D5DB" 
-                          BorderThickness="1"/>
-            </StackPanel>
-
-            <!-- Selección de ubicacion -->
-            <StackPanel Visibility="{Binding AsignarAUbicacion, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <StackPanel Margin="0,0,0,12">
-                    <TextBlock Text="Sede *" 
-                               FontWeight="Medium" 
+                <!-- Selección de empleado -->
+                <StackPanel Visibility="{Binding AsignarAEmpleado, Converter={StaticResource BooleanToVisibilityConverter}}"
+                            Margin="0,0,0,12">
+                    <TextBlock Text="Empleado *"
+                               FontWeight="Medium"
                                Margin="0,0,0,4"/>
-                    <ComboBox ItemsSource="{Binding Sedes}" 
-                              SelectedItem="{Binding SedeSeleccionada}"
-                              DisplayMemberPath="Nombre"
-                              Padding="10,8" 
-                              BorderBrush="#D1D5DB" 
+                    <ComboBox ItemsSource="{Binding Empleados}"
+                              SelectedItem="{Binding EmpleadoSeleccionado}"
+                              DisplayMemberPath="NombreCompleto"
+                              Padding="10,8"
+                              BorderBrush="#D1D5DB"
                               BorderThickness="1"/>
                 </StackPanel>
 
-                <StackPanel Margin="0,0,0,12">
-                    <TextBlock Text="Área *" 
-                               FontWeight="Medium" 
-                               Margin="0,0,0,4"/>
-                    <ComboBox ItemsSource="{Binding Areas}" 
-                              SelectedItem="{Binding AreaSeleccionada}"
-                              DisplayMemberPath="Nombre"
-                              Padding="10,8" 
-                              BorderBrush="#D1D5DB" 
-                              BorderThickness="1"
-                              IsEnabled="{Binding SedeSeleccionada, Converter={StaticResource ObjectToVisibilityConverter}}"/>
+                <!-- Selección de ubicación -->
+                <StackPanel Visibility="{Binding AsignarAUbicacion, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel Margin="0,0,0,12">
+                        <TextBlock Text="Sede *"
+                                   FontWeight="Medium"
+                                   Margin="0,0,0,4"/>
+                        <ComboBox ItemsSource="{Binding Sedes}"
+                                  SelectedItem="{Binding SedeSeleccionada}"
+                                  DisplayMemberPath="Nombre"
+                                  Padding="10,8"
+                                  BorderBrush="#D1D5DB"
+                                  BorderThickness="1"/>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,0,0,12"
+                                IsEnabled="{Binding SedeSeleccionada, Converter={StaticResource NotNullToBoolConverter}}">
+                        <TextBlock Text="Área *"
+                                   FontWeight="Medium"
+                                   Margin="0,0,0,4"/>
+                        <ComboBox ItemsSource="{Binding Areas}"
+                                  SelectedItem="{Binding AreaSeleccionada}"
+                                  DisplayMemberPath="Nombre"
+                                  Padding="10,8"
+                                  BorderBrush="#D1D5DB"
+                                  BorderThickness="1"/>
+                    </StackPanel>
+
+                    <StackPanel Margin="0,0,0,12"
+                                IsEnabled="{Binding AreaSeleccionada, Converter={StaticResource NotNullToBoolConverter}}">
+                        <TextBlock Text="Zona *"
+                                   FontWeight="Medium"
+                                   Margin="0,0,0,4"/>
+                        <ComboBox ItemsSource="{Binding Zonas}"
+                                  SelectedItem="{Binding ZonaSeleccionada}"
+                                  DisplayMemberPath="Nombre"
+                                  Padding="10,8"
+                                  BorderBrush="#D1D5DB"
+                                  BorderThickness="1"/>
+                    </StackPanel>
                 </StackPanel>
 
-                <StackPanel Margin="0,0,0,12">
-                    <TextBlock Text="Zona *" 
-                               FontWeight="Medium" 
+                <!-- Motivo -->
+                <StackPanel Margin="0,8,0,12">
+                    <TextBlock Text="Motivo *"
+                               FontWeight="Medium"
                                Margin="0,0,0,4"/>
-                    <ComboBox ItemsSource="{Binding Zonas}" 
-                              SelectedItem="{Binding ZonaSeleccionada}"
-                              DisplayMemberPath="Nombre"
-                              Padding="10,8" 
-                              BorderBrush="#D1D5DB" 
-                              BorderThickness="1"
-                              IsEnabled="{Binding AreaSeleccionada, Converter={StaticResource ObjectToVisibilityConverter}}"/>
+                    <TextBox Text="{Binding Motivo}"
+                             TextWrapping="Wrap"
+                             AcceptsReturn="True"
+                             Height="60"
+                             Padding="10,8"
+                             BorderBrush="#D1D5DB"
+                             BorderThickness="1"/>
                 </StackPanel>
+
+                <TextBlock Text="* Campos obligatorios"
+                           Foreground="#9E9E9E"
+                           FontStyle="Italic"
+                           Margin="0,8,0,8"/>
             </StackPanel>
+        </ScrollViewer>
 
-            <!-- Motivo de asignacion -->
-            <StackPanel Margin="0,8,0,12">
-                <TextBlock Text="Motivo *" 
-                           FontWeight="Medium" 
-                           Margin="0,0,0,4"/>
-                <TextBox Text="{Binding Motivo}" 
-                         TextWrapping="Wrap"
-                         AcceptsReturn="True"
-                         Height="60"
-                         Padding="10,8" 
-                         BorderBrush="#D1D5DB" 
-                         BorderThickness="1"/>
-            </StackPanel>
-
-            <TextBlock Text="* Campos obligatorios" 
-                       Foreground="#9E9E9E" 
-                       FontStyle="Italic"
-                       Margin="0,8,0,0"/>
-        </StackPanel>
-
-        <Border Grid.Row="2" 
-                Background="#F5F7FA" 
-                BorderBrush="#E1E5EB" 
-                BorderThickness="0,1,0,0" 
+        <!-- Pie -->
+        <Border Grid.Row="2"
+                Background="#F5F7FA"
+                BorderBrush="#E1E5EB"
+                BorderThickness="0,1,0,0"
                 Padding="24,16">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="Cancelar" 
-                        Command="{Binding CancelarCommand}" 
-                        Padding="16,8" 
+                <Button Content="Cancelar"
+                        Command="{Binding CancelarCommand}"
+                        Padding="16,8"
                         Margin="0,0,12,0"
-                        Background="#F0F2F5" 
-                        Foreground="#2C3E50" 
+                        Background="#F0F2F5"
+                        Foreground="#2C3E50"
                         BorderBrush="#D1D5DB"
                         BorderThickness="1">
                     <Button.Resources>
@@ -230,11 +223,11 @@
                         </Style>
                     </Button.Resources>
                 </Button>
-                <Button Content="Guardar Asignación" 
-                        Command="{Binding GuardarCommand}" 
+                <Button Content="Guardar Asignación"
+                        Command="{Binding AsignarCommand}"
                         Padding="16,8"
-                        Background="#3498DB" 
-                        Foreground="White" 
+                        Background="#3498DB"
+                        Foreground="White"
                         BorderThickness="0">
                     <Button.Resources>
                         <Style TargetType="Border">
@@ -246,10 +239,10 @@
         </Border>
 
         <!-- Overlay de carga -->
-        <Grid Grid.Row="0" Grid.RowSpan="3" 
-              Background="#80000000" 
+        <Grid Grid.Row="0" Grid.RowSpan="3"
+              Background="#80000000"
               Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <Border HorizontalAlignment="Center" 
+            <Border HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Background="White"
                     Padding="24,16"
@@ -257,11 +250,11 @@
                     BorderThickness="1"
                     CornerRadius="4">
                 <StackPanel>
-                    <TextBlock Text="Guardando asignación..." 
-                               FontSize="16" 
+                    <TextBlock Text="Procesando..."
+                               FontSize="16"
                                Margin="0,0,0,12"/>
-                    <ProgressBar IsIndeterminate="True" 
-                                 Height="4" 
+                    <ProgressBar IsIndeterminate="True"
+                                 Height="4"
                                  Width="200"/>
                 </StackPanel>
             </Border>

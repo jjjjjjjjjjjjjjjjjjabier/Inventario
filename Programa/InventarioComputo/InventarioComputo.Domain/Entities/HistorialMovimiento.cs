@@ -8,7 +8,7 @@ namespace InventarioComputo.Domain.Entities
         public int EquipoComputoId { get; set; }
         public DateTime FechaMovimiento { get; set; }
 
-        public virtual EquipoComputo EquipoComputo { get; set; } = new();
+        public virtual EquipoComputo? EquipoComputo { get; set; }
 
         public int? EmpleadoAnteriorId { get; set; }
         public virtual Empleado? EmpleadoAnterior { get; set; }
@@ -37,6 +37,7 @@ namespace InventarioComputo.Domain.Entities
         public string Motivo { get; set; } = string.Empty;
 
         public int UsuarioResponsableId { get; set; }
-        public virtual Usuario UsuarioResponsable { get; set; } = new();
+        // Requerido por FK, pero sin inicializador
+        public virtual Usuario? UsuarioResponsable { get; set; }
     }
 }

@@ -3,7 +3,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:behaviors="clr-namespace:InventarioComputo.UI.Behaviors"
              xmlns:conv="clr-namespace:InventarioComputo.UI.Converters"
              mc:Ignorable="d"
              d:DesignHeight="650" d:DesignWidth="950"
@@ -12,6 +11,10 @@
     <UserControl.Resources>
         <conv:ActiveStatusConverter x:Key="ActiveStatusConverter"/>
         <conv:BoolToStringConverter x:Key="BoolToStringConverter"/>
+        <conv:ObjectToVisibilityConverter x:Key="ObjectToVisibilityConverter"/>
+        <!-- Añadidos para corregir habilitación y overlay -->
+        <conv:NotNullConverter x:Key="NotNullConverter"/>
+        <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
     </UserControl.Resources>
 
     <Grid>
@@ -23,23 +26,12 @@
         </Grid.RowDefinitions>
 
         <!-- Encabezado -->
-        <Border Grid.Row="0" 
-                Background="#F5F7FA" 
-                BorderBrush="#E1E5EB" 
-                BorderThickness="0,0,0,1" 
-                Padding="24,16">
-            <TextBlock Text="Reportes y Consultas" 
-                       FontSize="22" 
-                       FontWeight="Medium" 
-                       Foreground="#2C3E50"/>
+        <Border Grid.Row="0" Background="#F5F7FA" BorderBrush="#E1E5EB" BorderThickness="0,0,0,1" Padding="24,16">
+            <TextBlock Text="Reportes y Consultas" FontSize="22" FontWeight="Medium" Foreground="#2C3E50"/>
         </Border>
 
-        <!-- Panel de filtros -->
-        <Border Grid.Row="1" 
-                Background="White" 
-                BorderBrush="#E1E5EB" 
-                BorderThickness="0,0,0,1" 
-                Padding="24,16">
+        <!-- Filtros -->
+        <Border Grid.Row="1" Background="White" BorderBrush="#E1E5EB" BorderThickness="0,0,0,1" Padding="24,16">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
@@ -52,23 +44,18 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <!-- Primera fila de filtros -->
+                <!-- Fila 1 -->
                 <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,8,10">
-                    <TextBlock Text="Tipo de Equipo" 
-                               FontWeight="SemiBold" 
-                               Margin="0,0,0,5"/>
-                    <ComboBox ItemsSource="{Binding TiposEquipo}" 
+                    <TextBlock Text="Tipo de Equipo" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <ComboBox ItemsSource="{Binding TiposEquipo}"
                               SelectedItem="{Binding TipoEquipoSeleccionado}"
                               DisplayMemberPath="Nombre"
-                              Padding="8,6"
-                              IsEditable="False"/>
+                              Padding="8,6"/>
                 </StackPanel>
 
                 <StackPanel Grid.Row="0" Grid.Column="1" Margin="8,0,8,10">
-                    <TextBlock Text="Estado" 
-                               FontWeight="SemiBold" 
-                               Margin="0,0,0,5"/>
-                    <ComboBox ItemsSource="{Binding Estados}" 
+                    <TextBlock Text="Estado" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <ComboBox ItemsSource="{Binding Estados}"
                               SelectedItem="{Binding EstadoSeleccionado}"
                               DisplayMemberPath="Nombre"
                               Padding="8,6"
@@ -76,89 +63,73 @@
                 </StackPanel>
 
                 <StackPanel Grid.Row="0" Grid.Column="2" Margin="8,0,0,10">
-                    <TextBlock Text="Ubicación - Sede" 
-                               FontWeight="SemiBold" 
-                               Margin="0,0,0,5"/>
-                    <ComboBox ItemsSource="{Binding Sedes}" 
+                    <TextBlock Text="Ubicación - Sede" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <ComboBox ItemsSource="{Binding Sedes}"
                               SelectedItem="{Binding SedeSeleccionada}"
                               DisplayMemberPath="Nombre"
                               Padding="8,6"
                               IsEditable="False"/>
                 </StackPanel>
 
-                <!-- Segunda fila de filtros -->
+                <!-- Fila 2 -->
                 <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,8,10">
-                    <TextBlock Text="Área" 
-                               FontWeight="SemiBold" 
-                               Margin="0,0,0,5"/>
-                    <ComboBox ItemsSource="{Binding Areas}" 
+                    <TextBlock Text="Área" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <ComboBox ItemsSource="{Binding Areas}"
                               SelectedItem="{Binding AreaSeleccionada}"
                               DisplayMemberPath="Nombre"
                               Padding="8,6"
                               IsEditable="False"
-                              IsEnabled="{Binding SedeSeleccionada, Converter={StaticResource ObjectToVisibilityConverter}}"/>
+                              IsEnabled="{Binding SedeSeleccionada, Converter={StaticResource NotNullConverter}}"/>
                 </StackPanel>
 
                 <StackPanel Grid.Row="1" Grid.Column="1" Margin="8,0,8,10">
-                    <TextBlock Text="Zona" 
-                               FontWeight="SemiBold" 
-                               Margin="0,0,0,5"/>
-                    <ComboBox ItemsSource="{Binding Zonas}" 
+                    <TextBlock Text="Zona" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <ComboBox ItemsSource="{Binding Zonas}"
                               SelectedItem="{Binding ZonaSeleccionada}"
                               DisplayMemberPath="Nombre"
                               Padding="8,6"
                               IsEditable="False"
-                              IsEnabled="{Binding AreaSeleccionada, Converter={StaticResource ObjectToVisibilityConverter}}"/>
+                              IsEnabled="{Binding AreaSeleccionada, Converter={StaticResource NotNullConverter}}"/>
                 </StackPanel>
 
                 <StackPanel Grid.Row="1" Grid.Column="2" Margin="8,0,0,10">
-                    <TextBlock Text="Empleado" 
-                               FontWeight="SemiBold" 
-                               Margin="0,0,0,5"/>
-                    <ComboBox ItemsSource="{Binding Empleados}" 
+                    <TextBlock Text="Empleado" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <ComboBox ItemsSource="{Binding Empleados}"
                               SelectedItem="{Binding EmpleadoSeleccionado}"
                               DisplayMemberPath="NombreCompleto"
                               Padding="8,6"
                               IsEditable="False"/>
                 </StackPanel>
 
-                <!-- Tercera fila de filtros -->
+                <!-- Fila 3 -->
                 <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,8,0">
-                    <TextBlock Text="Fecha Desde" 
-                               FontWeight="SemiBold" 
-                               Margin="0,0,0,5"/>
-                    <DatePicker SelectedDate="{Binding FechaDesde}" 
-                                Padding="8,6"/>
+                    <TextBlock Text="Fecha Desde" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <DatePicker SelectedDate="{Binding FechaDesde}" Padding="8,6"/>
                 </StackPanel>
 
                 <StackPanel Grid.Row="2" Grid.Column="1" Margin="8,0,8,0">
-                    <TextBlock Text="Fecha Hasta" 
-                               FontWeight="SemiBold" 
-                               Margin="0,0,0,5"/>
-                    <DatePicker SelectedDate="{Binding FechaHasta}" 
-                                Padding="8,6"/>
+                    <TextBlock Text="Fecha Hasta" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <DatePicker SelectedDate="{Binding FechaHasta}" Padding="8,6"/>
                 </StackPanel>
 
-                <StackPanel Grid.Row="2" Grid.Column="2" Margin="8,0,0,0" 
-                            Orientation="Horizontal" 
-                            VerticalAlignment="Bottom">
-                    <CheckBox Content="Incluir inactivos" 
-                              IsChecked="{Binding IncluirInactivos}" 
-                              VerticalAlignment="Center" 
+                <StackPanel Grid.Row="2" Grid.Column="2" Margin="8,0,0,0" Orientation="Horizontal" VerticalAlignment="Bottom">
+                    <CheckBox Content="Incluir inactivos"
+                              IsChecked="{Binding IncluirInactivos}"
+                              VerticalAlignment="Center"
                               Margin="0,0,16,0"/>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <!-- DataGrid con resultados -->
-        <Border Grid.Row="2" 
-                Margin="24,16,24,16" 
-                BorderThickness="1" 
+        <!-- Resultados -->
+        <Border Grid.Row="2"
+                Margin="24,16,24,16"
+                BorderThickness="1"
                 BorderBrush="#E1E5EB"
                 CornerRadius="6"
                 Background="White"
                 Padding="1">
-            <DataGrid ItemsSource="{Binding Resultados}" 
+            <DataGrid ItemsSource="{Binding Resultados}"
                       AutoGenerateColumns="False"
                       IsReadOnly="True"
                       HeadersVisibility="Column"
@@ -192,40 +163,21 @@
                     </Style>
                 </DataGrid.Resources>
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Num. Serie" 
-                                        Binding="{Binding NumeroSerie}" 
-                                        Width="120"/>
-                    <DataGridTextColumn Header="Etiqueta" 
-                                        Binding="{Binding EtiquetaInventario}" 
-                                        Width="120"/>
-                    <DataGridTextColumn Header="Marca" 
-                                        Binding="{Binding Marca}" 
-                                        Width="100"/>
-                    <DataGridTextColumn Header="Modelo" 
-                                        Binding="{Binding Modelo}" 
-                                        Width="100"/>
-                    <DataGridTextColumn Header="Tipo" 
-                                        Binding="{Binding TipoEquipo}" 
-                                        Width="120"/>
-                    <DataGridTextColumn Header="Estado" 
-                                        Binding="{Binding Estado}" 
-                                        Width="100"/>
-                    <DataGridTextColumn Header="Asignado a" 
-                                        Binding="{Binding UsuarioAsignado}" 
-                                        Width="150"/>
-                    <DataGridTextColumn Header="Ubicación" 
-                                        Binding="{Binding Ubicacion}" 
-                                        Width="150"/>
-                    <DataGridTextColumn Header="Adquisición" 
-                                        Binding="{Binding FechaAdquisicion, StringFormat='{}{0:dd/MM/yyyy}'}" 
-                                        Width="100"/>
-                    <DataGridTextColumn Header="Costo" 
-                                        Binding="{Binding Costo, StringFormat='{}{0:C2}'}" 
-                                        Width="100"/>
+                    <DataGridTextColumn Header="Num. Serie" Binding="{Binding NumeroSerie}" Width="120"/>
+                    <DataGridTextColumn Header="Etiqueta" Binding="{Binding EtiquetaInventario}" Width="120"/>
+                    <DataGridTextColumn Header="Marca" Binding="{Binding Marca}" Width="100"/>
+                    <DataGridTextColumn Header="Modelo" Binding="{Binding Modelo}" Width="100"/>
+                    <DataGridTextColumn Header="Tipo" Binding="{Binding TipoEquipo}" Width="120"/>
+                    <DataGridTextColumn Header="Estado" Binding="{Binding Estado}" Width="100"/>
+                    <DataGridTextColumn Header="Asignado a" Binding="{Binding UsuarioAsignado}" Width="160"/>
+                    <DataGridTextColumn Header="Ubicación" Binding="{Binding Ubicacion}" Width="170"/>
+                    <!-- Nuevas columnas coherentes con los exports -->
+                    <DataGridTextColumn Header="Adquisición" Binding="{Binding FechaAdquisicion, StringFormat='{}{0:dd/MM/yyyy}'}" Width="110"/>
+                    <!-- Costo eliminado -->
                     <DataGridTemplateColumn Header="Activo" Width="80">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding Activo, Converter={StaticResource BoolToStringConverter}}" 
+                                <TextBlock Text="{Binding Activo, Converter={StaticResource BoolToStringConverter}}"
                                            HorizontalAlignment="Center"
                                            VerticalAlignment="Center"/>
                             </DataTemplate>
@@ -235,75 +187,47 @@
             </DataGrid>
         </Border>
 
-        <!-- Panel de acciones -->
-        <StackPanel Grid.Row="3" 
-                    Orientation="Horizontal" 
-                    HorizontalAlignment="Right" 
-                    Margin="0,0,24,24">
-            <Button Content="Limpiar Filtros" 
-                    Command="{Binding LimpiarFiltrosCommand}" 
-                    Padding="16,8" 
-                    Margin="0,0,8,0"
-                    Background="#F0F2F5" 
-                    Foreground="#2C3E50" 
-                    BorderThickness="1"
-                    BorderBrush="#D1D5DB">
+        <!-- Acciones -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,24,24">
+            <Button Content="Limpiar Filtros" Command="{Binding LimpiarFiltrosCommand}" Padding="16,8" Margin="0,0,8,0"
+                    Background="#F0F2F5" Foreground="#2C3E50" BorderThickness="1" BorderBrush="#D1D5DB">
                 <Button.Resources>
-                    <Style TargetType="Border">
-                        <Setter Property="CornerRadius" Value="4"/>
-                    </Style>
+                    <Style TargetType="Border"><Setter Property="CornerRadius" Value="4"/></Style>
                 </Button.Resources>
             </Button>
 
-            <Button Content="Generar Reporte" 
-                    Command="{Binding GenerarReporteCommand}" 
-                    Padding="16,8" 
-                    Margin="0,0,8,0"
-                    Background="#3498DB" 
-                    Foreground="White" 
-                    BorderThickness="0">
+            <Button Content="Generar Reporte" Command="{Binding GenerarReporteCommand}" Padding="16,8" Margin="0,0,8,0"
+                    Background="#3498DB" Foreground="White" BorderThickness="0">
                 <Button.Resources>
-                    <Style TargetType="Border">
-                        <Setter Property="CornerRadius" Value="4"/>
-                    </Style>
+                    <Style TargetType="Border"><Setter Property="CornerRadius" Value="4"/></Style>
                 </Button.Resources>
             </Button>
 
-            <Button Content="Exportar a Excel" 
-                    Command="{Binding ExportarExcelCommand}" 
-                    Padding="16,8"
-                    Background="#27AE60" 
-                    Foreground="White" 
-                    BorderThickness="0">
+            <Button Content="Exportar a PDF" Command="{Binding ExportarPdfCommand}" Padding="16,8" Margin="0,0,8,0"
+                    Background="#8E44AD" Foreground="White" BorderThickness="0">
                 <Button.Resources>
-                    <Style TargetType="Border">
-                        <Setter Property="CornerRadius" Value="4"/>
-                    </Style>
+                    <Style TargetType="Border"><Setter Property="CornerRadius" Value="4"/></Style>
+                </Button.Resources>
+            </Button>
+
+            <Button Content="Exportar a Excel" Command="{Binding ExportarExcelCommand}" Padding="16,8"
+                    Background="#27AE60" Foreground="White" BorderThickness="0">
+                <Button.Resources>
+                    <Style TargetType="Border"><Setter Property="CornerRadius" Value="4"/></Style>
                 </Button.Resources>
             </Button>
         </StackPanel>
 
-        <!-- Indicador de carga -->
-        <Grid Grid.Row="0" Grid.RowSpan="4" 
-              Background="#80000000" 
+        <!-- Overlay de carga -->
+        <Grid Grid.Row="0" Grid.RowSpan="4"
+              Background="#80000000"
               Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <Border Padding="20" 
-       BorderThickness="1" 
-       BorderBrush="#E1E5EB" 
-       CornerRadius="6">
-                <StackPanel HorizontalAlignment="Center" 
-            VerticalAlignment="Center"
-            Background="White">
-    
-    <TextBlock Text="Generando reporte..." 
-               FontSize="16" 
-               Margin="0,0,0,12"/>
-    <ProgressBar IsIndeterminate="True" 
-                 Height="4" 
-                 Width="200"/>
-</StackPanel>
+            <Border Padding="20" BorderThickness="1" BorderBrush="#E1E5EB" CornerRadius="6" Background="White">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock Text="Generando reporte..." FontSize="16" Margin="0,0,0,12"/>
+                    <ProgressBar IsIndeterminate="True" Height="4" Width="200"/>
+                </StackPanel>
             </Border>
-            
         </Grid>
     </Grid>
 </UserControl>

@@ -17,11 +17,8 @@ namespace InventarioComputo.UI.ViewModels
         private readonly IDialogService _dialogService;
         private readonly ISessionService _session;
 
-        [ObservableProperty]
-        private string _filtro = string.Empty;
-
-        [ObservableProperty]
-        private bool _mostrarInactivos;
+        [ObservableProperty] private string _filtro = string.Empty;
+        [ObservableProperty] private bool _mostrarInactivos;
 
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(EditarCommand))]
@@ -36,6 +33,8 @@ namespace InventarioComputo.UI.ViewModels
 
         public ObservableCollection<Empleado> Empleados { get; } = new();
 
+        private bool _dialogAbierto;
+
         public EmpleadosViewModel(IEmpleadoService srv, IDialogService dialogService, ISessionService session, ILogger<EmpleadosViewModel> log)
         {
             _srv = srv;
@@ -47,9 +46,7 @@ namespace InventarioComputo.UI.ViewModels
             _session.SesionCambiada += (s, logged) =>
             {
                 EsAdministrador = _session.TieneRol("Administrador");
-                CrearCommand?.NotifyCanExecuteChanged();
-                EditarCommand?.NotifyCanExecuteChanged();
-                EliminarCommand?.NotifyCanExecuteChanged();
+                ActualizarCanExecute();
             };
         }
 
@@ -66,7 +63,8 @@ namespace InventarioComputo.UI.ViewModels
             try
             {
                 Empleados.Clear();
-                var lista = await _srv.BuscarAsync(string.IsNullOrWhiteSpace(Filtro) ? null : Filtro, MostrarInactivos);
+                var filtro = string.IsNullOrWhiteSpace(Filtro) ? null : Filtro.Trim();
+                var lista = await _srv.BuscarAsync(filtro, MostrarInactivos);
                 foreach (var e in lista) Empleados.Add(e);
             }
             catch (Exception ex)
@@ -74,35 +72,57 @@ namespace InventarioComputo.UI.ViewModels
                 Logger?.LogError(ex, "Error buscando empleados");
                 _dialogService.ShowError("No se pudieron cargar los empleados.");
             }
-            finally { IsBusy = false; }
+            finally
+            {
+                IsBusy = false;
+                ActualizarCanExecute();
+            }
         }
 
         private bool PuedeCrear() => EsAdministrador && !IsBusy;
         private bool PuedeEditarEliminar() => EsAdministrador && Seleccionado != null && !IsBusy;
 
         [RelayCommand(CanExecute = nameof(PuedeCrear))]
-        public void Crear()
+        public async Task Crear()
         {
-            var nuevo = new Empleado { Activo = true };
-            _dialogService.ShowDialog<EmpleadoEditorViewModel>(vm => vm.SetEntidad(nuevo));
-            _ = BuscarAsync();
+            if (_dialogAbierto) return;
+            _dialogAbierto = true;
+            try
+            {
+                var nuevo = new Empleado { Activo = true };
+                var ok = _dialogService.ShowDialog<EmpleadoEditorViewModel>(vm => vm.SetEntidad(nuevo));
+                if (ok == true)
+                    await BuscarAsync();
+            }
+            finally
+            {
+                _dialogAbierto = false;
+            }
         }
 
         [RelayCommand(CanExecute = nameof(PuedeEditarEliminar))]
-        public void Editar()
+        public async Task Editar()
         {
-            if (Seleccionado == null) return;
-
-            var copia = new Empleado
+            if (Seleccionado == null || _dialogAbierto) return;
+            _dialogAbierto = true;
+            try
             {
-                Id = Seleccionado.Id,
-                NombreCompleto = Seleccionado.NombreCompleto,
-                Correo = Seleccionado.Correo,
-                Telefono = Seleccionado.Telefono,
-                Activo = Seleccionado.Activo
-            };
-            _dialogService.ShowDialog<EmpleadoEditorViewModel>(vm => vm.SetEntidad(copia));
-            _ = BuscarAsync();
+                var copia = new Empleado
+                {
+                    Id = Seleccionado.Id,
+                    NombreCompleto = Seleccionado.NombreCompleto,
+                    Correo = Seleccionado.Correo,
+                    Telefono = Seleccionado.Telefono,
+                    Activo = Seleccionado.Activo
+                };
+                var ok = _dialogService.ShowDialog<EmpleadoEditorViewModel>(vm => vm.SetEntidad(copia));
+                if (ok == true)
+                    await BuscarAsync();
+            }
+            finally
+            {
+                _dialogAbierto = false;
+            }
         }
 
         [RelayCommand(CanExecute = nameof(PuedeEditarEliminar))]
@@ -122,7 +142,18 @@ namespace InventarioComputo.UI.ViewModels
                 Logger?.LogError(ex, "Error desactivando empleado");
                 _dialogService.ShowError("No se pudo desactivar el empleado. Es posible que esté en uso.");
             }
-            finally { IsBusy = false; }
+            finally
+            {
+                IsBusy = false;
+                ActualizarCanExecute();
+            }
+        }
+
+        private void ActualizarCanExecute()
+        {
+            CrearCommand?.NotifyCanExecuteChanged();
+            EditarCommand?.NotifyCanExecuteChanged();
+            EliminarCommand?.NotifyCanExecuteChanged();
         }
     }
 }
