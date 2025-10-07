@@ -24,8 +24,8 @@ namespace InventarioComputo.Infrastructure.Repositories
                 .Include(e => e.TipoEquipo)
                 .Include(e => e.Estado)
                 .Include(e => e.Empleado)
-                .Include(e => e.Zona)!.ThenInclude(z => z.Area)!.ThenInclude(a => a.Sede)
-                .Include(e => e.Area)!.ThenInclude(a => a.Sede)
+                .Include(e => e.Zona).ThenInclude(z => z.Area).ThenInclude(a => a.Sede)
+                .Include(e => e.Area).ThenInclude(a => a.Sede)
                 .Include(e => e.Sede);
 
         public async Task<IReadOnlyList<EquipoComputo>> ObtenerTodosAsync(bool incluirInactivos, CancellationToken ct = default)

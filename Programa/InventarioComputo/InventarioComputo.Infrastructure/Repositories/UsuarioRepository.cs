@@ -67,9 +67,7 @@ namespace InventarioComputo.Infrastructure.Repositories
                                         u.NombreCompleto.Contains(filtro));
             }
 
-            return await query.OrderBy(u => u.NombreUsuario)
-                            .AsNoTracking()
-                            .ToListAsync(ct);
+            return (await query.ToListAsync(ct)).Where(u => u != null).Cast<Usuario>().ToList();
         }
 
         public async Task<Usuario?> ObtenerPorIdAsync(int id, CancellationToken ct = default)

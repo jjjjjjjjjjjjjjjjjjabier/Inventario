@@ -1,9 +1,17 @@
+using System;
 using InventarioComputo.Domain.Entities;
 
 namespace InventarioComputo.Infrastructure.Extensions
 {
     public static class EntityExtensions
     {
+        // Evita CS8625: acepta y retorna anulable
+        public static string? TrimOrNull(this string? value)
+            => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+        public static string TrimOrEmpty(this string? value)
+            => value?.Trim() ?? string.Empty;
+
         public static T ClearNavigationProperties<T>(this T entity) where T : class
         {
             // Desacoplar navegaciones según tipo de entidad

@@ -244,7 +244,7 @@ namespace InventarioComputo.UI
 
             var loginVM = _host.Services.GetRequiredService<LoginViewModel>();
             var loginView = new LoginView { DataContext = loginVM };
-            var _ = loginView.ShowDialog();
+            var _ = loginView.ShowDialog() ?? false;
 
             if (loginVM.LoginExitoso)
             {
@@ -273,7 +273,7 @@ namespace InventarioComputo.UI
 
                                 var vm = _host.Services.GetRequiredService<LoginViewModel>();
                                 var view = new LoginView { DataContext = vm };
-                                var ok = view.ShowDialog();
+                                var ok = view.ShowDialog() ?? false;
 
                                 if (vm.LoginExitoso)
                                 {
