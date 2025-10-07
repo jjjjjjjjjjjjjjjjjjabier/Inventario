@@ -1,6 +1,6 @@
 using InventarioComputo.Application.Contracts;
-using InventarioComputo.Application.Contracts.Repositories;
 using InventarioComputo.Domain.Entities;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,56 +10,69 @@ namespace InventarioComputo.Application.Services
 {
     public class SessionService : ISessionService
     {
-        private readonly IUsuarioRepository _usuarioRepo;
-        private readonly IRolRepository _rolRepo;
-        private readonly IAuthService _authService;
-
-        private Usuario? _usuarioActual;
-        private List<Rol> _roles = new();
+        private readonly IUsuarioService _usuarios;
+        private readonly ILogger<SessionService>? _logger;
 
         public event EventHandler<bool>? SesionCambiada;
 
-        public Usuario? UsuarioActual => _usuarioActual;
-        public bool EstaAutenticado => _usuarioActual != null;
+        public Usuario? UsuarioActual { get; private set; }
+        public bool EstaAutenticado => UsuarioActual != null;
 
-        public SessionService(IUsuarioRepository usuarioRepo, IRolRepository rolRepo, IAuthService authService)
+        private IReadOnlyList<Rol> _roles = Array.Empty<Rol>();
+
+        public SessionService(IUsuarioService usuarios, ILogger<SessionService>? logger = null)
         {
-            _usuarioRepo = usuarioRepo;
-            _rolRepo = rolRepo;
-            _authService = authService;
+            _usuarios = usuarios;
+            _logger = logger;
         }
 
         public async Task<bool> IniciarSesionAsync(string usuario, string password)
         {
-            var resultado = await _authService.ValidarUsuarioAsync(usuario, password);
-            if (resultado)
+            try
             {
-                _usuarioActual = await _usuarioRepo.ObtenerPorNombreUsuarioAsync(usuario);
-                if (_usuarioActual != null)
-                {
-                    _roles = (await _rolRepo.ObtenerRolesPorUsuarioIdAsync(_usuarioActual.Id)).ToList();
-                    SesionCambiada?.Invoke(this, true);
-                    return true;
-                }
+                var ok = await _usuarios.AuthenticateAsync(usuario, password);
+                if (!ok) return false;
+
+                var u = await _usuarios.ObtenerPorNombreUsuarioAsync(usuario);
+                if (u == null || !u.Activo) return false;
+
+                UsuarioActual = u;
+                _roles = await _usuarios.ObtenerRolesDeUsuarioAsync(u.Id);
+                SesionCambiada?.Invoke(this, true);
+                return true;
             }
-            return false;
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error al iniciar sesión");
+                return false;
+            }
         }
 
         public void CerrarSesion()
         {
-            _usuarioActual = null;
-            _roles.Clear();
+            UsuarioActual = null;
+            _roles = Array.Empty<Rol>();
             SesionCambiada?.Invoke(this, false);
         }
 
         public bool TieneRol(string rolNombre)
         {
-            return _usuarioActual != null && _roles.Any(r => r.Nombre == rolNombre);
+            if (!EstaAutenticado) return false;
+
+            string normalizado = NormalizarRol(rolNombre);
+            return _roles.Any(r =>
+                string.Equals(r.Nombre, rolNombre, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(r.Nombre, normalizado, StringComparison.OrdinalIgnoreCase));
         }
 
-        public IReadOnlyList<Rol> ObtenerRolesUsuario()
+        public IReadOnlyList<Rol> ObtenerRolesUsuario() => _roles;
+
+        private static string NormalizarRol(string nombre) => nombre switch
         {
-            return _roles.AsReadOnly();
-        }
+            "Administrador" => "Administradores",
+            "Admin" => "Administradores",
+            "Consultas" => "Consulta",
+            _ => nombre
+        };
     }
 }
