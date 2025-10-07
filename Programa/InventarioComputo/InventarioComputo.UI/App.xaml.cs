@@ -49,10 +49,18 @@ namespace InventarioComputo.UI
                 .ConfigureServices((hostContext, services) =>
                 {
                     var connectionString = hostContext.Configuration.GetConnectionString("DefaultConnection");
+
                     services.AddDbContext<InventarioDbContext>(options =>
-                        options.UseSqlServer(connectionString)
-                               .EnableDetailedErrors()
-                               .EnableSensitiveDataLogging());
+                    {
+                        options.UseSqlServer(connectionString);
+
+                        // Solo habilitar en Desarrollo para evitar fugas de datos y degradación en producción
+                        if (hostContext.HostingEnvironment.IsDevelopment())
+                        {
+                            options.EnableDetailedErrors()
+                                   .EnableSensitiveDataLogging();
+                        }
+                    });
 
                     services.AddSingleton<IPasswordHasher, PasswordHasher>();
 
@@ -176,6 +184,14 @@ namespace InventarioComputo.UI
                     var adminUser = config.GetSection("SeedUsers:Admin");
                     var consultaUser = config.GetSection("SeedUsers:Consulta");
 
+                    static string NormalizarRol(string nombre) => nombre switch
+                    {
+                        "Administrador" => "Administradores",
+                        "Admin" => "Administradores",
+                        "Consultas" => "Consulta",
+                        _ => nombre
+                    };
+
                     async Task EnsureUserAsync(IConfigurationSection section, string rolNombre)
                     {
                         var userName = section.GetValue<string>("UserName");
@@ -197,17 +213,21 @@ namespace InventarioComputo.UI
                             user = await usuarioSrv.GuardarAsync(user, password);
                         }
 
-                        var rol = await rolSrv.ObtenerPorNombreAsync(rolNombre);
+                        // Intentar rol tal cual y con sinónimos normalizados
+                        var rol = await rolSrv.ObtenerPorNombreAsync(rolNombre)
+                                  ?? await rolSrv.ObtenerPorNombreAsync(NormalizarRol(rolNombre));
+
                         if (rol != null)
                         {
                             var rolesUsuario = await usuarioSrv.ObtenerRolesDeUsuarioAsync(user.Id);
-                            var yaTiene = rolesUsuario.Any(r => r.Nombre == rol.Nombre);
+                            var yaTiene = rolesUsuario.Any(r =>
+                                string.Equals(r.Nombre, rol.Nombre, StringComparison.OrdinalIgnoreCase));
                             if (!yaTiene)
                                 await usuarioSrv.AsignarRolUsuarioAsync(user.Id, rol.Id);
                         }
                     }
 
-                    // Nombre de rol consistente con el resto del sistema
+                    // Nombres de rol robustos a singular/plural
                     await EnsureUserAsync(adminUser, "Administrador");
                     await EnsureUserAsync(consultaUser, "Consulta");
                 }
