@@ -41,16 +41,8 @@ namespace InventarioComputo.Infrastructure.Repositories
 
         public async Task<IReadOnlyList<HistorialMovimiento>> ObtenerPorEquipoAsync(int equipoId, CancellationToken ct = default)
         {
-            return await _context.HistorialMovimientos
-                .Where(h => h.EquipoComputoId == equipoId)
-                .Include(h => h.EmpleadoAnterior)
-                .Include(h => h.EmpleadoNuevo)
-                .Include(h => h.ZonaAnterior)
-                .Include(h => h.ZonaNueva)
-                .Include(h => h.UsuarioResponsable)
-                .OrderByDescending(h => h.FechaMovimiento)
-                .AsNoTracking()
-                .ToListAsync(ct);
+            // Reutilizar la consulta “completa” para que ambos caminos devuelvan lo mismo
+            return await ObtenerHistorialEquipoAsync(equipoId, ct);
         }
 
         public async Task<IReadOnlyList<HistorialMovimiento>> ObtenerPorUsuarioAsync(int usuarioId, CancellationToken ct = default)

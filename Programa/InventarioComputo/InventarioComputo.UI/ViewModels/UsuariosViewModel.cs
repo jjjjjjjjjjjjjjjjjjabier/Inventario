@@ -7,11 +7,12 @@ using InventarioComputo.UI.ViewModels.Base;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace InventarioComputo.UI.ViewModels
 {
-    public partial class UsuariosViewModel : BaseViewModel
+    public partial class UsuariosViewModel : BaseViewModel, IDisposable
     {
         private readonly IUsuarioService _srv;
         private readonly IDialogService _dialogService;
@@ -20,7 +21,8 @@ namespace InventarioComputo.UI.ViewModels
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(EditarCommand))]
         [NotifyCanExecuteChangedFor(nameof(EliminarCommand))]
-        private Usuario? _usuarioSeleccionado;
+        [NotifyCanExecuteChangedFor(nameof(AdministrarRolesCommand))]
+        private UsuarioViewModel? _usuarioSeleccionado;
 
         [ObservableProperty]
         private bool _mostrarInactivos;
@@ -28,10 +30,21 @@ namespace InventarioComputo.UI.ViewModels
         [ObservableProperty]
         private string _filtro = string.Empty;
 
+        // Agregar esta propiedad para resolver el error de binding
+        public string FiltroTexto
+        {
+            get => Filtro;
+            set => Filtro = value;
+        }
+
         [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(CrearCommand))]
+        [NotifyCanExecuteChangedFor(nameof(EditarCommand))]
+        [NotifyCanExecuteChangedFor(nameof(EliminarCommand))]
+        [NotifyCanExecuteChangedFor(nameof(AdministrarRolesCommand))]
         private bool _esAdministrador;
 
-        public ObservableCollection<Usuario> Usuarios { get; } = new();
+        public ObservableCollection<UsuarioViewModel> Usuarios { get; } = new();
 
         public UsuariosViewModel(
             IUsuarioService srv,
@@ -44,7 +57,22 @@ namespace InventarioComputo.UI.ViewModels
             _sessionService = sessionService;
             Logger = log;
 
-            EsAdministrador = _sessionService.TieneRol("Administrador");
+            EsAdministrador = _sessionService.TieneRol("Administradores");
+            _sessionService.SesionCambiada += OnSesionCambiada;
+        }
+
+        private void OnSesionCambiada(object? sender, bool estaLogueado)
+        {
+            EsAdministrador = _sessionService.TieneRol("Administradores");
+            ActualizarCanExecute();
+        }
+
+        private void ActualizarCanExecute()
+        {
+            CrearCommand?.NotifyCanExecuteChanged();
+            EditarCommand?.NotifyCanExecuteChanged();
+            EliminarCommand?.NotifyCanExecuteChanged();
+            AdministrarRolesCommand?.NotifyCanExecuteChanged();
         }
 
         partial void OnMostrarInactivosChanged(bool value) => _ = BuscarAsync();
@@ -61,8 +89,14 @@ namespace InventarioComputo.UI.ViewModels
             {
                 Usuarios.Clear();
                 var filtro = string.IsNullOrWhiteSpace(Filtro) ? null : Filtro.Trim();
-                var lista = await _srv.BuscarAsync(filtro, MostrarInactivos);
-                foreach (var item in lista) Usuarios.Add(item);
+                var listaUsuarios = await _srv.BuscarAsync(filtro, MostrarInactivos);
+                
+                foreach (var usuario in listaUsuarios)
+                {
+                    // Cargar roles para cada usuario
+                    var roles = await _srv.ObtenerRolesDeUsuarioAsync(usuario.Id);
+                    Usuarios.Add(new UsuarioViewModel(usuario, roles));
+                }
             }
             catch (Exception ex)
             {
@@ -72,6 +106,7 @@ namespace InventarioComputo.UI.ViewModels
             finally
             {
                 IsBusy = false;
+                ActualizarCanExecute();
             }
         }
 
@@ -99,7 +134,8 @@ namespace InventarioComputo.UI.ViewModels
                 Id = UsuarioSeleccionado.Id,
                 NombreUsuario = UsuarioSeleccionado.NombreUsuario,
                 NombreCompleto = UsuarioSeleccionado.NombreCompleto,
-                Activo = UsuarioSeleccionado.Activo
+                Activo = UsuarioSeleccionado.Activo,
+                EsEmpleadoSolamente = UsuarioSeleccionado.EsEmpleadoSolamente
             };
 
             if (_dialogService.ShowDialog<UsuarioEditorViewModel>(vm => vm.SetEntidad(copia)) == true)
@@ -128,7 +164,30 @@ namespace InventarioComputo.UI.ViewModels
             finally
             {
                 IsBusy = false;
+                ActualizarCanExecute();
             }
+        }
+
+        [RelayCommand(CanExecute = nameof(CanEditarEliminar))]
+        private async Task AdministrarRolesAsync()
+        {
+            if (UsuarioSeleccionado == null) return;
+
+            // Abrir el diálogo para administrar roles
+            bool? resultado = _dialogService.ShowDialog<UsuarioRolesViewModel>(
+                vm => vm.CargarAsync(UsuarioSeleccionado.Id, UsuarioSeleccionado.NombreUsuario).Wait()
+            );
+
+            if (resultado == true)
+            {
+                // Recargar la lista de usuarios para reflejar los cambios
+                await BuscarAsync();
+            }
+        }
+
+        public void Dispose()
+        {
+            _sessionService.SesionCambiada -= OnSesionCambiada;
         }
     }
 }

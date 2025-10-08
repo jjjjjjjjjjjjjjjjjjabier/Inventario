@@ -36,8 +36,9 @@ namespace InventarioComputo.Application.Services
             _session = session;
         }
 
+        // CAMBIO: usar siempre la consulta con Includes completos
         public Task<IReadOnlyList<HistorialMovimiento>> ObtenerHistorialPorEquipoAsync(int equipoId, CancellationToken ct = default)
-            => _historialRepo.ObtenerPorEquipoAsync(equipoId, ct);
+            => _historialRepo.ObtenerHistorialEquipoAsync(equipoId, ct);
 
         public async Task AsignarEquipoAsync(int equipoId, int? empleadoId, int? zonaId, string motivo, CancellationToken ct = default)
         {
@@ -96,8 +97,6 @@ namespace InventarioComputo.Application.Services
                 ZonaId = nuevaZonaId,
                 AreaId = areaNuevaId,
                 SedeId = sedeNuevaId,
-
-                // Mantener datos requeridos
                 TipoEquipoId = actual.TipoEquipoId,
                 EstadoId = actual.EstadoId,
                 NumeroSerie = actual.NumeroSerie,

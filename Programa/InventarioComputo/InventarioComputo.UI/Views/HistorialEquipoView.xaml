@@ -29,7 +29,7 @@
                 BorderBrush="#E1E5EB" 
                 BorderThickness="0,0,0,1" 
                 Padding="24,16">
-            <TextBlock Text="{Binding Titulo}" 
+            <TextBlock Text="{Binding Titulo, Mode=OneWay}" 
                        FontSize="22" 
                        FontWeight="Medium" 
                        Foreground="#2C3E50"/>
@@ -58,7 +58,7 @@
                                FontWeight="Medium" 
                                FontSize="12" 
                                Foreground="#666666"/>
-                    <TextBlock Text="{Binding Equipo.NumeroSerie}" 
+                    <TextBlock Text="{Binding Equipo.NumeroSerie, Mode=OneWay}" 
                                FontSize="14"/>
                 </StackPanel>
 
@@ -67,7 +67,7 @@
                                FontWeight="Medium" 
                                FontSize="12" 
                                Foreground="#666666"/>
-                    <TextBlock Text="{Binding Equipo.EtiquetaInventario}" 
+                    <TextBlock Text="{Binding Equipo.EtiquetaInventario, Mode=OneWay}" 
                                FontSize="14"/>
                 </StackPanel>
 
@@ -76,7 +76,7 @@
                                FontWeight="Medium" 
                                FontSize="12" 
                                Foreground="#666666"/>
-                    <TextBlock Text="{Binding Equipo.Estado.Nombre}" 
+                    <TextBlock Text="{Binding Equipo.Estado.Nombre, Mode=OneWay}" 
                                FontSize="14"/>
                 </StackPanel>
 
@@ -86,7 +86,7 @@
                                FontWeight="Medium" 
                                FontSize="12" 
                                Foreground="#666666"/>
-                    <TextBlock Text="{Binding Equipo.Marca}" 
+                    <TextBlock Text="{Binding Equipo.Marca, Mode=OneWay}" 
                                FontSize="14"/>
                 </StackPanel>
 
@@ -95,7 +95,7 @@
                                FontWeight="Medium" 
                                FontSize="12" 
                                Foreground="#666666"/>
-                    <TextBlock Text="{Binding Equipo.Modelo}" 
+                    <TextBlock Text="{Binding Equipo.Modelo, Mode=OneWay}" 
                                FontSize="14"/>
                 </StackPanel>
 
@@ -104,7 +104,7 @@
                                FontWeight="Medium" 
                                FontSize="12" 
                                Foreground="#666666"/>
-                    <TextBlock Text="{Binding Equipo.TipoEquipo.Nombre}" 
+                    <TextBlock Text="{Binding Equipo.TipoEquipo.Nombre, Mode=OneWay}" 
                                FontSize="14"/>
                 </StackPanel>
             </Grid>
@@ -118,7 +118,7 @@
                 CornerRadius="6"
                 Background="White"
                 Padding="1">
-            <ListView ItemsSource="{Binding Movimientos}" 
+            <ListView ItemsSource="{Binding Movimientos, Mode=OneWay}" 
                       BorderThickness="0"
                       ScrollViewer.VerticalScrollBarVisibility="Auto"
                       ScrollViewer.HorizontalScrollBarVisibility="Disabled"
@@ -147,10 +147,10 @@
 
                             <!-- Fecha y responsable -->
                             <StackPanel Grid.Column="0" Width="180" Margin="0,0,16,0">
-                                <TextBlock Text="{Binding FechaMovimiento, StringFormat='{}{0:dd/MM/yyyy HH:mm}'}" 
+                                <TextBlock Text="{Binding FechaMovimiento, StringFormat='{}{0:dd/MM/yyyy HH:mm}', Mode=OneWay}" 
                                            FontWeight="Medium" 
                                            FontSize="14"/>
-                                <TextBlock Text="{Binding UsuarioResponsable.NombreCompleto}" 
+                                <TextBlock Text="{Binding UsuarioResponsable.NombreCompleto, Mode=OneWay, TargetNullValue='-'}" 
                                            FontSize="12" 
                                            Foreground="#666666"/>
                             </StackPanel>
@@ -160,30 +160,32 @@
                                 <!-- Cambio de asignación -->
                                 <TextBlock Margin="0,0,0,4">
                                     <Run Text="De: " FontWeight="Medium"/>
-                                    <Run Text="{Binding EmpleadoAnterior.NombreCompleto, TargetNullValue='Sin asignación'}" />
+                                    <!-- CAMBIO: usar propiedad calculada -->
+                                    <Run Text="{Binding EmpleadoAnteriorNombre, Mode=OneWay}" />
                                 </TextBlock>
 
                                 <TextBlock Margin="0,0,0,8">
                                     <Run Text="A: " FontWeight="Medium"/>
-                                    <Run Text="{Binding EmpleadoNuevo.NombreCompleto, TargetNullValue='Sin asignación'}" />
+                                    <!-- CAMBIO: usar propiedad calculada -->
+                                    <Run Text="{Binding EmpleadoNuevoNombre, Mode=OneWay}" />
                                 </TextBlock>
 
                                 <!-- Cambio de ubicación -->
                                 <TextBlock Margin="0,0,0,4">
                                     <Run Text="Ubicación anterior: " FontWeight="Medium"/>
-                                    <Run Text="{Binding UbicacionAnteriorTexto}" />
+                                    <Run Text="{Binding UbicacionAnteriorTexto, Mode=OneWay}" />
                                 </TextBlock>
 
                                 <TextBlock Margin="0,0,0,8">
                                     <Run Text="Ubicación nueva: " FontWeight="Medium"/>
-                                    <Run Text="{Binding UbicacionNuevaTexto}" />
+                                    <Run Text="{Binding UbicacionNuevaTexto, Mode=OneWay}" />
                                 </TextBlock>
 
                                 <!-- Motivo -->
                                 <TextBlock Text="Motivo:" 
                                            FontWeight="Medium" 
                                            Margin="0,4,0,2"/>
-                                <TextBlock Text="{Binding Motivo}" 
+                                <TextBlock Text="{Binding Motivo, Mode=OneWay}" 
                                            TextWrapping="Wrap"/>
                             </StackPanel>
                         </Grid>
@@ -218,13 +220,12 @@
               Background="#80000000" 
               Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
             <Border Padding="20" 
-       BorderBrush="#E1E5EB" 
-       BorderThickness="1" 
-       CornerRadius="6">
+                    BorderBrush="#E1E5EB" 
+                    BorderThickness="1" 
+                    CornerRadius="6">
                 <StackPanel HorizontalAlignment="Center" 
                             VerticalAlignment="Center"
                             Background="White">
-                    
                     <TextBlock Text="Cargando historial..." 
                                FontSize="16" 
                                Margin="0,0,0,12"/>
@@ -233,7 +234,6 @@
                                  Width="200"/>
                 </StackPanel>
             </Border>
-            
         </Grid>
 
         <!-- Mensaje sin movimientos -->

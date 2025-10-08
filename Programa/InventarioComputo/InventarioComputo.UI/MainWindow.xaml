@@ -162,24 +162,6 @@
                     </Button>
 
                     <Button Style="{StaticResource MenuButtonStyle}"
-                            Command="{Binding NavigateToUnidadesCommand}">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="40"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" 
-                                       Text="&#xE707;" 
-                                       FontFamily="Segoe MDL2 Assets"
-                                       FontSize="18"
-                                       HorizontalAlignment="Center"/>
-                            <TextBlock Grid.Column="1" 
-                                       Text="Unidades"
-                                       FontSize="14"/>
-                        </Grid>
-                    </Button>
-
-                    <Button Style="{StaticResource MenuButtonStyle}"
                             Command="{Binding NavigateToUbicacionesCommand}">
                         <Grid>
                             <Grid.ColumnDefinitions>

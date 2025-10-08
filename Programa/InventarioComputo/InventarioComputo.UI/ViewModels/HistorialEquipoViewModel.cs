@@ -18,10 +18,16 @@ namespace InventarioComputo.UI.ViewModels
         private readonly IEquipoComputoService _equipoSrv;
 
         [ObservableProperty]
-        private EquipoComputo? _equipo; // EXPUESTO PARA EL XAML
+        private EquipoComputo? _equipo;
+
+        // NUEVO: controla el overlay “No hay historial”
+        [ObservableProperty]
+        private bool _hasNoMovimientos = true;
 
         public string Titulo { get; private set; } = "Historial de Movimientos";
-        public ObservableCollection<HistorialMovimiento> Movimientos { get; } = new();
+
+        // CAMBIO: ahora es una colección de VM de ítem
+        public ObservableCollection<MovimientoItemViewModel> Movimientos { get; } = new();
 
         public HistorialEquipoViewModel(
             IMovimientoService movimientoSrv,
@@ -48,12 +54,21 @@ namespace InventarioComputo.UI.ViewModels
                     OnPropertyChanged(nameof(Titulo));
 
                     var historial = await _movimientoSrv.ObtenerHistorialPorEquipoAsync(equipoId);
-                    foreach (var mov in historial) Movimientos.Add(mov);
+
+                    foreach (var mov in historial)
+                        Movimientos.Add(new MovimientoItemViewModel(mov));
+
+                    HasNoMovimientos = Movimientos.Count == 0;
+                }
+                else
+                {
+                    HasNoMovimientos = true;
                 }
             }
             catch (Exception ex)
             {
                 Logger?.LogError(ex, "Error al cargar historial para equipo {EquipoId}", equipoId);
+                HasNoMovimientos = true;
             }
             finally
             {

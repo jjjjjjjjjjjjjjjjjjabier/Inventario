@@ -52,14 +52,26 @@ namespace InventarioComputo.Application.Services
             SesionCambiada?.Invoke(this, false);
         }
 
-        public bool TieneRol(string rolNombre)
+        private static string NormalizarRol(string nombre)
         {
-            return _usuarioActual != null && _roles.Any(r => r.Nombre == rolNombre);
+            var n = (nombre ?? string.Empty).Trim().ToLowerInvariant();
+            return n switch
+            {
+                "admin" or "administrador" or "administradores" => "administradores",
+                "consulta" or "consultas" => "consulta",
+                "soporte" => "soporte",
+                _ => n
+            };
         }
 
-        public IReadOnlyList<Rol> ObtenerRolesUsuario()
+        public bool TieneRol(string rolNombre)
         {
-            return _roles.AsReadOnly();
+            if (_usuarioActual is null) return false;
+
+            var buscado = NormalizarRol(rolNombre);
+            return _roles.Any(r => NormalizarRol(r.Nombre) == buscado);
         }
+
+        public IReadOnlyList<Rol> ObtenerRolesUsuario() => _roles.AsReadOnly();
     }
 }

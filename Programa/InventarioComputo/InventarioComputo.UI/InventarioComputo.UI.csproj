@@ -26,7 +26,15 @@
 		<Compile Remove="StaticConverters.cs" />
 	</ItemGroup>
 	<ItemGroup>
+	  <None Remove="Assets\logo.png" />
+	</ItemGroup>
+	<ItemGroup>
 	  <Page Remove="Styles\Styles.xaml" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Content Include="Assets\logo.png">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
 	</ItemGroup>
 	<ItemGroup>
 	  <None Include="Styles\Styles.xaml" />
@@ -36,6 +44,7 @@
 	<ItemGroup>
 		<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
 		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
+		<PackageReference Include="iTextSharp" Version="5.5.13.4" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.4">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

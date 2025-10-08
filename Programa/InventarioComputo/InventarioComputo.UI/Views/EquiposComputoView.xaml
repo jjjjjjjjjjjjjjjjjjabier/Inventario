@@ -7,11 +7,63 @@
              xmlns:conv="clr-namespace:InventarioComputo.UI.Converters"
              mc:Ignorable="d"
              d:DesignHeight="650" d:DesignWidth="950"
-             behaviors:LoadedCommandBehavior.LoadedCommand="{Binding LoadedCommand}">
+             Loaded="UserControl_Loaded">
 
     <UserControl.Resources>
         <conv:ActiveStatusConverter x:Key="ActiveStatusConverter"/>
         <conv:BoolToStringConverter x:Key="BoolToStringConverter"/>
+        <conv:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+
+        <!-- Estilo para textos en celdas: alineación, trimming y colores -->
+        <Style x:Key="CellTextStyle" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="#2C3E50"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            <Setter Property="TextWrapping" Value="NoWrap"/>
+            <Setter Property="Margin" Value="4,0"/>
+        </Style>
+
+        <!-- Estilo para encabezados de columna -->
+        <Style TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#F5F6F8"/>
+            <Setter Property="Foreground" Value="#2C3E50"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="BorderBrush" Value="#E5E7EB"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        </Style>
+
+        <!-- Estilo de fila: altura, hover y selección -->
+        <Style TargetType="DataGridRow">
+            <Setter Property="Height" Value="44"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#F3F6FB"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#E8F1FF"/>
+                    <Setter Property="Foreground" Value="#1F2D3D"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Estilo de celda: padding y enfoque limpio -->
+        <Style TargetType="DataGridCell">
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="Foreground" Value="#1F2D3D"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
 
     <Grid>
@@ -48,12 +100,12 @@
                           VerticalAlignment="Center" 
                           Margin="0,0,16,0"/>
 
-                <Border CornerRadius="4" 
+                <Border CornerRadius="6" 
                         BorderThickness="1" 
                         BorderBrush="#D1D5DB" 
                         Background="White" 
                         Padding="8,0" 
-                        Width="280">
+                        Width="300">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
@@ -118,7 +170,7 @@
                         Cursor="Hand">
                     <Button.Resources>
                         <Style TargetType="Border">
-                            <Setter Property="CornerRadius" Value="4"/>
+                            <Setter Property="CornerRadius" Value="6"/>
                         </Style>
                     </Button.Resources>
                 </Button>
@@ -134,7 +186,7 @@
                         Cursor="Hand">
                     <Button.Resources>
                         <Style TargetType="Border">
-                            <Setter Property="CornerRadius" Value="4"/>
+                            <Setter Property="CornerRadius" Value="6"/>
                         </Style>
                     </Button.Resources>
                 </Button>
@@ -149,7 +201,7 @@
                         Cursor="Hand">
                     <Button.Resources>
                         <Style TargetType="Border">
-                            <Setter Property="CornerRadius" Value="4"/>
+                            <Setter Property="CornerRadius" Value="6"/>
                         </Style>
                     </Button.Resources>
                 </Button>
@@ -165,7 +217,7 @@
                         Cursor="Hand">
                     <Button.Resources>
                         <Style TargetType="Border">
-                            <Setter Property="CornerRadius" Value="4"/>
+                            <Setter Property="CornerRadius" Value="6"/>
                         </Style>
                     </Button.Resources>
                 </Button>
@@ -179,29 +231,33 @@
                         Cursor="Hand">
                     <Button.Resources>
                         <Style TargetType="Border">
-                            <Setter Property="CornerRadius" Value="4"/>
+                            <Setter Property="CornerRadius" Value="6"/>
                         </Style>
                     </Button.Resources>
                 </Button>
             </StackPanel>
         </Grid>
 
-        <!-- DataGrid -->
+        <!-- DataGrid con mejor manejo del espacio -->
         <Border Grid.Row="2" 
                 Margin="24,0,24,24" 
                 BorderThickness="1" 
-                BorderBrush="#E1E5EB"
-                CornerRadius="6"
+                BorderBrush="#E5E7EB"
+                CornerRadius="8"
                 Background="White"
                 Padding="1">
+
             <DataGrid ItemsSource="{Binding Equipos}" 
                       SelectedItem="{Binding EquipoSeleccionado}"
                       AutoGenerateColumns="False"
                       IsReadOnly="True"
                       HeadersVisibility="Column"
                       GridLinesVisibility="Horizontal"
+                      HorizontalGridLinesBrush="#EEF1F5"
+                      AlternatingRowBackground="#FAFAFB"
                       RowBackground="White"
-                      AlternatingRowBackground="#F9FAFC"
+                      AlternationCount="2"
+                      RowHeaderWidth="0"
                       CanUserAddRows="False"
                       CanUserDeleteRows="False"
                       CanUserReorderColumns="True"
@@ -209,59 +265,58 @@
                       CanUserSortColumns="True"
                       BorderThickness="0"
                       SelectionMode="Single"
-                      SelectionUnit="FullRow">
-                <DataGrid.Resources>
-                    <Style TargetType="DataGridColumnHeader">
-                        <Setter Property="Background" Value="#F5F7FA"/>
-                        <Setter Property="Foreground" Value="#2C3E50"/>
-                        <Setter Property="FontWeight" Value="SemiBold"/>
-                        <Setter Property="Padding" Value="10,12"/>
-                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
-                        <Setter Property="BorderBrush" Value="#E1E5EB"/>
-                    </Style>
-                    <Style TargetType="DataGridRow">
-                        <Setter Property="Height" Value="40"/>
-                    </Style>
-                    <Style TargetType="DataGridCell">
-                        <Setter Property="Padding" Value="10,8"/>
-                        <Setter Property="BorderThickness" Value="0"/>
-                        <Setter Property="VerticalAlignment" Value="Center"/>
-                    </Style>
-                </DataGrid.Resources>
+                      SelectionUnit="FullRow"
+                      ScrollViewer.CanContentScroll="True"
+                      ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                      ScrollViewer.VerticalScrollBarVisibility="Auto"
+                      EnableRowVirtualization="True"
+                      EnableColumnVirtualization="True">
+
                 <DataGrid.Columns>
+                    <!-- Columnas con anchos optimizados -->
                     <DataGridTextColumn Header="Num. Serie" 
                                         Binding="{Binding NumeroSerie}" 
-                                        Width="120"/>
+                                        Width="110"
+                                        ElementStyle="{StaticResource CellTextStyle}"/>
                     <DataGridTextColumn Header="Etiqueta" 
                                         Binding="{Binding EtiquetaInventario}" 
-                                        Width="120"/>
+                                        Width="100"
+                                        ElementStyle="{StaticResource CellTextStyle}"/>
                     <DataGridTextColumn Header="Marca" 
                                         Binding="{Binding Marca}" 
-                                        Width="100"/>
+                                        Width="90"
+                                        ElementStyle="{StaticResource CellTextStyle}"/>
                     <DataGridTextColumn Header="Modelo" 
                                         Binding="{Binding Modelo}" 
-                                        Width="100"/>
+                                        Width="110"
+                                        ElementStyle="{StaticResource CellTextStyle}"/>
                     <DataGridTextColumn Header="Tipo" 
                                         Binding="{Binding TipoEquipo.Nombre}" 
-                                        Width="120"/>
+                                        Width="110"
+                                        ElementStyle="{StaticResource CellTextStyle}"/>
                     <DataGridTextColumn Header="Estado" 
                                         Binding="{Binding Estado.Nombre}" 
-                                        Width="100"/>
-                    <DataGridTextColumn Header="Asignado a" 
-                                        Binding="{Binding Empleado.NombreCompleto}" 
-                                        Width="*"/>
+                                        Width="100"
+                                        ElementStyle="{StaticResource CellTextStyle}"/>
+                    <DataGridTextColumn Header="Asignado a"
+                                        Binding="{Binding Empleado.NombreCompleto}"
+                                        Width="180"
+                                        ElementStyle="{StaticResource CellTextStyle}"/>
                     <DataGridTextColumn Header="Ubicación" 
                                         Binding="{Binding Zona.Nombre}" 
-                                        Width="120"/>
+                                        Width="120"
+                                        ElementStyle="{StaticResource CellTextStyle}"/>
                     <DataGridTextColumn Header="Adquisición" 
                                         Binding="{Binding FechaAdquisicion, StringFormat='{}{0:dd/MM/yyyy}'}" 
-                                        Width="100"/>
+                                        Width="100"
+                                        ElementStyle="{StaticResource CellTextStyle}"/>
                     <DataGridTemplateColumn Header="Activo" Width="80">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding Activo, Converter={StaticResource BoolToStringConverter}}" 
+                                <TextBlock Text="{Binding Activo, Converter={StaticResource BoolToStringConverter}}"
                                            HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"/>
+                                           VerticalAlignment="Center"
+                                           Style="{StaticResource CellTextStyle}"/>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
@@ -273,16 +328,20 @@
         <Grid Grid.Row="0" Grid.RowSpan="3" 
               Background="#80000000" 
               Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <Border Padding="20">
-                <StackPanel HorizontalAlignment="Center" 
-                            VerticalAlignment="Center"
-                            Background="White">
-                    <TextBlock Text="Cargando datos..." 
-                               FontSize="16" 
+            <Border Padding="20"
+                    BorderThickness="1"
+                    BorderBrush="#E1E5EB"
+                    CornerRadius="8"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Background="White">
+                <StackPanel>
+                    <TextBlock Text="Cargando equipos..."
+                               FontSize="16"
                                Margin="0,0,0,10"/>
-                    <ProgressBar IsIndeterminate="True" 
-                                 Height="4" 
-                                 Width="200"/>
+                    <ProgressBar IsIndeterminate="True"
+                                 Height="4"
+                                 Width="220"/>
                 </StackPanel>
             </Border>
         </Grid>

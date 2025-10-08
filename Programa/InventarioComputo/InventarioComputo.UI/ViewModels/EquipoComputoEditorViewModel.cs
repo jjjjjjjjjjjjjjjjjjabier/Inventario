@@ -38,6 +38,13 @@ namespace InventarioComputo.UI.ViewModels
         public DateTime? FechaAdquisicion { get => _entidad.FechaAdquisicion; set => SetProperty(_entidad.FechaAdquisicion, value, _entidad, (e, v) => e.FechaAdquisicion = v); }
         public decimal Costo { get => _entidad.Costo; set => SetProperty(_entidad.Costo, value, _entidad, (e, v) => e.Costo = v); }
 
+        // NUEVO: enlaza el CheckBox "Activo" al ViewModel
+        public bool Activo
+        {
+            get => _entidad.Activo;
+            set => SetProperty(_entidad.Activo, value, _entidad, (e, v) => e.Activo = v);
+        }
+
         public ObservableCollection<TipoEquipo> TiposEquipo { get; } = new();
         public ObservableCollection<Estado> Estados { get; } = new();
         public ObservableCollection<Sede> Sedes { get; } = new();
@@ -70,6 +77,10 @@ namespace InventarioComputo.UI.ViewModels
             _entidad = equipo;
             if (equipo.Id > 0) Titulo = "Editar Equipo";
             else FechaAdquisicion = DateTime.Today;
+
+            // Notificar también Activo para que el CheckBox refleje el valor actual
+            OnPropertyChanged(nameof(Activo));
+
             _ = CargarCombosAsync();
         }
 
@@ -105,6 +116,7 @@ namespace InventarioComputo.UI.ViewModels
             IsBusy = true;
             try
             {
+                // 1. Cargar los catálogos básicos primero
                 var tipos = await _tipoEquipoSrv.BuscarAsync(null, true);
                 TiposEquipo.Clear();
                 foreach (var t in tipos) TiposEquipo.Add(t);
@@ -117,24 +129,51 @@ namespace InventarioComputo.UI.ViewModels
                 Sedes.Clear();
                 foreach (var s in sedes) Sedes.Add(s);
 
+                // 2. Configurar las selecciones actuales solo si es un equipo existente
                 if (_entidad.Id > 0)
                 {
+                    // Seleccionar tipo equipo y estado (catálogos básicos)
                     TipoEquipoSeleccionado = TiposEquipo.FirstOrDefault(t => t.Id == _entidad.TipoEquipoId);
                     EstadoSeleccionado = Estados.FirstOrDefault(e => e.Id == _entidad.EstadoId);
 
+                    // ZONA DE RIESGO: Proteger la navegación con verificaciones
                     if (_entidad.ZonaId.HasValue)
                     {
+                        // Obtener la zona y verificar que exista
                         var zona = await _zonaSrv.ObtenerPorIdAsync(_entidad.ZonaId.Value);
                         if (zona != null)
                         {
-                            var area = await _areaSrv.ObtenerPorIdAsync(zona.AreaId);
-                            if (area != null)
+                            try
                             {
-                                SedeSeleccionada = Sedes.FirstOrDefault(s => s.Id == area.SedeId);
-                                await CargarAreasAsync();
-                                AreaSeleccionada = Areas.FirstOrDefault(a => a.Id == area.Id);
-                                await CargarZonasAsync();
-                                ZonaSeleccionada = Zonas.FirstOrDefault(z => z.Id == zona.Id);
+                                // Obtener el área y verificar que exista
+                                var area = await _areaSrv.ObtenerPorIdAsync(zona.AreaId);
+                                if (area != null)
+                                {
+                                    // Seleccionar la sede (debe existir siempre si área existe)
+                                    SedeSeleccionada = Sedes.FirstOrDefault(s => s.Id == area.SedeId);
+                                    
+                                    // Cargar las áreas de esa sede
+                                    if (SedeSeleccionada != null)
+                                    {
+                                        await CargarAreasAsync();
+                                        
+                                        // Seleccionar el área específica
+                                        AreaSeleccionada = Areas.FirstOrDefault(a => a.Id == area.Id);
+                                        
+                                        // Cargar las zonas de esa área
+                                        if (AreaSeleccionada != null)
+                                        {
+                                            await CargarZonasAsync();
+                                            // Finalmente seleccionar la zona
+                                            ZonaSeleccionada = Zonas.FirstOrDefault(z => z.Id == zona.Id);
+                                        }
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                // Log específico para este punto (zona->area->sede)
+                                Logger?.LogError(ex, "Error navegando jerarquía ubicación: ZonaId={ZonaId}", zona.Id);
                             }
                         }
                     }
@@ -142,10 +181,13 @@ namespace InventarioComputo.UI.ViewModels
             }
             catch (Exception ex)
             {
-                Logger?.LogError(ex, "Error cargando catálogos para el editor de equipos");
+                Logger?.LogError(ex, "Error cargando catálogos para editor de equipo: {Message}", ex.Message);
                 _dialogService.ShowError("No se pudieron cargar los datos necesarios para el formulario.");
             }
-            finally { IsBusy = false; }
+            finally 
+            { 
+                IsBusy = false; 
+            }
         }
 
         partial void OnSedeSeleccionadaChanged(Sede? value) => _ = CargarAreasAsync();

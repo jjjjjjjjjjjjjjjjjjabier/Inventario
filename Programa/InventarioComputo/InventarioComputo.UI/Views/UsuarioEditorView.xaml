@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:behaviors="clr-namespace:InventarioComputo.UI.Behaviors"
         mc:Ignorable="d"
         Title="{Binding Titulo}"
         SizeToContent="Height"
@@ -63,26 +64,27 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" Margin="0,0,8,0">
-                    <TextBlock Text="Contraseña" 
-                               FontWeight="Medium" 
-                               Margin="0,0,0,4"/>
+                    <TextBlock Text="Contraseña" FontWeight="Medium" Margin="0,0,0,4"/>
                     <PasswordBox x:Name="PasswordBox"
-                                 Padding="10,8" 
-                                 BorderBrush="#D1D5DB" 
-                                 BorderThickness="1"/>
+                                 Padding="10,8"
+                                 BorderBrush="#D1D5DB"
+                                 BorderThickness="1"
+                                 behaviors:PasswordBoxBehavior.Attach="True"
+                                 behaviors:PasswordBoxBehavior.Password="{Binding Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Margin="8,0,0,0">
-                    <TextBlock Text="Confirmar Contraseña" 
-                               FontWeight="Medium" 
-                               Margin="0,0,0,4"/>
+                    <TextBlock Text="Confirmar Contraseña" FontWeight="Medium" Margin="0,0,0,4"/>
                     <PasswordBox x:Name="ConfirmPasswordBox"
-                                 Padding="10,8" 
-                                 BorderBrush="#D1D5DB" 
-                                 BorderThickness="1"/>
+                                 Padding="10,8"
+                                 BorderBrush="#D1D5DB"
+                                 BorderThickness="1"
+                                 behaviors:PasswordBoxBehavior.Attach="True"
+                                 behaviors:PasswordBoxBehavior.Password="{Binding ConfirmPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
                 </StackPanel>
             </Grid>
 
+            <!-- Aviso de edición -->
             <TextBlock Text="Deje la contraseña en blanco para mantener la actual"
                        Foreground="#666666"
                        FontSize="12"
@@ -118,6 +120,7 @@
                         Foreground="White" 
                         BorderThickness="0"
                         Visibility="{Binding EsEdicion, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        IsEnabled="{Binding EsEdicion}"
                         HorizontalAlignment="Left">
                     <Button.Resources>
                         <Style TargetType="Border">
@@ -162,13 +165,12 @@
               Background="#80000000" 
               Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
             <Border Padding="20" 
-       BorderBrush="#E1E5EB" 
-       BorderThickness="1" 
-       CornerRadius="6">
+                    BorderBrush="#E1E5EB" 
+                    BorderThickness="1" 
+                    CornerRadius="6">
                 <StackPanel HorizontalAlignment="Center" 
                             VerticalAlignment="Center"
                             Background="White">
-    
                     <TextBlock Text="Guardando..." 
                                FontSize="16" 
                                Margin="0,0,0,12"/>
@@ -177,7 +179,6 @@
                                  Width="200"/>
                 </StackPanel>
             </Border>
-           
         </Grid>
     </Grid>
 </Window>

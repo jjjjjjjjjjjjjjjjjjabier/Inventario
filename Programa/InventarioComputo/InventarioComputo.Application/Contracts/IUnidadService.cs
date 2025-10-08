@@ -7,7 +7,6 @@ namespace InventarioComputo.Application.Contracts
 {
     public interface IUnidadService
     {
-        // CORRECCIÓN 1: El tipo de retorno se cambia a IReadOnlyList para seguir las buenas prácticas.
         Task<IReadOnlyList<Unidad>> BuscarAsync(string? filtro, bool incluirInactivas, CancellationToken ct = default);
 
         Task<Unidad?> ObtenerPorIdAsync(int id, CancellationToken ct = default);
@@ -16,7 +15,6 @@ namespace InventarioComputo.Application.Contracts
 
         Task EliminarAsync(int id, CancellationToken ct = default);
 
-        // CORRECCIÓN 2: Se añaden los nuevos métodos de validación que faltaban.
         Task<bool> ExisteNombreAsync(string nombre, int? idExcluir, CancellationToken ct = default);
 
         Task<bool> ExisteAbreviaturaAsync(string abreviatura, int? idExcluir, CancellationToken ct = default);
